@@ -52,32 +52,26 @@ public:
     template <typename T>
     T Read(const int index);
 
-    template <typename T>
-    T PopBottom() {
-        T ret = Read<T>(1);
-        lua_remove(_l, 1);
-        return ret;
-    }
-
-
 private:
     template <typename... Ts>
     struct _Pop {
         typedef std::tuple<Ts...> type;
 
         template <typename T>
-        static std::tuple<T> worker(Luab &l) {
-            return std::make_tuple(l.PopBottom<T>());
+        static std::tuple<T> worker(Luab &l, const int index) {
+            return std::make_tuple(l.Read<T>(index));
         }
 
         template <typename T1, typename T2, typename... Rest>
-        static std::tuple<T1, T2, Rest...> worker(Luab &l) {
-            std::tuple<T1> head = std::make_tuple(l.PopBottom<T1>());
-            return std::tuple_cat(head, worker<T2, Rest...>(l));
+        static std::tuple<T1, T2, Rest...> worker(Luab &l, const int index) {
+            std::tuple<T1> head = std::make_tuple(l.Read<T1>(index));
+            return std::tuple_cat(head, worker<T2, Rest...>(l, index + 1));
         }
 
         static type apply(Luab &l) {
-            return worker<Ts...>(l);
+            auto ret = worker<Ts...>(l, 1);
+            lua_pop(l._l, sizeof...(Ts));
+            return ret;
         }
     };
 
