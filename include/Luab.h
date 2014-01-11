@@ -60,7 +60,7 @@ private:
     // Popping multiple elements returns a tuple
     template <size_t, typename... Ts> // First template argument
                                       // denotes the sizeof(Ts...)
-    struct _Pop {
+    struct _pop {
         typedef std::tuple<Ts...> type;
 
         template <typename T>
@@ -84,14 +84,14 @@ private:
 
     // Popping nothing returns void
     template <typename... Ts>
-    struct _Pop<0, Ts...> {
+    struct _pop<0, Ts...> {
         typedef void type;
         static type apply(Luab &l) {}
     };
 
     // Popping one element returns an unboxed value
     template <typename T>
-    struct _Pop<1, T> {
+    struct _pop<1, T> {
         typedef T type;
         static type apply(Luab &l) {
             T ret = l.Read<T>(-1);
@@ -102,14 +102,14 @@ private:
 
 public:
     template <typename... T>
-    typename _Pop<sizeof...(T), T...>::type Pop() {
-        return _Pop<sizeof...(T), T...>::apply(*this);
+    typename _pop<sizeof...(T), T...>::type Pop() {
+        return _pop<sizeof...(T), T...>::apply(*this);
     }
 
     // Calls a lua function with variadic return parameters and
     // function arguments
     template <typename... Ret, typename... Args>
-    typename _Pop<sizeof...(Ret), Ret...>::type Call(const std::string &fun,
+    typename _pop<sizeof...(Ret), Ret...>::type Call(const std::string &fun,
                                      Args&&... args) {
         lua_getglobal(_l, fun.c_str());
         const int num_args = sizeof...(Args);
