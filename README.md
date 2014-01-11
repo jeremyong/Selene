@@ -2,6 +2,22 @@
 
 Simple C++11 friendly bindings to Lua
 
+## Building
+
+The project requires Cmake > v2.8.11 although an older Cmake is likely
+to work and creates a shared library.
+
+```
+mkdir build
+cd build
+cmake ..
+make
+```
+
+This will create an `libluab.so` library that your application can
+link against. Remember to add the `include` directory as well. In
+addition, this will build all any tests in the `test` directory.
+
 ## Usage
 
 Currently, these bindings only support calling lua function from C++.
@@ -55,3 +71,14 @@ int main() {
 ```
 
 You can read more about this project in the blogpost that describes it [here](http://www.jeremyong.com/blog/2014/01/10/interfacing-lua-with-templates-in-c-plus-plus-11/).
+
+## Roadmap
+
+The following features are planned, although nothing is guaranteed:
+
+- Object oriented type aware table interface with Lua
+- Clean way to expose C++ function to Lua
+- Smarter Lua module loading
+- Hooks for module reloading
+- Handling continuations
+- Standardize state management
