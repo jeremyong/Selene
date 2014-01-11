@@ -50,7 +50,7 @@ public:
     }
 
     template <typename T>
-    T Read(const int index);
+    T Read(const int index) const;
 
 private:
     template <typename... Ts>
@@ -58,12 +58,13 @@ private:
         typedef std::tuple<Ts...> type;
 
         template <typename T>
-        static std::tuple<T> worker(Luab &l, const int index) {
+        static std::tuple<T> worker(const Luab &l, const int index) {
             return std::make_tuple(l.Read<T>(index));
         }
 
         template <typename T1, typename T2, typename... Rest>
-        static std::tuple<T1, T2, Rest...> worker(Luab &l, const int index) {
+        static std::tuple<T1, T2, Rest...> worker(const Luab &l,
+                                                  const int index) {
             std::tuple<T1> head = std::make_tuple(l.Read<T1>(index));
             return std::tuple_cat(head, worker<T2, Rest...>(l, index + 1));
         }

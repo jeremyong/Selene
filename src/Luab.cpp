@@ -43,32 +43,32 @@ void Luab::Push(const std::string &s) {
 }
 
 template <>
-bool Luab::Read<bool>(const int index) {
+bool Luab::Read<bool>(const int index) const {
     return lua_toboolean(_l, index);
 }
 
 template <>
-int Luab::Read<int>(const int index) {
+int Luab::Read<int>(const int index) const {
     return lua_tointeger(_l, index);
 }
 
 template <>
-unsigned int Luab::Read<unsigned int>(const int index) {
+unsigned int Luab::Read<unsigned int>(const int index) const {
     return lua_tounsigned(_l, index);
 }
 
 template <>
-float Luab::Read<float>(const int index) {
+float Luab::Read<float>(const int index) const {
     return lua_tonumber(_l, index);
 }
 
 template <>
-double Luab::Read<double>(const int index) {
+double Luab::Read<double>(const int index) const {
     return lua_tonumber(_l, index);
 }
 
 template <>
-std::string Luab::Read<std::string>(const int index) {
+std::string Luab::Read<std::string>(const int index) const {
     return lua_tostring(_l, index);
 }
 
