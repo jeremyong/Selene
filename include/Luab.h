@@ -35,7 +35,7 @@ public:
 
     bool Load(const std::string &file);
 
-    void Push() {}
+    void Push() {} // Necessary in the case no arguments are passed
     void Push(bool &&value);
     void Push(int &&value);
     void Push(unsigned int &&value);
@@ -50,11 +50,16 @@ public:
     }
 
     template <typename T>
-    T Read(const int index) const;
+    T Read(const int index) const; // Lua stacks are 1 indexed from
+                                   // the bottom and -1 indexed from
+                                   // the top
 
 private:
 
-    template <size_t, typename... Ts>
+    // Worker type-trait struct to Pop
+    // Popping multiple elements returns a tuple
+    template <size_t, typename... Ts> // First template argument
+                                      // denotes the sizeof(Ts...)
     struct _Pop {
         typedef std::tuple<Ts...> type;
 
@@ -77,12 +82,14 @@ private:
         }
     };
 
+    // Popping nothing returns void
     template <typename... Ts>
     struct _Pop<0, Ts...> {
         typedef void type;
         static type apply(Luab &l) {}
     };
 
+    // Popping one element returns an unboxed value
     template <typename T>
     struct _Pop<1, T> {
         typedef T type;
@@ -99,6 +106,8 @@ public:
         return _Pop<sizeof...(T), T...>::apply(*this);
     }
 
+    // Calls a lua function with variadic return parameters and
+    // function arguments
     template <typename... Ret, typename... Args>
     typename _Pop<sizeof...(Ret), Ret...>::type Call(const std::string &fun,
                                      Args&&... args) {
