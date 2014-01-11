@@ -18,6 +18,30 @@ bool Luab::Load(const std::string &file) {
     return !luaL_dofile(_l, file.c_str());
 }
 
+void Luab::Push(const bool b) {
+    lua_pushboolean(_l, b);
+}
+
+void Luab::Push(const int i) {
+    lua_pushinteger(_l, i);
+}
+
+void Luab::Push(const unsigned int u) {
+    lua_pushunsigned(_l, u);
+}
+
+void Luab::Push(const float f) {
+    lua_pushnumber(_l, f);
+}
+
+void Luab::Push(const double d) {
+    lua_pushnumber(_l, d);
+}
+
+void Luab::Push(const std::string &s) {
+    lua_pushlstring(_l, s.c_str(), s.size());
+}
+
 template <>
 bool Luab::Read<bool>(const int index) {
     return lua_toboolean(_l, index);
