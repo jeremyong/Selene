@@ -36,24 +36,25 @@ public:
     bool Load(const std::string &file);
 
     void Push() {}
-    void Push(const bool value);
-    void Push(const int value);
-    void Push(const unsigned int value);
-    void Push(const float value);
-    void Push(const double value);
-    void Push(const std::string &value);
+    void Push(bool &&value);
+    void Push(int &&value);
+    void Push(unsigned int &&value);
+    void Push(float &&value);
+    void Push(double &&value);
+    void Push(std::string &&value);
 
     template <typename T, typename... Ts>
-    void Push(const T value, const Ts... values) {
-        Push(value);
-        Push(values...);
+    void Push(T &&value, Ts&&... values) {
+        Push(std::forward<T>(value));
+        Push(std::forward<Ts>(values)...);
     }
 
     template <typename T>
     T Read(const int index) const;
 
 private:
-    template <typename... Ts>
+
+    template <size_t, typename... Ts>
     struct _Pop {
         typedef std::tuple<Ts...> type;
 
@@ -76,8 +77,14 @@ private:
         }
     };
 
+    template <typename... Ts>
+    struct _Pop<0, Ts...> {
+        typedef void type;
+        static type apply(Luab &l) {}
+    };
+
     template <typename T>
-    struct _Pop<T> {
+    struct _Pop<1, T> {
         typedef T type;
         static type apply(Luab &l) {
             T ret = l.Read<T>(-1);
@@ -85,24 +92,22 @@ private:
             return ret;
         }
     };
+
 public:
     template <typename... T>
-    typename _Pop<T...>::type Pop() {
-        return _Pop<T...>::apply(*this);
+    typename _Pop<sizeof...(T), T...>::type Pop() {
+        return _Pop<sizeof...(T), T...>::apply(*this);
     }
 
     template <typename... Ret, typename... Args>
-    typename _Pop<Ret...>::type Call(const std::string &fun,
-                                     const Args&... args) {
+    typename _Pop<sizeof...(Ret), Ret...>::type Call(const std::string &fun,
+                                     Args&&... args) {
         lua_getglobal(_l, fun.c_str());
         const int num_args = sizeof...(Args);
         const int num_ret = sizeof...(Ret);
-        Push(args...);
-        if (luab::check(_l, lua_pcall(_l, num_args, num_ret, 0))) {
-            return Pop<Ret...>();
-        } else {
-            throw 0;
-        }
+        Push(std::forward<Args>(args)...);
+        lua_call(_l, num_args, num_ret);
+        return Pop<Ret...>();
     }
 
     friend std::ostream &operator<<(std::ostream &os, const Luab &luab);

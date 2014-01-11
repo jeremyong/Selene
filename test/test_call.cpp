@@ -4,6 +4,8 @@
 int main() {
     Luab l;
     l.Load("../test/test.lua");
+    l.Call("foo");
+
     int result = l.Call<int>("add", 5, 2);
     assert(result == 7);
 
