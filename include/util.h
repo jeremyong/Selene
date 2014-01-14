@@ -8,7 +8,7 @@ extern "C" {
 #include "lualib.h"
 }
 
-namespace luab {
+namespace luna {
 inline bool check(lua_State *L, int code) {
     if (code == LUA_OK) {
         return true;

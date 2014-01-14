@@ -1,8 +1,8 @@
-#include "luab.h"
+#include "luna.h"
 #include <cassert>
 
 int main() {
-    Luab l;
+    luna::State l;
     l.Load("../test/test.lua");
     l.Call("foo");
 

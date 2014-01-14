@@ -17,7 +17,8 @@ T singular_t();
 template <typename... T>
 std::tuple<T...> tuple_t();
 
-class Luab {
+namespace luna {
+class State {
 private:
     lua_State *_l;
 
@@ -27,11 +28,11 @@ private:
     }
 
 public:
-    Luab();
-    Luab(const Luab &other) = delete;
-    Luab &operator=(const Luab &other) = delete;
-    Luab(Luab &&other);
-    ~Luab();
+    State();
+    State(const State &other) = delete;
+    State &operator=(const State &other) = delete;
+    State(State &&other);
+    ~State();
 
     bool Load(const std::string &file);
 
@@ -55,7 +56,6 @@ public:
                                    // the top
 
 private:
-
     // Worker type-trait struct to Pop
     // Popping multiple elements returns a tuple
     template <size_t, typename... Ts> // First template argument
@@ -64,18 +64,18 @@ private:
         typedef std::tuple<Ts...> type;
 
         template <typename T>
-        static std::tuple<T> worker(const Luab &l, const int index) {
+        static std::tuple<T> worker(const State &l, const int index) {
             return std::make_tuple(l.Read<T>(index));
         }
 
         template <typename T1, typename T2, typename... Rest>
-        static std::tuple<T1, T2, Rest...> worker(const Luab &l,
+        static std::tuple<T1, T2, Rest...> worker(const State &l,
                                                   const int index) {
             std::tuple<T1> head = std::make_tuple(l.Read<T1>(index));
             return std::tuple_cat(head, worker<T2, Rest...>(l, index + 1));
         }
 
-        static type apply(Luab &l) {
+        static type apply(State &l) {
             auto ret = worker<Ts...>(l, 1);
             lua_pop(l._l, sizeof...(Ts));
             return ret;
@@ -86,14 +86,14 @@ private:
     template <typename... Ts>
     struct _pop<0, Ts...> {
         typedef void type;
-        static type apply(Luab &l) {}
+        static type apply(State &l) {}
     };
 
     // Popping one element returns an unboxed value
     template <typename T>
     struct _pop<1, T> {
         typedef T type;
-        static type apply(Luab &l) {
+        static type apply(State &l) {
             T ret = l.Read<T>(-1);
             lua_pop(l._l, 1);
             return ret;
@@ -119,5 +119,6 @@ public:
         return Pop<Ret...>();
     }
 
-    friend std::ostream &operator<<(std::ostream &os, const Luab &luab);
+    friend std::ostream &operator<<(std::ostream &os, const State &state);
 };
+}

@@ -1,79 +1,80 @@
-#include "Luab.h"
+#include "State.h"
 
-Luab::Luab() : _l(nullptr) {
+namespace luna {
+State::State() : _l(nullptr) {
     _l = luaL_newstate();
 }
 
-Luab::Luab(Luab &&other) : _l(other._l) {
+State::State(State &&other) : _l(other._l) {
     other._l = nullptr;
 }
 
-Luab::~Luab() {
+State::~State() {
     if (_l == nullptr) return;
 
     lua_close(_l);
 }
 
-bool Luab::Load(const std::string &file) {
+bool State::Load(const std::string &file) {
     return !luaL_dofile(_l, file.c_str());
 }
 
-void Luab::Push(bool &&b) {
+void State::Push(bool &&b) {
     lua_pushboolean(_l, b);
 }
 
-void Luab::Push(int &&i) {
+void State::Push(int &&i) {
     lua_pushinteger(_l, i);
 }
 
-void Luab::Push(unsigned int &&u) {
+void State::Push(unsigned int &&u) {
     lua_pushunsigned(_l, u);
 }
 
-void Luab::Push(float &&f) {
+void State::Push(float &&f) {
     lua_pushnumber(_l, f);
 }
 
-void Luab::Push(double &&d) {
+void State::Push(double &&d) {
     lua_pushnumber(_l, d);
 }
 
-void Luab::Push(std::string &&s) {
+void State::Push(std::string &&s) {
     lua_pushlstring(_l, s.c_str(), s.size());
 }
 
 template <>
-bool Luab::Read<bool>(const int index) const {
+bool State::Read<bool>(const int index) const {
     return lua_toboolean(_l, index);
 }
 
 template <>
-int Luab::Read<int>(const int index) const {
+int State::Read<int>(const int index) const {
     return lua_tointeger(_l, index);
 }
 
 template <>
-unsigned int Luab::Read<unsigned int>(const int index) const {
+unsigned int State::Read<unsigned int>(const int index) const {
     return lua_tounsigned(_l, index);
 }
 
 template <>
-float Luab::Read<float>(const int index) const {
+float State::Read<float>(const int index) const {
     return lua_tonumber(_l, index);
 }
 
 template <>
-double Luab::Read<double>(const int index) const {
+double State::Read<double>(const int index) const {
     return lua_tonumber(_l, index);
 }
 
 template <>
-std::string Luab::Read<std::string>(const int index) const {
+std::string State::Read<std::string>(const int index) const {
     return lua_tostring(_l, index);
 }
 
-std::ostream &operator<<(std::ostream &os, const Luab &luab) {
-    lua_State *l = luab._l;
+std::ostream &operator<<(std::ostream &os, const State &state) {
+    lua_State *l = state._l;
     int top = lua_gettop(l);
     for (int i = 1; i <= top; ++i) {
         int t = lua_type(l, i);
@@ -94,4 +95,5 @@ std::ostream &operator<<(std::ostream &os, const Luab &luab) {
         os << " ";
     }
     return os;
+}
 }

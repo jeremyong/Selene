@@ -1,4 +1,4 @@
-# luab
+# Luna
 
 Simple C++11 friendly bindings to Lua
 
@@ -14,7 +14,7 @@ cmake ..
 make
 ```
 
-This will create an `libluab.so` library that your application can
+This will create an `libluna.so` library that your application can
 link against. Remember to add the `include` directory as well. In
 addition, this will build all any tests in the `test` directory.
 
@@ -40,11 +40,11 @@ end
 ```
 
 ```c++
-#include "luab.h"
+#include "luna.h"
 #include <cassert>
 
 int main() {
-    Luab l;
+    luna::State l;
     l.Load("../test/test.lua");
 
     // Call function with no arguments or returns
