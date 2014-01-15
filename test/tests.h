@@ -106,3 +106,12 @@ bool test_multivalue_c_fun_from_lua() {
     int answer = l.Call<int>("doozy", 5);
     return (answer == -75);
 }
+
+bool test_c_fun_destructor() {
+    luna::State l;
+    l.Load("../test/test.lua");
+    l.Register("doozy_c", &my_sum_and_difference);
+    l.Call<int>("doozy", 5);
+    l.Unregister("doozy_c");
+    return l.CheckNil("doozy_c");
+}

@@ -56,6 +56,13 @@ public:
         return detail::_get<T>(_l, index);
     }
 
+    bool CheckNil(const std::string &global) {
+        lua_getglobal(_l, global.c_str());
+        const bool result = lua_isnil(_l, -1);
+        lua_pop(_l, 1);
+        return result;
+    }
+
 public:
     template <typename... T>
     typename detail::_pop_n_impl<sizeof...(T), T...>::type Pop() {

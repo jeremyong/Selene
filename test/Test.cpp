@@ -14,7 +14,8 @@ static std::vector<bool(*)()> tests = {
     test_call_normal_c_fun,
     test_call_functor,
     test_multivalue_c_fun_return,
-    test_multivalue_c_fun_from_lua
+    test_multivalue_c_fun_from_lua,
+    test_c_fun_destructor
 };
 
 

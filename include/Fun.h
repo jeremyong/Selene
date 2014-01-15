@@ -28,16 +28,16 @@ std::tuple<T...> _get_args_impl(lua_State *l, _indices<N...>) {
 template <typename... T>
 std::tuple<T...> _get_args(lua_State *l) {
     constexpr std::size_t num_args = sizeof...(T);
-    std::tuple<T...> ret =
-        _get_args_impl<T...>(l, typename _indices_builder<num_args>::type());
-    lua_pop(l, num_args);
-    return ret;
+    return _get_args_impl<T...>(l, typename _indices_builder<num_args>::type());
 }
 
 int _lua_dispatcher(lua_State *l);
 }
 
-struct BaseFun { virtual int Apply(lua_State *l) = 0; };
+struct BaseFun {
+    virtual ~BaseFun() {};
+    virtual int Apply(lua_State *l) = 0;
+};
 
 template <int N, typename Ret, typename... Args>
 class Fun : public BaseFun {
@@ -45,22 +45,41 @@ private:
     using _return_type = Ret;
     using _fun_type = std::function<Ret(Args...)>;
     _fun_type _fun;
+    std::string _name;
+    lua_State **_l; // used for destruction
 
 public:
-    Fun(lua_State *l,
+    Fun(lua_State *&l,
         const std::string &name,
         _return_type(*fun)(Args...))
         : Fun(l, name, _fun_type{fun}) {}
 
-    Fun(lua_State *l,
+    Fun(lua_State *&l,
         const std::string &name,
-        _fun_type fun) : _fun(fun) {
+        _fun_type fun) : _fun(fun), _name(name), _l(&l) {
         lua_pushlightuserdata(l, (void *)this);
         lua_pushcclosure(l, &detail::_lua_dispatcher, 1);
         lua_setglobal(l, name.c_str());
     }
 
+    Fun(const Fun &other) = delete;
+    Fun(Fun &&other)
+        : _fun(other._fun),
+          _name(other._name),
+          _l(other._l) {
+        *other._l = nullptr;
+    }
 
+    ~Fun() {
+        if (_l != nullptr && (*_l) != nullptr) {
+            lua_pushnil(*_l);
+            lua_setglobal(*_l, _name.c_str());
+        }
+    }
+
+
+    // Each application of a function receives a new Lua context so
+    // this argument is necessary.
     int Apply(lua_State *l) {
         std::tuple<Args...> args = detail::_get_args<Args...>(l);
         _return_type value = _lift(_fun, args,
