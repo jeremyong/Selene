@@ -43,6 +43,10 @@ end
 #include "luna.h"
 #include <cassert>
 
+int my_multiply(int a, int b) {
+    return (a*b);
+}
+
 int main() {
     luna::State l;
     l.Load("../test/test.lua");
@@ -65,6 +69,11 @@ int main() {
     std::string z;
     std::tie(x, y, z) = l.Call<int, bool, std::string>("bar");
     assert(x == 4 && y == true && z == "hi");
+
+    // Call C function from Lua
+    l.Register("c_multiply", std::function<int(int, int)>(my_multiply));
+    result = l.Call<int>("my_multiply", 5, 2);
+    assert(result == 10);
 
     std::cout << "Call tests finished successfully." << std::endl;
 }

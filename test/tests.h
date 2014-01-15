@@ -38,7 +38,7 @@ bool test_heterogeneous_return() {
 }
 
 bool test_call_c_function() {
-    luna::State l{true};
+    luna::State l;
     l.Load("../test/test.lua");
     l.Register("cadd", std::function<int(int, int)>(my_add));
     int answer = l.Call<int>("cadd", 3, 6);
@@ -46,9 +46,18 @@ bool test_call_c_function() {
 }
 
 bool test_call_c_fun_from_lua() {
-    luna::State l{true};
+    luna::State l;
     l.Load("../test/test.lua");
     l.Register("cadd", std::function<int(int, int)>(my_add));
     int answer = l.Call<int>("execute");
     return (answer == 11);
+}
+
+bool test_call_lambda() {
+    luna::State l;
+    l.Load("../test/test.lua");
+    std::function<int(int, int)> mult = [](int x, int y){ return x * y; };
+    l.Register("cmultiply", mult);
+    int answer = l.Call<int>("cmultiply", 5, 6);
+    return (answer == 30);
 }

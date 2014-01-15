@@ -8,7 +8,8 @@ static std::vector<bool(*)()> tests = {
     test_multi_return,
     test_heterogeneous_return,
     test_call_c_function,
-    test_call_c_fun_from_lua
+    test_call_c_fun_from_lua,
+    test_call_lambda
 };
 
 
