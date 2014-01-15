@@ -70,14 +70,14 @@ struct _pop_n_impl {
 // Popping nothing returns void
 template <typename... Ts>
 struct _pop_n_impl<0, Ts...> {
-    typedef void type;
+    using type = void;
     static type apply(lua_State *) {}
 };
 
 // Popping one element returns an unboxed value
 template <typename T>
 struct _pop_n_impl<1, T> {
-    typedef T type;
+    using type = T;
     static type apply(lua_State *l) {
         T ret = _get<T>(l, -1);
         lua_pop(l, 1);
