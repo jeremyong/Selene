@@ -13,17 +13,6 @@ extern "C" {
 
 namespace luna {
 namespace detail {
-template <std::size_t... Is>
-struct _indices {};
-
-template <std::size_t N, std::size_t... Is>
-struct _indices_builder : _indices_builder<N-1, N-1, Is...> {};
-
-template <std::size_t... Is>
-struct _indices_builder<0, Is...> : _indices<Is...> {
-    using type = _indices<Is...>;
-};
-
 template <typename Ret, typename... Args, std::size_t... N>
 Ret _lift(std::function<Ret(Args...)> fun,
           std::tuple<Args...> args,

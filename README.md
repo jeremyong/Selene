@@ -71,13 +71,16 @@ int main() {
     assert(x == 4 && y == true && z == "hi");
 
     // Call C function from Lua
-    l.Register("c_multiply", std::function<int(int, int)>(my_multiply));
+    l.Register("c_multiply", &my_multiply);
     result = l.Call<int>("my_multiply", 5, 2);
     assert(result == 10);
 
     std::cout << "Call tests finished successfully." << std::endl;
 }
 ```
+
+You can also register functor objects, lambdas, and any fully
+qualified `std::function`. See `test/tests.h` for details.
 
 You can read more about this project in the blogpost that describes it [here](http://www.jeremyong.com/blog/2014/01/10/interfacing-lua-with-templates-in-c-plus-plus-11/).
 

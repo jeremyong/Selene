@@ -2,6 +2,7 @@
 #include "tests.h"
 #include <vector>
 
+// The most ghetto unit testing framework ever!
 static std::vector<bool(*)()> tests = {
     test_function_no_args,
     test_add,

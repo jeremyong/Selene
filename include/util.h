@@ -22,6 +22,17 @@ inline bool check(lua_State *L, int code) {
 }
 
 namespace detail {
+template <std::size_t... Is>
+struct _indices {};
+
+template <std::size_t N, std::size_t... Is>
+struct _indices_builder : _indices_builder<N-1, N-1, Is...> {};
+
+template <std::size_t... Is>
+struct _indices_builder<0, Is...> : _indices<Is...> {
+    using type = _indices<Is...>;
+};
+
 template <typename T> T _get(lua_State *l, const int index);
 
 template <typename T> T _check_get(lua_State *l, const int index);
@@ -39,23 +50,19 @@ void _push(lua_State *l, std::string &&value);
 template <size_t, typename... Ts> // First template argument denotes
                                   // the sizeof(Ts...)
 struct _pop_n_impl {
-    typedef std::tuple<Ts...> type;
+    using type =  std::tuple<Ts...>;
 
-    template <typename T>
-    static std::tuple<T> worker(lua_State *l, const int index) {
-        return std::make_tuple(_get<T>(l, index));
-    }
-
-    template <typename T1, typename T2, typename... Rest>
-    static std::tuple<T1, T2, Rest...> worker(lua_State *l,
-                                              const int index) {
-        std::tuple<T1> head = std::make_tuple(_get<T1>(l, index));
-        return std::tuple_cat(head, worker<T2, Rest...>(l, index + 1));
+    template <std::size_t... N>
+    static type worker(lua_State *l,
+                       const int index,
+                       _indices<N...>) {
+        return std::make_tuple(_get<Ts>(l, N + 1)...);
     }
 
     static type apply(lua_State *l) {
-        auto ret = worker<Ts...>(l, 1);
-        lua_pop(l, sizeof...(Ts));
+        const std::size_t num_args = sizeof...(Ts);
+        auto ret = worker(l, 1, typename _indices_builder<num_args>::type());
+        lua_pop(l, num_args);
         return ret;
     }
 };
