@@ -58,11 +58,16 @@ private:
 public:
     Fun(lua_State *l,
         const std::string &name,
+        Ret (*fun)(Args...)) : Fun(l, name, std::function<Ret(Args...)>{fun}) {}
+
+    Fun(lua_State *l,
+        const std::string &name,
         std::function<Ret(Args...)> fun) : _fun(fun) {
         lua_pushlightuserdata(l, (void *)this);
         lua_pushcclosure(l, &detail::_lua_dispatcher, 1);
         lua_setglobal(l, name.c_str());
     }
+
 
     int Apply(lua_State *l) {
         std::tuple<Args...> args = detail::_get_args<Args...>(l);

@@ -81,6 +81,12 @@ public:
         _funs.insert(std::make_pair(name, std::move(tmp)));
     }
 
+    template <typename Ret, typename... Args>
+    void Register(const std::string &name, Ret (*fun)(Args...)) {
+        auto tmp = std::unique_ptr<BaseFun>(new Fun<Ret, Args...>{_l, name, fun});
+        _funs.insert(std::make_pair(name, std::move(tmp)));
+    }
+
     friend std::ostream &operator<<(std::ostream &os, const State &state);
 };
 }

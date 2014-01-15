@@ -61,3 +61,27 @@ bool test_call_lambda() {
     int answer = l.Call<int>("cmultiply", 5, 6);
     return (answer == 30);
 }
+
+bool test_call_normal_c_fun() {
+    luna::State l;
+    l.Load("../test/test.lua");
+    l.Register("cadd", &my_add);
+    int answer = l.Call<int>("cadd", 4, 20);
+    return (answer == 24);
+}
+
+bool test_call_functor() {
+    struct the_answer {
+        int answer = 42;
+        int operator()() {
+            return answer;
+        }
+    };
+    the_answer functor;
+    luna::State l;
+    l.Load("../test/test.lua");
+    l.Register("c_the_answer", std::function<int()>(functor));
+    int answer = l.Call<int>("c_the_answer");
+    return (answer == 42);
+
+}
