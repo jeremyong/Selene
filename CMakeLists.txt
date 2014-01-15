@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.12)
-project(luab)
+project(Luna)
 
 if(APPLE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -stdlib=libc++ -g -Wall")
@@ -13,14 +13,14 @@ file(GLOB sources RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
 file(GLOB headers RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
      include/*.h)
 
-add_library(luab SHARED ${headers} ${sources})
+add_library(Luna SHARED ${headers} ${sources})
 
 if(APPLE)
     find_library(lua lua)
-    target_link_libraries(luab ${lua})
+    target_link_libraries(Luna ${lua})
 elseif(UNIX)
-    target_link_libraries(luab lua)
+    target_link_libraries(Luna lua)
 endif(APPLE)
 
-add_executable(test_call ${CMAKE_CURRENT_SOURCE_DIR}/test/test_call.cpp)
-target_link_libraries(test_call luab)
+add_executable(test ${CMAKE_CURRENT_SOURCE_DIR}/test/Test.cpp)
+target_link_libraries(test Luna)

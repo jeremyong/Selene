@@ -1,6 +1,29 @@
 #include "util.h"
 
 namespace luna {
+std::ostream &operator<<(std::ostream &os, lua_State *l) {
+    int top = lua_gettop(l);
+    for (int i = 1; i <= top; ++i) {
+        int t = lua_type(l, i);
+        switch(t) {
+        case LUA_TSTRING:
+            os << lua_tostring(l, i);
+            break;
+        case LUA_TBOOLEAN:
+            os << (lua_toboolean(l, i) ? "true" : "false");
+            break;
+        case LUA_TNUMBER:
+            os << lua_tonumber(l, i);
+            break;
+        default:
+            os << lua_typename(l, t);
+            break;
+        }
+        os << " ";
+    }
+    return os;
+}
+
 namespace detail {
 template <>
 bool _get<bool>(lua_State *l, const int index) {
@@ -33,28 +56,33 @@ std::string _get<std::string>(lua_State *l, const int index) {
 }
 
 template <>
-int _check_get<int>(lua_State *l) {
-    return luaL_checkint(l, 1);
+int _check_get<int>(lua_State *l, const int index) {
+    return luaL_checkint(l, index);
 };
 
 template <>
-unsigned int _check_get<unsigned int>(lua_State *l) {
-    return luaL_checkunsigned(l, 1);
+unsigned int _check_get<unsigned int>(lua_State *l, const int index) {
+    return luaL_checkunsigned(l, index);
 }
 
 template <>
-float _check_get<float>(lua_State *l) {
-    return luaL_checknumber(l, 1);
+float _check_get<float>(lua_State *l, const int index) {
+    return luaL_checknumber(l, index);
 }
 
 template <>
-double _check_get<double>(lua_State *l) {
-    return luaL_checknumber(l, 1);
+double _check_get<double>(lua_State *l, const int index) {
+    return luaL_checknumber(l, index);
 }
 
 template <>
-bool _check_get<bool>(lua_State *l) {
-    return lua_toboolean(l, 1);
+bool _check_get<bool>(lua_State *l, const int index) {
+    return lua_toboolean(l, index);
+}
+
+template <>
+std::string _check_get<std::string>(lua_State *l, const int index) {
+    return luaL_checkstring(l, index);
 }
 
 void _push(lua_State *l, bool &&b) {

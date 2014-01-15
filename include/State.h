@@ -32,7 +32,8 @@ private:
 
     std::map<std::string, std::unique_ptr<BaseFun>> _funs;
 public:
-    State();
+    State() : State(false) {}
+    State(bool should_open_libs);
     State(const State &other) = delete;
     State &operator=(const State &other) = delete;
     State(State &&other);
@@ -55,62 +56,17 @@ public:
         return detail::_get<T>(_l, index);
     }
 
-private:
-    // Worker type-trait struct to Pop
-    // Popping multiple elements returns a tuple
-    template <size_t, typename... Ts> // First template argument
-                                      // denotes the sizeof(Ts...)
-    struct _pop {
-        typedef std::tuple<Ts...> type;
-
-        template <typename T>
-        static std::tuple<T> worker(const State &l, const int index) {
-            return std::make_tuple(l.Read<T>(index));
-        }
-
-        template <typename T1, typename T2, typename... Rest>
-        static std::tuple<T1, T2, Rest...> worker(const State &l,
-                                                  const int index) {
-            std::tuple<T1> head = std::make_tuple(l.Read<T1>(index));
-            return std::tuple_cat(head, worker<T2, Rest...>(l, index + 1));
-        }
-
-        static type apply(State &l) {
-            auto ret = worker<Ts...>(l, 1);
-            lua_pop(l._l, sizeof...(Ts));
-            return ret;
-        }
-    };
-
-    // Popping nothing returns void
-    template <typename... Ts>
-    struct _pop<0, Ts...> {
-        typedef void type;
-        static type apply(State &l) {}
-    };
-
-    // Popping one element returns an unboxed value
-    template <typename T>
-    struct _pop<1, T> {
-        typedef T type;
-        static type apply(State &l) {
-            T ret = l.Read<T>(-1);
-            lua_pop(l._l, 1);
-            return ret;
-        }
-    };
-
 public:
     template <typename... T>
-    typename _pop<sizeof...(T), T...>::type Pop() {
-        return _pop<sizeof...(T), T...>::apply(*this);
+    typename detail::_pop_n_impl<sizeof...(T), T...>::type Pop() {
+        return detail::_pop_n<T...>(_l);
     }
 
     // Calls a lua function with variadic return parameters and
     // function arguments
     template <typename... Ret, typename... Args>
-    typename _pop<sizeof...(Ret), Ret...>::type Call(const std::string &fun,
-                                     Args&&... args) {
+    typename detail::_pop_n_impl<sizeof...(Ret), Ret...>::type
+    Call(const std::string &fun, Args&&... args) {
         lua_getglobal(_l, fun.c_str());
         const int num_args = sizeof...(Args);
         const int num_ret = sizeof...(Ret);

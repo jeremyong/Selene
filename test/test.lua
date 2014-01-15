@@ -12,3 +12,7 @@ end
 function bar()
    return 4, true, "hi"
 end
+
+function execute()
+   return cadd(5, 6);
+end
