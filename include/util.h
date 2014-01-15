@@ -45,10 +45,40 @@ void _push(lua_State *l, float &&value);
 void _push(lua_State *l, double &&value);
 void _push(lua_State *l, std::string &&value);
 
+template <typename T>
+void _set(lua_State *l, T &&value, const int index) {
+    _push(l, std::forward<T>(value));
+    lua_replace(l, index);
+}
+
+inline void _push_n(lua_State *) {}
+
+template <typename T, typename... Rest>
+void _push_n(lua_State *l, T value, Rest... rest) {
+    _push(l, std::forward<T>(value));
+    _push_n(l, rest...);
+}
+
+template <typename... T, std::size_t... N>
+void _push_dispatcher(lua_State *l,
+                      std::tuple<T...> &&values,
+                      _indices<N...>) {
+    _push_n(l, std::get<N>(values)...);
+}
+
+template <typename... T>
+void _push(lua_State *l, std::tuple<T...> &&values) {
+    constexpr int num_values = sizeof...(T);
+    lua_settop(l, num_values);
+    _push_dispatcher(l,
+                     std::forward<std::tuple<T...>>(values),
+                     typename _indices_builder<num_values>::type());
+}
+
 // Worker type-trait struct to _pop_n
 // Popping multiple elements returns a tuple
-template <size_t, typename... Ts> // First template argument denotes
-                                  // the sizeof(Ts...)
+template <std::size_t, typename... Ts> // First template argument denotes
+                                       // the sizeof(Ts...)
 struct _pop_n_impl {
     using type =  std::tuple<Ts...>;
 
@@ -60,7 +90,7 @@ struct _pop_n_impl {
     }
 
     static type apply(lua_State *l) {
-        const std::size_t num_args = sizeof...(Ts);
+        constexpr std::size_t num_args = sizeof...(Ts);
         auto ret = worker(l, 1, typename _indices_builder<num_args>::type());
         lua_pop(l, num_args);
         return ret;

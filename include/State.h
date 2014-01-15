@@ -68,8 +68,8 @@ public:
     typename detail::_pop_n_impl<sizeof...(Ret), Ret...>::type
     Call(const std::string &fun, Args&&... args) {
         lua_getglobal(_l, fun.c_str());
-        const int num_args = sizeof...(Args);
-        const int num_ret = sizeof...(Ret);
+        constexpr int num_args = sizeof...(Args);
+        constexpr int num_ret = sizeof...(Ret);
         Push(std::forward<Args>(args)...);
         lua_call(_l, num_args, num_ret);
         return Pop<Ret...>();
@@ -77,14 +77,37 @@ public:
 
     template <typename Ret, typename... Args>
     void Register(const std::string &name, std::function<Ret(Args...)> fun) {
-        auto tmp = std::unique_ptr<BaseFun>(new Fun<Ret, Args...>{_l, name, fun});
+        auto tmp = std::unique_ptr<BaseFun>(new Fun<1, Ret, Args...>{_l, name, fun});
         _funs.insert(std::make_pair(name, std::move(tmp)));
     }
 
     template <typename Ret, typename... Args>
     void Register(const std::string &name, Ret (*fun)(Args...)) {
-        auto tmp = std::unique_ptr<BaseFun>(new Fun<Ret, Args...>{_l, name, fun});
+        auto tmp = std::unique_ptr<BaseFun>(new Fun<1, Ret, Args...>{_l, name, fun});
         _funs.insert(std::make_pair(name, std::move(tmp)));
+    }
+
+    template <typename... Ret, typename... Args>
+    void Register(const std::string &name,
+                  std::function<std::tuple<Ret...>(Args...)> fun) {
+        constexpr int num_return = sizeof...(Ret);
+        auto tmp = std::unique_ptr<BaseFun>(
+            new Fun<num_return, std::tuple<Ret...>, Args...>{_l, name, fun});
+        _funs.insert(std::make_pair(name, std::move(tmp)));
+    }
+
+    template <typename... Ret, typename... Args>
+    void Register(const std::string &name,
+                  std::tuple<Ret...> (*fun)(Args...)) {
+        constexpr int num_return = sizeof...(Ret);
+        auto tmp = std::unique_ptr<BaseFun>(
+            new Fun<num_return, std::tuple<Ret...>, Args...>{_l, name, fun});
+        _funs.insert(std::make_pair(name, std::move(tmp)));
+    }
+
+    void Unregister(const std::string &name) {
+        auto it = _funs.find(name);
+        if (it != _funs.end()) _funs.erase(it);
     }
 
     friend std::ostream &operator<<(std::ostream &os, const State &state);

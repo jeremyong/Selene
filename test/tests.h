@@ -85,3 +85,24 @@ bool test_call_functor() {
     return (answer == 42);
 
 }
+
+std::tuple<int, int> my_sum_and_difference(int x, int y) {
+    return std::make_tuple(x+y, x-y);
+}
+
+bool test_multivalue_c_fun_return() {
+    luna::State l;
+    l.Load("../test/test.lua");
+    l.Register("test_fun", &my_sum_and_difference);
+    int sum, difference;
+    std::tie(sum, difference) = l.Call<int, int>("test_fun", -2, 2);
+    return (sum == 0 && difference == -4);
+}
+
+bool test_multivalue_c_fun_from_lua() {
+    luna::State l;
+    l.Load("../test/test.lua");
+    l.Register("doozy_c", &my_sum_and_difference);
+    int answer = l.Call<int>("doozy", 5);
+    return (answer == -75);
+}

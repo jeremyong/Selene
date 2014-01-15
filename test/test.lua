@@ -16,3 +16,8 @@ end
 function execute()
    return cadd(5, 6);
 end
+
+function doozy(a)
+   x, y = doozy_c(a, 2 * a)
+   return x * y
+end
