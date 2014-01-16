@@ -64,7 +64,7 @@ public:
     Fun(lua_State *&l,
         const std::string &name,
         _fun_type fun) : _fun(fun), _name(name), _l(&l) {
-        lua_pushlightuserdata(l, (void *)this);
+        lua_pushlightuserdata(l, (void *)static_cast<BaseFun *>(this));
         lua_pushcclosure(l, &detail::_lua_dispatcher, 1);
         lua_setglobal(l, name.c_str());
     }
