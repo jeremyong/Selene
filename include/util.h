@@ -29,7 +29,7 @@ template <std::size_t N, std::size_t... Is>
 struct _indices_builder : _indices_builder<N-1, N-1, Is...> {};
 
 template <std::size_t... Is>
-struct _indices_builder<0, Is...> : _indices<Is...> {
+struct _indices_builder<0, Is...> {
     using type = _indices<Is...>;
 };
 

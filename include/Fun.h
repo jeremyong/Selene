@@ -20,22 +20,29 @@ Ret _lift(std::function<Ret(Args...)> fun,
     return fun(std::get<N>(args)...);
 }
 
+template <typename Ret, typename... Args>
+Ret _lift(std::function<Ret(Args...)> fun,
+          std::tuple<Args...> args) {
+    return _lift(fun, args, typename _indices_builder<sizeof...(Args)>::type());
+}
+
+
 template <typename... T, std::size_t... N>
-std::tuple<T...> _get_args_impl(lua_State *l, _indices<N...>) {
+std::tuple<T...> _get_args(lua_State *l, _indices<N...>) {
     return std::make_tuple(_check_get<T>(l, N + 1)...);
 }
 
 template <typename... T>
 std::tuple<T...> _get_args(lua_State *l) {
     constexpr std::size_t num_args = sizeof...(T);
-    return _get_args_impl<T...>(l, typename _indices_builder<num_args>::type());
+    return _get_args<T...>(l, typename _indices_builder<num_args>::type());
 }
 
 int _lua_dispatcher(lua_State *l);
 }
 
 struct BaseFun {
-    virtual ~BaseFun() {};
+    virtual ~BaseFun() {}
     virtual int Apply(lua_State *l) = 0;
 };
 
@@ -71,7 +78,7 @@ public:
     }
 
     ~Fun() {
-        if (_l != nullptr && (*_l) != nullptr) {
+        if (_l != nullptr && *_l != nullptr) {
             lua_pushnil(*_l);
             lua_setglobal(*_l, _name.c_str());
         }
@@ -82,8 +89,7 @@ public:
     // this argument is necessary.
     int Apply(lua_State *l) {
         std::tuple<Args...> args = detail::_get_args<Args...>(l);
-        _return_type value = _lift(_fun, args,
-                                   typename detail::_indices_builder<sizeof...(Args)>::type());
+        _return_type value = detail::_lift(_fun, args);
         detail::_push(l, std::forward<_return_type>(value));
         return N;
     }

@@ -66,8 +66,22 @@ bool test_call_normal_c_fun() {
     luna::State l;
     l.Load("../test/test.lua");
     l.Register("cadd", &my_add);
-    int answer = l.Call<int>("cadd", 4, 20);
+    const int answer = l.Call<int>("cadd", 4, 20);
     return (answer == 24);
+}
+
+bool test_call_normal_c_fun_many_times() {
+    // Ensures there isn't any strange overflow problem or lingering
+    // state
+    luna::State l;
+    l.Load("../test/test.lua");
+    l.Register("cadd", &my_add);
+    bool result = true;
+    for (int i = 0; i < 25; ++i) {
+        const int answer = l.Call<int>("cadd", 4, 20);
+        result = result && (answer == 24);
+    }
+    return result;
 }
 
 bool test_call_functor() {

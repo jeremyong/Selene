@@ -14,9 +14,9 @@ cmake ..
 make
 ```
 
-This will create an `libluna.so` library that your application can
+This will create an `libLuna.so` library that your application can
 link against. Remember to add the `include` directory as well. In
-addition, this will build all any tests in the `test` directory.
+addition, this will build all tests in the `test` directory.
 
 ## Usage
 
@@ -48,31 +48,31 @@ int my_multiply(int a, int b) {
 }
 
 int main() {
-    luna::State l;
-    l.Load("../test/test.lua");
+    luna::State state;
+    state.Load("../test/test.lua");
 
     // Call function with no arguments or returns
-    l.Call("foo");
+    state.Call("foo");
 
     // Call function with two arguments that returns an int
-    int result = l.Call<int>("add", 5, 2);
+    int result = state.Call<int>("add", 5, 2);
     assert(result == 7);
 
     // Multiple return types
     int sum, difference;
-    std::tie(sum, difference) = l.Call<int, int>("sum_and_difference", 3, 1);
+    std::tie(sum, difference) = state.Call<int, int>("sum_and_difference", 3, 1);
     assert(sum == 4 && difference == 2);
 
     // Heterogeneous return types
     int x;
     bool y;
     std::string z;
-    std::tie(x, y, z) = l.Call<int, bool, std::string>("bar");
+    std::tie(x, y, z) = state.Call<int, bool, std::string>("bar");
     assert(x == 4 && y == true && z == "hi");
 
     // Call C function from Lua
-    l.Register("c_multiply", &my_multiply);
-    result = l.Call<int>("my_multiply", 5, 2);
+    state.Register("c_multiply", &my_multiply);
+    result = state.Call<int>("my_multiply", 5, 2);
     assert(result == 10);
 
     std::cout << "Call tests finished successfully." << std::endl;
@@ -82,14 +82,16 @@ int main() {
 You can also register functor objects, lambdas, and any fully
 qualified `std::function`. See `test/tests.h` for details.
 
-You can read more about this project in the blogpost that describes it [here](http://www.jeremyong.com/blog/2014/01/10/interfacing-lua-with-templates-in-c-plus-plus-11/).
+You can read more about this project in the blogpost that describes it
+[here](http://www.jeremyong.com/blog/2014/01/10/interfacing-lua-with-templates-in-c-plus-plus-11/).
+and in the second part
+[here](http://www.jeremyong.com/blog/2014/01/14/interfacing-lua-with-templates-in-c-plus-plus-11-continued).
 
 ## Roadmap
 
 The following features are planned, although nothing is guaranteed:
 
 - Object oriented type aware table interface with Lua
-- Clean way to expose C++ function to Lua
 - Smarter Lua module loading
 - Hooks for module reloading
 - Handling continuations
