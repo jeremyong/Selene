@@ -20,7 +20,7 @@ addition, this will build all tests in the `test` directory.
 
 ## Usage
 
-Currently, these bindings only support calling lua function from C++.
+Currently, these bindings support calling lua function from C++ and vice versa.
 
 ```lua
 function foo()
