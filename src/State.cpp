@@ -1,6 +1,6 @@
 #include "State.h"
 
-namespace luna {
+namespace sel {
 State::State(bool should_open_libs) : _l(nullptr) {
     _l = luaL_newstate();
     if (_l == nullptr) throw 0;
@@ -21,7 +21,7 @@ bool State::Load(const std::string &file) {
 }
 
 std::ostream &operator<<(std::ostream &os, const State &state) {
-    os << "luna::State - " << state._l;
+    os << "sel::State - " << state._l;
     return os;
 }
 }

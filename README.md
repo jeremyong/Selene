@@ -1,6 +1,6 @@
-# Luna
+# Selene
 
-Simple C++11 friendly bindings to Lua
+Simple C++11 friendly bindings to Lua.
 
 ## Building
 
@@ -14,7 +14,7 @@ cmake ..
 make
 ```
 
-This will create an `libLuna.so` library that your application can
+This will create an `libSelene.so` library that your application can
 link against. Remember to add the `include` directory as well. In
 addition, this will build all tests in the `test` directory.
 
@@ -40,7 +40,7 @@ end
 ```
 
 ```c++
-#include "luna.h"
+#include <selene.h>
 #include <cassert>
 
 int my_multiply(int a, int b) {
@@ -48,7 +48,7 @@ int my_multiply(int a, int b) {
 }
 
 int main() {
-    luna::State state;
+    sel::State state;
     state.Load("../test/test.lua");
 
     // Call function with no arguments or returns

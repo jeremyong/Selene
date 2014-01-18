@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.12)
-project(Luna)
+project(Selene)
 
 if(APPLE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -stdlib=libc++ -g -Wall")
@@ -13,14 +13,14 @@ file(GLOB sources RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
 file(GLOB headers RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
      include/*.h)
 
-add_library(Luna SHARED ${headers} ${sources})
+add_library(Selene SHARED ${headers} ${sources})
 
 if(APPLE)
     find_library(lua lua)
-    target_link_libraries(Luna ${lua})
+    target_link_libraries(Selene ${lua})
 elseif(UNIX)
-    target_link_libraries(Luna lua)
+    target_link_libraries(Selene lua)
 endif(APPLE)
 
 add_executable(test ${CMAKE_CURRENT_SOURCE_DIR}/test/Test.cpp)
-target_link_libraries(test Luna)
+target_link_libraries(test Selene)

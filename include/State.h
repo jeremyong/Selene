@@ -20,7 +20,7 @@ T singular_t();
 template <typename... T>
 std::tuple<T...> tuple_t();
 
-namespace luna {
+namespace sel {
 class State {
 private:
     lua_State *_l;

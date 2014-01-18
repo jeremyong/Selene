@@ -1,4 +1,4 @@
-#include "luna.h"
+#include <selene.h>
 #include <cassert>
 #include <string>
 
@@ -7,78 +7,78 @@ int my_add(int a, int b) {
 }
 
 bool test_function_no_args() {
-    luna::State l;
-    l.Load("../test/test.lua");
-    l.Call("foo");
+    sel::State state;
+    state.Load("../test/test.lua");
+    state.Call("foo");
     return true;
 }
 
 bool test_add() {
-    luna::State l;
-    l.Load("../test/test.lua");
-    return (l.Call<int>("add", 5, 2) == 7);
+    sel::State state;
+    state.Load("../test/test.lua");
+    return (state.Call<int>("add", 5, 2) == 7);
 }
 
 bool test_multi_return() {
-    luna::State l;
-    l.Load("../test/test.lua");
+    sel::State state;
+    state.Load("../test/test.lua");
     int sum, difference;
-    std::tie(sum, difference) = l.Call<int, int>("sum_and_difference", 3, 1);
+    std::tie(sum, difference) = state.Call<int, int>("sum_and_difference", 3, 1);
     return (sum == 4 && difference == 2);
 }
 
 bool test_heterogeneous_return() {
-    luna::State l;
-    l.Load("../test/test.lua");
+    sel::State state;
+    state.Load("../test/test.lua");
     int x;
     bool y;
     std::string z;
-    std::tie(x, y, z) = l.Call<int, bool, std::string>("bar");
+    std::tie(x, y, z) = state.Call<int, bool, std::string>("bar");
     return (x == 4 && y == true && z == "hi");
 }
 
 bool test_call_c_function() {
-    luna::State l;
-    l.Load("../test/test.lua");
-    l.Register("cadd", std::function<int(int, int)>(my_add));
-    int answer = l.Call<int>("cadd", 3, 6);
+    sel::State state;
+    state.Load("../test/test.lua");
+    state.Register("cadd", std::function<int(int, int)>(my_add));
+    int answer = state.Call<int>("cadd", 3, 6);
     return (answer == 9);
 }
 
 bool test_call_c_fun_from_lua() {
-    luna::State l;
-    l.Load("../test/test.lua");
-    l.Register("cadd", std::function<int(int, int)>(my_add));
-    int answer = l.Call<int>("execute");
+    sel::State state;
+    state.Load("../test/test.lua");
+    state.Register("cadd", std::function<int(int, int)>(my_add));
+    int answer = state.Call<int>("execute");
     return (answer == 11);
 }
 
 bool test_call_lambda() {
-    luna::State l;
-    l.Load("../test/test.lua");
+    sel::State state;
+    state.Load("../test/test.lua");
     std::function<int(int, int)> mult = [](int x, int y){ return x * y; };
-    l.Register("cmultiply", mult);
-    int answer = l.Call<int>("cmultiply", 5, 6);
+    state.Register("cmultiply", mult);
+    int answer = state.Call<int>("cmultiply", 5, 6);
     return (answer == 30);
 }
 
 bool test_call_normal_c_fun() {
-    luna::State l;
-    l.Load("../test/test.lua");
-    l.Register("cadd", &my_add);
-    const int answer = l.Call<int>("cadd", 4, 20);
+    sel::State state;
+    state.Load("../test/test.lua");
+    state.Register("cadd", &my_add);
+    const int answer = state.Call<int>("cadd", 4, 20);
     return (answer == 24);
 }
 
 bool test_call_normal_c_fun_many_times() {
     // Ensures there isn't any strange overflow problem or lingering
     // state
-    luna::State l;
-    l.Load("../test/test.lua");
-    l.Register("cadd", &my_add);
+    sel::State state;
+    state.Load("../test/test.lua");
+    state.Register("cadd", &my_add);
     bool result = true;
     for (int i = 0; i < 25; ++i) {
-        const int answer = l.Call<int>("cadd", 4, 20);
+        const int answer = state.Call<int>("cadd", 4, 20);
         result = result && (answer == 24);
     }
     return result;
@@ -92,10 +92,10 @@ bool test_call_functor() {
         }
     };
     the_answer functor;
-    luna::State l;
-    l.Load("../test/test.lua");
-    l.Register("c_the_answer", std::function<int()>(functor));
-    int answer = l.Call<int>("c_the_answer");
+    sel::State state;
+    state.Load("../test/test.lua");
+    state.Register("c_the_answer", std::function<int()>(functor));
+    int answer = state.Call<int>("c_the_answer");
     return (answer == 42);
 
 }
@@ -105,27 +105,27 @@ std::tuple<int, int> my_sum_and_difference(int x, int y) {
 }
 
 bool test_multivalue_c_fun_return() {
-    luna::State l;
-    l.Load("../test/test.lua");
-    l.Register("test_fun", &my_sum_and_difference);
+    sel::State state;
+    state.Load("../test/test.lua");
+    state.Register("test_fun", &my_sum_and_difference);
     int sum, difference;
-    std::tie(sum, difference) = l.Call<int, int>("test_fun", -2, 2);
+    std::tie(sum, difference) = state.Call<int, int>("test_fun", -2, 2);
     return (sum == 0 && difference == -4);
 }
 
 bool test_multivalue_c_fun_from_lua() {
-    luna::State l;
-    l.Load("../test/test.lua");
-    l.Register("doozy_c", &my_sum_and_difference);
-    int answer = l.Call<int>("doozy", 5);
+    sel::State state;
+    state.Load("../test/test.lua");
+    state.Register("doozy_c", &my_sum_and_difference);
+    int answer = state.Call<int>("doozy", 5);
     return (answer == -75);
 }
 
 bool test_c_fun_destructor() {
-    luna::State l;
-    l.Load("../test/test.lua");
-    l.Register("doozy_c", &my_sum_and_difference);
-    l.Call<int>("doozy", 5);
-    l.Unregister("doozy_c");
-    return l.CheckNil("doozy_c");
+    sel::State state;
+    state.Load("../test/test.lua");
+    state.Register("doozy_c", &my_sum_and_difference);
+    state.Call<int>("doozy", 5);
+    state.Unregister("doozy_c");
+    return state.CheckNil("doozy_c");
 }

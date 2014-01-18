@@ -1,6 +1,6 @@
 #include "util.h"
 
-namespace luna {
+namespace sel {
 std::ostream &operator<<(std::ostream &os, lua_State *l) {
     int top = lua_gettop(l);
     for (int i = 1; i <= top; ++i) {

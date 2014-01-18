@@ -11,7 +11,7 @@ extern "C" {
 #include "lualib.h"
 }
 
-namespace luna {
+namespace sel {
 namespace detail {
 template <typename Ret, typename... Args, std::size_t... N>
 Ret _lift(std::function<Ret(Args...)> fun,

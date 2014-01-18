@@ -9,7 +9,7 @@ extern "C" {
 #include "lualib.h"
 }
 
-namespace luna {
+namespace sel {
 std::ostream &operator<<(std::ostream &os, lua_State *l);
 
 inline bool check(lua_State *L, int code) {
