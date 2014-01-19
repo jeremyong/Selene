@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include "LuaGlobal.h"
 #include <string>
 #include <tuple>
 #include "util.h"
@@ -52,8 +53,7 @@ private:
     using _return_type = Ret;
     using _fun_type = std::function<Ret(Args...)>;
     _fun_type _fun;
-    std::string _name;
-    lua_State **_l; // used for destruction
+    LuaGlobal _global;
 
 public:
     Fun(lua_State *&l,
@@ -63,27 +63,11 @@ public:
 
     Fun(lua_State *&l,
         const std::string &name,
-        _fun_type fun) : _fun(fun), _name(name), _l(&l) {
+        _fun_type fun) : _fun(fun), _global(l, name) {
         lua_pushlightuserdata(l, (void *)static_cast<BaseFun *>(this));
         lua_pushcclosure(l, &detail::_lua_dispatcher, 1);
-        lua_setglobal(l, name.c_str());
+        _global.Register();
     }
-
-    Fun(const Fun &other) = delete;
-    Fun(Fun &&other)
-        : _fun(other._fun),
-          _name(other._name),
-          _l(other._l) {
-        *other._l = nullptr;
-    }
-
-    ~Fun() {
-        if (_l != nullptr && *_l != nullptr) {
-            lua_pushnil(*_l);
-            lua_setglobal(*_l, _name.c_str());
-        }
-    }
-
 
     // Each application of a function receives a new Lua context so
     // this argument is necessary.
