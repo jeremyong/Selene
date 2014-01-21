@@ -1,3 +1,9 @@
+```
+  __|        |
+\__ \   -_)  |   -_)    \    -_)
+____/ \___| _| \___| _| _| \___|
+```
+
 # Selene
 
 Simple C++11 friendly bindings to Lua.
@@ -94,5 +100,3 @@ The following features are planned, although nothing is guaranteed:
 - Object oriented type aware table interface with Lua
 - Smarter Lua module loading
 - Hooks for module reloading
-- Handling continuations
-- Standardize state management
