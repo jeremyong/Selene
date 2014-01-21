@@ -13,20 +13,20 @@ namespace sel {
  * context in which it was registered still exists before doing so.
  * Prevents copying but permits moving.
  */
-class LuaGlobal {
+class LuaName {
 private:
     lua_State **_l;
     std::string _name;
 
 public:
-    LuaGlobal(lua_State *&l, const std::string &name) : _l(&l), _name(name) {}
-    LuaGlobal(const LuaGlobal &other) = delete;
-    LuaGlobal(LuaGlobal &&other)
+    LuaName(lua_State *&l, const std::string &name) : _l(&l), _name(name) {}
+    LuaName(const LuaName &other) = delete;
+    LuaName(LuaName &&other)
         : _l(other._l),
           _name(other._name) {
         *other._l = nullptr;
     }
-    ~LuaGlobal() {
+    ~LuaName() {
         if (_l != nullptr && *_l != nullptr) {
             lua_pushnil(*_l);
             lua_setglobal(*_l, _name.c_str());
@@ -38,5 +38,8 @@ public:
             lua_setglobal(*_l, _name.c_str());
         }
     }
+
+    std::string GetName() const {return _name;}
+    lua_State *GetState() {return *_l;}
 };
 }

@@ -1,5 +1,6 @@
 #include <algorithm>
-#include "tests.h"
+#include "interop_tests.h"
+#include "class_tests.h"
 #include <vector>
 
 // The most ghetto unit testing framework ever!
@@ -10,13 +11,16 @@ static std::vector<bool(*)()> tests = {
     test_heterogeneous_return,
     test_call_c_function,
     test_call_c_fun_from_lua,
+    test_no_return,
     test_call_lambda,
     test_call_normal_c_fun,
     test_call_normal_c_fun_many_times,
     test_call_functor,
     test_multivalue_c_fun_return,
     test_multivalue_c_fun_from_lua,
-    test_c_fun_destructor
+    test_c_fun_destructor,
+    test_register_class,
+    test_mutate_instance
 };
 
 

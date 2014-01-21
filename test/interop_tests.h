@@ -1,9 +1,13 @@
+#pragma once
+
 #include <selene.h>
-#include <cassert>
 #include <string>
 
 int my_add(int a, int b) {
     return a + b;
+}
+
+void no_return() {
 }
 
 bool test_function_no_args() {
@@ -51,6 +55,13 @@ bool test_call_c_fun_from_lua() {
     state.Register("cadd", std::function<int(int, int)>(my_add));
     int answer = state.Call<int>("execute");
     return (answer == 11);
+}
+
+bool test_no_return() {
+    sel::State state;
+    state.Register("no_return", &no_return);
+    state.Call("no_return");
+    return true;
 }
 
 bool test_call_lambda() {

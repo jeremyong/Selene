@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Class.h"
 #include "Fun.h"
 #include <iostream>
 #include <map>
@@ -31,6 +32,7 @@ private:
     }
 
     std::map<std::string, std::unique_ptr<BaseFun>> _funs;
+    std::map<std::string, std::unique_ptr<BaseClass>> _objs;
 public:
     State() : State(false) {}
     State(bool should_open_libs);
@@ -82,39 +84,54 @@ public:
         return Pop<Ret...>();
     }
 
+    // Calls a lua function with variadic return parameters and
+    // function arguments
+    template <typename... Ret, typename... Args>
+    typename detail::_pop_n_impl<sizeof...(Ret), Ret...>::type
+    CallField(const std::string &table,
+              const std::string &fun,
+              Args&&... args) {
+        lua_getglobal(_l, table.c_str());
+        lua_getfield(_l, -1, fun.c_str());
+        constexpr int num_args = sizeof...(Args);
+        constexpr int num_ret = sizeof...(Ret);
+        Push(std::forward<Args>(args)...);
+        lua_call(_l, num_args, num_ret);
+        return Pop<Ret...>();
+    }
+
     template <typename Ret, typename... Args>
     void Register(const std::string &name, std::function<Ret(Args...)> fun) {
-        auto tmp = std::unique_ptr<BaseFun>(new Fun<1, Ret, Args...>{_l, name, fun});
+        Unregister(name);
+        constexpr int arity = detail::_arity<Ret>::value;
+        auto tmp = std::unique_ptr<BaseFun>(
+            new Fun<arity, Ret, Args...>{_l, name, fun});
         _funs.insert(std::make_pair(name, std::move(tmp)));
     }
 
     template <typename Ret, typename... Args>
     void Register(const std::string &name, Ret (*fun)(Args...)) {
-        auto tmp = std::unique_ptr<BaseFun>(new Fun<1, Ret, Args...>{_l, name, fun});
+        Unregister(name);
+        constexpr int arity = detail::_arity<Ret>::value;
+        auto tmp = std::unique_ptr<BaseFun>(
+            new Fun<arity, Ret, Args...>{_l, name, fun});
         _funs.insert(std::make_pair(name, std::move(tmp)));
     }
 
-    template <typename... Ret, typename... Args>
-    void Register(const std::string &name,
-                  std::function<std::tuple<Ret...>(Args...)> fun) {
-        constexpr int num_return = sizeof...(Ret);
-        auto tmp = std::unique_ptr<BaseFun>(
-            new Fun<num_return, std::tuple<Ret...>, Args...>{_l, name, fun});
-        _funs.insert(std::make_pair(name, std::move(tmp)));
-    }
-
-    template <typename... Ret, typename... Args>
-    void Register(const std::string &name,
-                  std::tuple<Ret...> (*fun)(Args...)) {
-        constexpr int num_return = sizeof...(Ret);
-        auto tmp = std::unique_ptr<BaseFun>(
-            new Fun<num_return, std::tuple<Ret...>, Args...>{_l, name, fun});
-        _funs.insert(std::make_pair(name, std::move(tmp)));
+    template <typename T, typename... Funs>
+    void Register(const std::string &name, T &t,
+                  std::pair<const char *, Funs>... funs) {
+        Unregister(name);
+        auto tmp = std::unique_ptr<BaseClass>(
+            new Class<T, Funs...>{_l, &t, name, funs...});
+        _objs.insert(std::make_pair(name, std::move(tmp)));
     }
 
     void Unregister(const std::string &name) {
-        auto it = _funs.find(name);
-        if (it != _funs.end()) _funs.erase(it);
+        auto it1 = _funs.find(name);
+        if (it1 != _funs.end()) _funs.erase(it1);
+        auto it2 = _objs.find(name);
+        if (it2 != _objs.end()) _objs.erase(it2);
     }
 
     friend std::ostream &operator<<(std::ostream &os, const State &state);

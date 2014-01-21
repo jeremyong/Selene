@@ -22,6 +22,22 @@ inline bool check(lua_State *L, int code) {
 }
 
 namespace detail {
+
+template <typename T>
+struct _arity {
+    static constexpr int value = 1;
+};
+
+template <typename... Vs>
+struct _arity<std::tuple<Vs...>> {
+    static constexpr int value = sizeof...(Vs);
+};
+
+template <>
+struct _arity<void> {
+    static constexpr int value = 0;
+};
+
 template <std::size_t... Is>
 struct _indices {};
 
