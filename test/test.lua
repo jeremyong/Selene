@@ -21,3 +21,8 @@ function doozy(a)
    x, y = doozy_c(a, 2 * a)
    return x * y
 end
+
+mytable = {}
+function mytable.foo()
+   return 4
+end

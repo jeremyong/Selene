@@ -9,6 +9,7 @@ static std::vector<bool(*)()> tests = {
     test_add,
     test_multi_return,
     test_heterogeneous_return,
+    test_call_field,
     test_call_c_function,
     test_call_c_fun_from_lua,
     test_no_return,
@@ -20,7 +21,8 @@ static std::vector<bool(*)()> tests = {
     test_multivalue_c_fun_from_lua,
     test_c_fun_destructor,
     test_register_class,
-    test_mutate_instance
+    test_mutate_instance,
+    test_multiple_methods
 };
 
 

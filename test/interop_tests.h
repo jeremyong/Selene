@@ -38,7 +38,14 @@ bool test_heterogeneous_return() {
     bool y;
     std::string z;
     std::tie(x, y, z) = state.Call<int, bool, std::string>("bar");
-    return (x == 4 && y == true && z == "hi");
+    return x == 4 && y == true && z == "hi";
+}
+
+bool test_call_field() {
+    sel::State state;
+    state.Load("../test/test.lua");
+    int answer = state.CallField<int>("mytable", "foo");
+    return answer == 4;
 }
 
 bool test_call_c_function() {
@@ -46,7 +53,7 @@ bool test_call_c_function() {
     state.Load("../test/test.lua");
     state.Register("cadd", std::function<int(int, int)>(my_add));
     int answer = state.Call<int>("cadd", 3, 6);
-    return (answer == 9);
+    return answer == 9;
 }
 
 bool test_call_c_fun_from_lua() {
@@ -54,7 +61,7 @@ bool test_call_c_fun_from_lua() {
     state.Load("../test/test.lua");
     state.Register("cadd", std::function<int(int, int)>(my_add));
     int answer = state.Call<int>("execute");
-    return (answer == 11);
+    return answer == 11;
 }
 
 bool test_no_return() {
@@ -70,7 +77,7 @@ bool test_call_lambda() {
     std::function<int(int, int)> mult = [](int x, int y){ return x * y; };
     state.Register("cmultiply", mult);
     int answer = state.Call<int>("cmultiply", 5, 6);
-    return (answer == 30);
+    return answer == 30;
 }
 
 bool test_call_normal_c_fun() {
@@ -78,7 +85,7 @@ bool test_call_normal_c_fun() {
     state.Load("../test/test.lua");
     state.Register("cadd", &my_add);
     const int answer = state.Call<int>("cadd", 4, 20);
-    return (answer == 24);
+    return answer == 24;
 }
 
 bool test_call_normal_c_fun_many_times() {
@@ -107,7 +114,7 @@ bool test_call_functor() {
     state.Load("../test/test.lua");
     state.Register("c_the_answer", std::function<int()>(functor));
     int answer = state.Call<int>("c_the_answer");
-    return (answer == 42);
+    return answer == 42;
 
 }
 
@@ -121,7 +128,7 @@ bool test_multivalue_c_fun_return() {
     state.Register("test_fun", &my_sum_and_difference);
     int sum, difference;
     std::tie(sum, difference) = state.Call<int, int>("test_fun", -2, 2);
-    return (sum == 0 && difference == -4);
+    return sum == 0 && difference == -4;
 }
 
 bool test_multivalue_c_fun_from_lua() {
@@ -129,7 +136,7 @@ bool test_multivalue_c_fun_from_lua() {
     state.Load("../test/test.lua");
     state.Register("doozy_c", &my_sum_and_difference);
     int answer = state.Call<int>("doozy", 5);
-    return (answer == -75);
+    return answer == -75;
 }
 
 bool test_c_fun_destructor() {
