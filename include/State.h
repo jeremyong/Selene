@@ -120,7 +120,7 @@ public:
 
     template <typename T, typename... Funs>
     void Register(const std::string &name, T &t,
-                  std::pair<const char *, Funs>... funs) {
+                  Funs... funs) {
         Unregister(name);
         auto tmp = std::unique_ptr<BaseClass>(
             new Class<T, Funs...>{_l, &t, name, funs...});

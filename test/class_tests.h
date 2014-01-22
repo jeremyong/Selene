@@ -18,7 +18,7 @@ bool test_register_class() {
     sel::State state;
     state.Register("foo_instance",
                    foo_instance,
-                   std::make_pair("double_add", &Foo::DoubleAdd));
+                   "double_add", &Foo::DoubleAdd);
     const int answer = state.CallField<int>("foo_instance", "double_add", 3);
     return (answer == 8);
 }
@@ -28,7 +28,7 @@ bool test_mutate_instance() {
     sel::State state;
     state.Register("foo_instance",
                    foo_instance,
-                   std::make_pair("set_x", &Foo::SetX));
+                   "set_x", &Foo::SetX);
     state.CallField("foo_instance", "set_x", 4);
     return (foo_instance.x == 4);
 }
@@ -38,8 +38,8 @@ bool test_multiple_methods() {
     sel::State state;
     state.Register("foo_instance",
                    foo_instance,
-                   std::make_pair("double_add", &Foo::DoubleAdd),
-                   std::make_pair("set_x", &Foo::SetX));
+                   "double_add", &Foo::DoubleAdd,
+                   "set_x", &Foo::SetX);
     state.CallField("foo_instance", "set_x", 4);
     const int answer = state.CallField<int>("foo_instance", "double_add", 3);
     return (answer == 14);
@@ -50,8 +50,8 @@ bool test_unregister_instance() {
     sel::State state;
     state.Register("foo_instance",
                    foo_instance,
-                   std::make_pair("double_add", &Foo::DoubleAdd),
-                   std::make_pair("set_x", &Foo::SetX));
+                   "double_add", &Foo::DoubleAdd,
+                   "set_x", &Foo::SetX);
     bool exists = !state.CheckNil("foo_instance");
     state.Unregister("foo_instance");
     return exists && state.CheckNil("foo_instance");

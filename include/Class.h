@@ -7,7 +7,6 @@
 #include "State.h"
 #include <string>
 #include "util.h"
-#include <utility>
 #include <vector>
 
 namespace sel {
@@ -38,14 +37,15 @@ private:
 
     template <typename F, typename... Fs>
     void _register_funs(lua_State *state, T *t,
-                        std::pair<const char *, F> fun,
-                        std::pair<const char *, Fs>... funs) {
-        _register_fun(state, t, fun.first, fun.second);
+                        const char *name,
+                        F fun,
+                        Fs... funs) {
+        _register_fun(state, t, name, fun);
         _register_funs(state, t, funs...);
     }
 public:
     Class(lua_State *&state, T *t, const std::string &name,
-          std::pair<const char *, Funs>... funs)
+          Funs... funs)
         : _name(state, name) {
         lua_createtable(state, 0, sizeof...(Funs));
         _register_funs(state, t, funs...);

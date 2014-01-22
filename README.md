@@ -126,10 +126,11 @@ sel::State state;
 Foo foo(2);
 
 // Binds the C++ instance foo to a table also called foo in Lua along
-// with two methods bound to fields of that table
+// with two methods bound to fields of that table.
+// The user is not required to bind all methods
 state.Register("foo", foo,
-               std::make_pair("double_add", &Foo::DoubleAdd),
-               std::make_pair("set_x", &Foo::SetX));
+               "double_add", &Foo::DoubleAdd,
+               "set_x", &Foo::SetX);
 
 state.CallField("foo", "set_x", 4);
 assert(foo.x == 4);
