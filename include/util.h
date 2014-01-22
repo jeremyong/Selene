@@ -57,8 +57,7 @@ inline void _push(lua_State *l) {} // Necessary in the case no arguments are pas
 void _push(lua_State *l, bool &&value);
 void _push(lua_State *l, int &&value);
 void _push(lua_State *l, unsigned int &&value);
-void _push(lua_State *l, float &&value);
-void _push(lua_State *l, double &&value);
+void _push(lua_State *l, lua_Number &&value);
 void _push(lua_State *l, std::string &&value);
 
 template <typename T>

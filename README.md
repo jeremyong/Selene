@@ -78,6 +78,8 @@ state.Load("/path/to/test.lua");
 state.Call("foo");
 
 // Call function with two arguments that returns an int
+// The type parameter can be one of int, lua_Number, std::string,
+// bool, or unsigned int
 int result = state.Call<int>("add", 5, 2);
 assert(result == 7);
 

@@ -41,12 +41,7 @@ unsigned int _get<unsigned int>(lua_State *l, const int index) {
 }
 
 template <>
-float _get<float>(lua_State *l, const int index) {
-    return lua_tonumber(l, index);
-}
-
-template <>
-double _get<double>(lua_State *l, const int index) {
+lua_Number _get<lua_Number>(lua_State *l, const int index) {
     return lua_tonumber(l, index);
 }
 
@@ -68,12 +63,7 @@ unsigned int _check_get<unsigned int>(lua_State *l, const int index) {
 }
 
 template <>
-float _check_get<float>(lua_State *l, const int index) {
-    return luaL_checknumber(l, index);
-}
-
-template <>
-double _check_get<double>(lua_State *l, const int index) {
+lua_Number _check_get<lua_Number>(lua_State *l, const int index) {
     return luaL_checknumber(l, index);
 }
 
@@ -101,12 +91,8 @@ void _push(lua_State *l, unsigned int &&u) {
     lua_pushunsigned(l, u);
 }
 
-void _push(lua_State *l, float &&f) {
+void _push(lua_State *l, lua_Number &&f) {
     lua_pushnumber(l, f);
-}
-
-void _push(lua_State *l, double &&d) {
-    lua_pushnumber(l, d);
 }
 
 void _push(lua_State *l, std::string &&s) {
