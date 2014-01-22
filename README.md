@@ -22,7 +22,13 @@ make
 
 This will create an `libSelene.so` library that your application can
 link against. Remember to add the `include` directory as well. In
-addition, this will build all tests in the `test` directory.
+addition, this will build all tests in the `test` directory. If you
+wish to build a static library, you can do so by supply an option to
+cmake in the above steps like so:
+
+```
+cmake -DBUILD_SHARED_LIBS=off ..
+```
 
 ## Usage
 

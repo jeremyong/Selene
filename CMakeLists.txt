@@ -9,13 +9,15 @@ elseif(WIN32)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -g -Wall")
 endif(APPLE)
 
+option(BUILD_SHARED_LIBS "Build shared libraries." ON)
+
 include_directories(include)
 file(GLOB sources RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
      src/*.cpp)
 file(GLOB headers RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
      include/*.h)
 
-add_library(Selene SHARED ${headers} ${sources})
+add_library(Selene ${headers} ${sources})
 
 if(APPLE)
     find_library(lua lua)
