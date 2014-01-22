@@ -26,3 +26,7 @@ mytable = {}
 function mytable.foo()
    return 4
 end
+
+function embedded_nulls()
+   return "\0h\0i"
+end

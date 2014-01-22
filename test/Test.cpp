@@ -20,6 +20,7 @@ static std::vector<bool(*)()> tests = {
     test_multivalue_c_fun_return,
     test_multivalue_c_fun_from_lua,
     test_c_fun_destructor,
+    test_embedded_nulls,
     test_register_class,
     test_mutate_instance,
     test_multiple_methods,

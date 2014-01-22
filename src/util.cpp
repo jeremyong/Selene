@@ -52,7 +52,9 @@ double _get<double>(lua_State *l, const int index) {
 
 template <>
 std::string _get<std::string>(lua_State *l, const int index) {
-    return lua_tostring(l, index);
+    size_t size;
+    const char *buff = lua_tolstring(l, index, &size);
+    return std::string{buff, size};
 }
 
 template <>
@@ -82,7 +84,9 @@ bool _check_get<bool>(lua_State *l, const int index) {
 
 template <>
 std::string _check_get<std::string>(lua_State *l, const int index) {
-    return luaL_checkstring(l, index);
+    size_t size;
+    const char *buff = luaL_checklstring(l, index, &size);
+    return std::string{buff, size};
 }
 
 void _push(lua_State *l, bool &&b) {

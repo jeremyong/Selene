@@ -147,3 +147,10 @@ bool test_c_fun_destructor() {
     state.Unregister("doozy_c");
     return state.CheckNil("doozy_c");
 }
+
+bool test_embedded_nulls() {
+    sel::State state;
+    state.Load("../test/test.lua");
+    std::string result = state.Call<std::string>("embedded_nulls");
+    return result.size() == 4;
+}
