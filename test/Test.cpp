@@ -22,7 +22,8 @@ static std::vector<bool(*)()> tests = {
     test_c_fun_destructor,
     test_register_class,
     test_mutate_instance,
-    test_multiple_methods
+    test_multiple_methods,
+    test_unregister_instance
 };
 
 

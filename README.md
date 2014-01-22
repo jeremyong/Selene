@@ -6,6 +6,8 @@ ____/ \___| _| \___| _| _| \___|
 
 Simple C++11 friendly bindings to Lua.
 
+![Lua logo](http://www.lua.org/images/lua-logo.gif)
+
 ## Building
 
 The project requires Cmake > v2.8.11 although an older Cmake is likely
@@ -104,6 +106,9 @@ assert(result == 10);
 You can also register functor objects, lambdas, and any fully
 qualified `std::function`. See `test/interop_tests.h` for details.
 
+If we no longer want a function to be accessible, we can unregister it
+with `state.Unregister("c_multiply")` for example.
+
 ### Registering Object Instances
 
 ```c++
@@ -131,6 +136,9 @@ assert(foo.x == 4);
 
 int result = state.CallField("foo", "double_add", 3);
 assert(result == 14);
+
+// If foo goes out of scope, we need to unregister it
+state.Unregister("foo");
 ```
 
 In the above example, the functions `foo.double_add` and `foo.set_x`
