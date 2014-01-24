@@ -1,6 +1,7 @@
 #include <algorithm>
-#include "interop_tests.h"
 #include "class_tests.h"
+#include "interop_tests.h"
+#include "selector_tests.h"
 #include <vector>
 
 // The most ghetto unit testing framework ever!
@@ -21,10 +22,17 @@ static std::vector<bool(*)()> tests = {
     test_multivalue_c_fun_from_lua,
     test_c_fun_destructor,
     test_embedded_nulls,
+
     test_register_class,
     test_mutate_instance,
     test_multiple_methods,
-    test_unregister_instance
+    test_unregister_instance,
+
+    test_select_global,
+    test_select_field,
+    test_select_index,
+    test_select_nested_field,
+    test_select_nested_index
 };
 
 

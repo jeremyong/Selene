@@ -5,6 +5,7 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include "Selector.h"
 #include <string>
 #include <tuple>
 #include "util.h"
@@ -64,6 +65,8 @@ public:
         lua_pop(_l, 1);
         return result;
     }
+
+    friend class Selector;
 
 public:
     template <typename... T>
@@ -132,6 +135,10 @@ public:
         if (it1 != _funs.end()) _funs.erase(it1);
         auto it2 = _objs.find(name);
         if (it2 != _objs.end()) _objs.erase(it2);
+    }
+
+    Selector operator[](const char *name) {
+        return Selector{_l, name};
     }
 
     friend std::ostream &operator<<(std::ostream &os, const State &state);

@@ -20,6 +20,12 @@ bool State::Load(const std::string &file) {
     return !luaL_dofile(_l, file.c_str());
 }
 
+/*
+Selector State::operator[](const char *name) {
+    return Selector(_l, name);
+}
+*/
+
 std::ostream &operator<<(std::ostream &os, const State &state) {
     os << "sel::State - " << state._l;
     return os;

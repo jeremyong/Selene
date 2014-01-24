@@ -30,3 +30,15 @@ end
 function embedded_nulls()
    return "\0h\0i"
 end
+
+my_global = 4
+
+my_table = {}
+my_table[3] = "hi"
+my_table["key"] = 6.4
+
+nested_table = {}
+nested_table[2] = -3;
+nested_table["foo"] = "bar";
+
+my_table["nested"] = nested_table
