@@ -137,9 +137,7 @@ public:
         if (it2 != _objs.end()) _objs.erase(it2);
     }
 
-    Selector operator[](const char *name) {
-        return Selector{_l, name};
-    }
+    Selector operator[](const char *name);
 
     friend std::ostream &operator<<(std::ostream &os, const State &state);
 };

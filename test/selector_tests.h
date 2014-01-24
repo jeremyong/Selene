@@ -48,3 +48,39 @@ bool test_select_cast() {
     state.Load("../test/test.lua");
     return int(state["global1"]) == state["global2"];
 }
+
+bool test_set_global() {
+    sel::State state;
+    state.Load("../test/test.lua");
+    auto lua_dummy_global = state["dummy_global"];
+    lua_dummy_global = 32;
+    return state["dummy_global"] == 32;
+}
+
+bool test_set_field() {
+    sel::State state;
+    state.Load("../test/test.lua");
+    state["my_table"]["dummy_key"] = "testing";
+    return state["my_table"]["dummy_key"] == "testing";
+}
+
+bool test_set_index() {
+    sel::State state;
+    state.Load("../test/test.lua");
+    state["my_table"][10] = 3;
+    return state["my_table"][10] == 3;
+}
+
+bool test_set_nested_field() {
+    sel::State state;
+    state.Load("../test/test.lua");
+    state["my_table"]["nested"]["asdf"] = true;
+    return state["my_table"]["nested"]["asdf"];
+}
+
+bool test_set_nested_index() {
+    sel::State state;
+    state.Load("../test/test.lua");
+    state["my_table"]["nested"][1] = 2;
+    return state["my_table"]["nested"][1] == 2;
+}

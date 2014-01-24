@@ -79,24 +79,28 @@ std::string _check_get<std::string>(lua_State *l, const int index) {
     return std::string{buff, size};
 }
 
-void _push(lua_State *l, bool &&b) {
+void _push(lua_State *l, bool b) {
     lua_pushboolean(l, b);
 }
 
-void _push(lua_State *l, int &&i) {
+void _push(lua_State *l, int i) {
     lua_pushinteger(l, i);
 }
 
-void _push(lua_State *l, unsigned int &&u) {
+void _push(lua_State *l, unsigned int u) {
     lua_pushunsigned(l, u);
 }
 
-void _push(lua_State *l, lua_Number &&f) {
+void _push(lua_State *l, lua_Number f) {
     lua_pushnumber(l, f);
 }
 
-void _push(lua_State *l, std::string &&s) {
+void _push(lua_State *l, const std::string &s) {
     lua_pushlstring(l, s.c_str(), s.size());
+}
+
+void _push(lua_State *l, const char *s) {
+    lua_pushstring(l, s);
 }
 }
 }

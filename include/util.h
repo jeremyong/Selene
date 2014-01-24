@@ -54,11 +54,11 @@ template <typename T> T _get(lua_State *l, const int index);
 template <typename T> T _check_get(lua_State *l, const int index);
 
 inline void _push(lua_State *l) {} // Necessary in the case no arguments are passed
-void _push(lua_State *l, bool &&value);
-void _push(lua_State *l, int &&value);
-void _push(lua_State *l, unsigned int &&value);
-void _push(lua_State *l, lua_Number &&value);
-void _push(lua_State *l, std::string &&value);
+void _push(lua_State *l, bool value);
+void _push(lua_State *l, int value);
+void _push(lua_State *l, unsigned int value);
+void _push(lua_State *l, lua_Number value);
+void _push(lua_State *l, const std::string &value);
 
 template <typename T>
 void _set(lua_State *l, T &&value, const int index) {

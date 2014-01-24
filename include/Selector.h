@@ -37,7 +37,25 @@ public:
         };
     }
 
+    // Allow automatic casting when used in comparisons
     bool operator==(Selector &other) = delete;
+
+    void operator=(const char *s) const {
+        _traverse();
+        auto push = [s](lua_State *l) {
+            detail::_push(l, std::string{s});
+        };
+        _put(push);
+    }
+
+    template <typename T>
+    void operator=(T t) const {
+        _traverse();
+        auto push = [t](lua_State *l) {
+            detail::_push(l, t);
+        };
+        _put(push);
+    }
 
     operator bool() const {
         _traverse();
@@ -97,6 +115,15 @@ public:
         return Selector{_l, traverse, get, put};
     }
 };
+
+inline bool operator==(const Selector &s, const char *c) {
+    return std::string{c} == std::string(s);
+}
+
+inline bool operator==(const char *c, const Selector &s) {
+    return std::string{c} == std::string(s);
+}
+
 template <typename T>
 inline bool operator==(const Selector &s, T&& t) {
     return T(s) == t;
