@@ -107,7 +107,7 @@ sel::State state;
 state.Register("c_multiply", &my_multiply);
 
 // Now we can call it (we can also call it from within lua)
-result = state.Call<int>("my_multiply", 5, 2);
+result = state.Call<int>("c_multiply", 5, 2);
 assert(result == 10);
 ```
 
