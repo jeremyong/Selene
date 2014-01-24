@@ -32,7 +32,9 @@ static std::vector<bool(*)()> tests = {
     test_select_field,
     test_select_index,
     test_select_nested_field,
-    test_select_nested_index
+    test_select_nested_index,
+    test_select_equality,
+    test_select_cast
 };
 
 

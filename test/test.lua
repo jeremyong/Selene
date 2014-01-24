@@ -42,3 +42,6 @@ nested_table[2] = -3;
 nested_table["foo"] = "bar";
 
 my_table["nested"] = nested_table
+
+global1 = 5
+global2 = 5

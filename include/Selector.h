@@ -1,6 +1,5 @@
 #pragma once
 
-#include "exceptions.h"
 #include <functional>
 #include <string>
 #include "util.h"
@@ -38,27 +37,29 @@ public:
         };
     }
 
-    operator bool() {
+    bool operator==(Selector &other) = delete;
+
+    operator bool() const {
         _traverse();
         _get();
         return detail::_get<bool>(_l, -1);
     }
-    operator int() {
+    operator int() const {
         _traverse();
         _get();
         return detail::_get<int>(_l, -1);
     }
-    operator unsigned int() {
+    operator unsigned int() const {
         _traverse();
         _get();
         return detail::_get<unsigned int>(_l, -1);
     }
-    operator lua_Number() {
+    operator lua_Number() const {
         _traverse();
         _get();
         return detail::_get<lua_Number>(_l, -1);
     }
-    operator std::string() {
+    operator std::string() const {
         _traverse();
         _get();
         return detail::_get<std::string>(_l, -1);
@@ -96,4 +97,14 @@ public:
         return Selector{_l, traverse, get, put};
     }
 };
+template <typename T>
+inline bool operator==(const Selector &s, T&& t) {
+    return T(s) == t;
+}
+
+template <typename T>
+inline bool operator==(T &&t, const Selector &s) {
+    return T(s) == t;
+}
+
 }
