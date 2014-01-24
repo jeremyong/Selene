@@ -37,7 +37,7 @@ cmake -DBUILD_SHARED_LIBS=off ..
 ```c++
 using namespace sel;
 State state; // creates a Lua context
-State state{true]; // creates a Lua context and loads standard Lua libraries
+State state{true}; // creates a Lua context and loads standard Lua libraries
 ```
 
 When a `sel::State` object goes out of scope, the Lua context is
