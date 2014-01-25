@@ -50,6 +50,7 @@ automatically destroyed in addition to all objects associated with it
 ### Accessing elements
 
 ```lua
+-- test.lua
 foo = 4
 bar = {}
 bar[3] = "hi"
@@ -58,6 +59,7 @@ bar["key"] = "there"
 
 ```c++
 sel::State state;
+state.Load("/path/to/test.lua");
 assert(state["foo"] == 4);
 assert(state["bar"][3] == "hi");
 assert(state["bar"]["key"] == "there";
@@ -80,7 +82,7 @@ std::cout << int(bar3) << std::endl;
 ### Calling Lua functions from C++
 
 ```lua
-// test.lua
+-- test.lua
 
 function foo()
 end
@@ -133,7 +135,9 @@ type of something like `state["add"](5, 2)` is still a
 `sel::Selector`. However, if the `Selector` is then typecast, as in a
 statement like `int answer = state["add"](5, 2)`, then the invocation
 of the function will occur. This is short hand for
-`int answer = state["add"].Call<int>(5, 2)`. Note that `Call`, unlike
+`int answer = state["add"].Call<int>(5, 2)`.
+
+Note that `Call`, unlike
 `operator()`, will in fact execute the statement immediately and
 return. This is because the return types are given to `Call` as a
 template function. Without actually performing a cast, `operator()`
