@@ -10,6 +10,7 @@ elseif(WIN32)
 endif(APPLE)
 
 option(BUILD_SHARED_LIBS "Build shared libraries." ON)
+option(BUILD_TESTS "Build tests." ON)
 
 include_directories(include)
 file(GLOB sources RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
@@ -28,5 +29,7 @@ elseif(WIN32)
     target_link_libraries(Selene lua)
 endif(APPLE)
 
-add_executable(test ${CMAKE_CURRENT_SOURCE_DIR}/test/Test.cpp)
-target_link_libraries(test Selene)
+if (BUILD_TESTS)
+	add_executable(test ${CMAKE_CURRENT_SOURCE_DIR}/test/Test.cpp)
+	target_link_libraries(test Selene)
+endif(BUILD_TESTS)
