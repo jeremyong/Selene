@@ -67,6 +67,16 @@ When the `[]` operator is invoked on a `sel::State` object, a
 `sel::Selector` object is returned. The `Selector` is type castable to
 all the basic types that Lua can return.
 
+If you access the same element frequently, it is recommended that you
+cache the selector for fast access later like so:
+
+```c++
+auto bar3 = state["bar"][3]; // foo has type sel::Selector
+bar3 = 4;
+bar3 = 6;
+std::cout << int(bar3) << std::endl;
+```
+
 ### Calling Lua functions from C++
 
 ```lua
