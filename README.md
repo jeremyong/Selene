@@ -8,6 +8,9 @@ Simple C++11 friendly bindings to Lua.
 
 ![Lua logo](http://www.lua.org/images/lua-logo.gif)
 
+Note that this library is still in the alpha stages and may undergo
+significant change.
+
 ## Building
 
 The project requires Cmake > v2.8.11 although an older Cmake is likely
@@ -44,6 +47,26 @@ When a `sel::State` object goes out of scope, the Lua context is
 automatically destroyed in addition to all objects associated with it
 (including C++ objects).
 
+### Accessing elements
+
+```lua
+foo = 4
+bar = {}
+bar[3] = "hi"
+bar["key"] = "there"
+```
+
+```c++
+sel::State state;
+assert(state["foo"] == 4);
+assert(state["bar"][3] == "hi");
+assert(state["bar"]["key"] == "there";
+```
+
+When the `[]` operator is invoked on a `sel::State` object, a
+`sel::Selector` object is returned. The `Selector` is type castable to
+all the basic types that Lua can return.
+
 ### Calling Lua functions from C++
 
 ```lua
@@ -75,24 +98,38 @@ sel::State state;
 state.Load("/path/to/test.lua");
 
 // Call function with no arguments or returns
-state.Call("foo");
+state["foo"].Call();
 
 // Call function with two arguments that returns an int
 // The type parameter can be one of int, lua_Number, std::string,
 // bool, or unsigned int
-int result = state.Call<int>("add", 5, 2);
+int result = state["add"](5, 2);
 assert(result == 7);
 
 
 // Call function that returns multiple values
 int sum, difference;
-std::tie(sum, difference) = state.Call<int, int>("sum_and_difference", 3, 1);
+std::tie(sum, difference) = state["sum_and_difference"].Call<int, int>(3, 1);
 assert(sum == 4 && difference == 2);
 
 // Call function in table
-result = state.CallField<int>("mytable", "foo");
+result = state["mytable"]["foo"]();
 assert(result == 4);
 ```
+
+Generally, the `operator()` implemenation *does not* actually execute
+the function call until a typecast occurs. In otherwords, the actual
+type of something like `state["add"](5, 2)` is still a
+`sel::Selector`. However, if the `Selector` is then typecast, as in a
+statement like `int answer = state["add"](5, 2)`, then the invocation
+of the function will occur. This is short hand for
+`int answer = state["add"].Call<int>(5, 2)`. Note that `Call`, unlike
+`operator()`, will in fact execute the statement immediately and
+return. This is because the return types are given to `Call` as a
+template function. Without actually performing a cast, `operator()`
+has no way to know how many values to retrieve and what types to
+retrieve them as. Note that multi-value returns must leverage the
+`Call` syntax because casting to a tuple of LValues is non-trivial.
 
 ### Calling Free-standing C++ functions from Lua
 
@@ -104,18 +141,15 @@ int my_multiply(int a, int b) {
 sel::State state;
 
 // Register the function to the Lua global "c_multiply"
-state.Register("c_multiply", &my_multiply);
+state["c_multiply"] = &my_multiply;
 
 // Now we can call it (we can also call it from within lua)
-result = state.Call<int>("c_multiply", 5, 2);
+int result = state["c_multiply"](5, 2);
 assert(result == 10);
 ```
 
 You can also register functor objects, lambdas, and any fully
 qualified `std::function`. See `test/interop_tests.h` for details.
-
-If we no longer want a function to be accessible, we can unregister it
-with `state.Unregister("c_multiply")` for example.
 
 ### Registering Object Instances
 
@@ -136,18 +170,15 @@ Foo foo(2);
 // Binds the C++ instance foo to a table also called foo in Lua along
 // with two methods bound to fields of that table.
 // The user is not required to bind all methods
-state.Register("foo", foo,
-               "double_add", &Foo::DoubleAdd,
-               "set_x", &Foo::SetX);
+state["foo"].SetObj(foo,
+                    "double_add", &Foo::DoubleAdd,
+                    "set_x", &Foo::SetX);
 
-state.CallField("foo", "set_x", 4);
+state["foo"]["set_x"].Call(4);
 assert(foo.x == 4);
 
-int result = state.CallField("foo", "double_add", 3);
+int result = state["foo"]["double_add"](3);
 assert(result == 14);
-
-// If foo goes out of scope, we need to unregister it
-state.Unregister("foo");
 ```
 
 In the above example, the functions `foo.double_add` and `foo.set_x`
@@ -155,10 +186,14 @@ will also be accessible from within Lua after registration occurs.
 
 ## Writeup
 
-You can read more about this project in the blogpost that describes it
-[here](http://www.jeremyong.com/blog/2014/01/10/interfacing-lua-with-templates-in-c-plus-plus-11/).
-and in the second part
-[here](http://www.jeremyong.com/blog/2014/01/14/interfacing-lua-with-templates-in-c-plus-plus-11-continued).
+You can read more about this project in the three blogposts that describes it:
+
+- [first part](http://www.jeremyong.com/blog/2014/01/10/interfacing-lua-with-templates-in-c-plus-plus-11/).
+- [second part](http://www.jeremyong.com/blog/2014/01/14/interfacing-lua-with-templates-in-c-plus-plus-11-continued)
+- [third part](http://www.jeremyong.com/blog/2014/01/21/interfacing-lua-with-templates-in-c-plus-plus-11-conclusion)
+
+There have been syntax changes in library usage but the underlying
+concepts of variadic template use and generics is the same.
 
 ## Roadmap
 
