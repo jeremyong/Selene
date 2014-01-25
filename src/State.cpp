@@ -1,3 +1,4 @@
+#include "Selector.h"
 #include "State.h"
 
 namespace sel {
@@ -21,7 +22,7 @@ bool State::Load(const std::string &file) {
 }
 
 Selector State::operator[](const char *name) {
-    return Selector(_l, name);
+    return Selector(*this, name);
 }
 
 std::ostream &operator<<(std::ostream &os, const State &state) {

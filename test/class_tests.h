@@ -19,7 +19,7 @@ bool test_register_class() {
     state.Register("foo_instance",
                    foo_instance,
                    "double_add", &Foo::DoubleAdd);
-    const int answer = state.CallField<int>("foo_instance", "double_add", 3);
+    const int answer = state["foo_instance"]["double_add"](3);
     return (answer == 8);
 }
 
@@ -29,7 +29,7 @@ bool test_mutate_instance() {
     state.Register("foo_instance",
                    foo_instance,
                    "set_x", &Foo::SetX);
-    state.CallField("foo_instance", "set_x", 4);
+    state["foo_instance"]["set_x"].Call(4);
     return (foo_instance.x == 4);
 }
 
@@ -40,8 +40,8 @@ bool test_multiple_methods() {
                    foo_instance,
                    "double_add", &Foo::DoubleAdd,
                    "set_x", &Foo::SetX);
-    state.CallField("foo_instance", "set_x", 4);
-    const int answer = state.CallField<int>("foo_instance", "double_add", 3);
+    state["foo_instance"]["set_x"].Call(4);
+    const int answer = state["foo_instance"]["double_add"](3);
     return (answer == 14);
 }
 

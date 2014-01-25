@@ -26,33 +26,6 @@ std::ostream &operator<<(std::ostream &os, lua_State *l) {
 
 namespace detail {
 template <>
-bool _get<bool>(lua_State *l, const int index) {
-    return lua_toboolean(l, index);
-}
-
-template <>
-int _get<int>(lua_State *l, const int index) {
-    return lua_tointeger(l, index);
-}
-
-template <>
-unsigned int _get<unsigned int>(lua_State *l, const int index) {
-    return lua_tounsigned(l, index);
-}
-
-template <>
-lua_Number _get<lua_Number>(lua_State *l, const int index) {
-    return lua_tonumber(l, index);
-}
-
-template <>
-std::string _get<std::string>(lua_State *l, const int index) {
-    size_t size;
-    const char *buff = lua_tolstring(l, index, &size);
-    return std::string{buff, size};
-}
-
-template <>
 int _check_get<int>(lua_State *l, const int index) {
     return luaL_checkint(l, index);
 };

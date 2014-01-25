@@ -11,20 +11,16 @@ private:
     using _return_type = Ret;
     using _fun_type = std::function<Ret(Args...)>;
     _fun_type _fun;
-    LuaName _name;
 
 public:
     Fun(lua_State *&l,
-        const std::string &name,
         _return_type(*fun)(Args...))
-        : Fun(l, name, _fun_type{fun}) {}
+        : Fun(l, _fun_type{fun}) {}
 
     Fun(lua_State *&l,
-        const std::string &name,
-        _fun_type fun) : _fun(fun), _name(l, name) {
+        _fun_type fun) : _fun(fun) {
         lua_pushlightuserdata(l, (void *)static_cast<BaseFun *>(this));
         lua_pushcclosure(l, &detail::_lua_dispatcher, 1);
-        _name.Register();
     }
 
     // Each application of a function receives a new Lua context so
@@ -42,20 +38,16 @@ private:
     using _return_type = Ret;
     using _fun_type = std::function<Ret(Args...)>;
     _fun_type _fun;
-    LuaName _name;
 
 public:
     Fun(lua_State *&l,
-        const std::string &name,
         _return_type(*fun)(Args...))
-        : Fun(l, name, _fun_type{fun}) {}
+        : Fun(l, _fun_type{fun}) {}
 
     Fun(lua_State *&l,
-        const std::string &name,
-        _fun_type fun) : _fun(fun), _name(l, name) {
+        _fun_type fun) : _fun(fun) {
         lua_pushlightuserdata(l, (void *)static_cast<BaseFun *>(this));
         lua_pushcclosure(l, &detail::_lua_dispatcher, 1);
-        _name.Register();
     }
 
     // Each application of a function receives a new Lua context so
