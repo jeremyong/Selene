@@ -16,7 +16,6 @@ struct BaseClass {
 template <typename T, typename... Funs>
 class Class : public BaseClass {
 private:
-    LuaName _name;
     std::vector<std::unique_ptr<BaseFun>> _funs;
 
     template <typename Ret, typename... Args>
@@ -44,12 +43,9 @@ private:
         _register_funs(state, t, funs...);
     }
 public:
-    Class(lua_State *&state, T *t, const std::string &name,
-          Funs... funs)
-        : _name(state, name) {
+    Class(lua_State *&state, T *t, Funs... funs) {
         lua_createtable(state, 0, sizeof...(Funs));
         _register_funs(state, t, funs...);
-        _name.Register();
     }
 };
 }

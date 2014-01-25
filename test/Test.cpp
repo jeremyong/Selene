@@ -25,7 +25,6 @@ static std::map<int, bool(*)()> tests = {
     {16, test_register_class},
     {17, test_mutate_instance},
     {18, test_multiple_methods},
-    {19, test_unregister_instance},
 
     {20, test_select_global},
     {21, test_select_field},

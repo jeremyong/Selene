@@ -3,7 +3,6 @@
 #include "Class.h"
 #include "Fun.h"
 #include <iostream>
-#include <map>
 #include <memory>
 #include <string>
 #include <tuple>
@@ -29,7 +28,7 @@ private:
     lua_State *_l;
 
     std::vector<std::unique_ptr<BaseFun>> _funs;
-    std::map<std::string, std::unique_ptr<BaseClass>> _objs;
+    std::vector<std::unique_ptr<BaseClass>> _objs;
 public:
     State() : State(false) {}
     State(bool should_open_libs);
@@ -84,17 +83,21 @@ public:
     }
 
     template <typename T, typename... Funs>
-    void Register(const std::string &name, T &t,
-                  Funs... funs) {
-        Unregister(name);
-        auto tmp = std::unique_ptr<BaseClass>(
-            new Class<T, Funs...>{_l, &t, name, funs...});
-        _objs.insert(std::make_pair(name, std::move(tmp)));
+    void Register(T &t, std::tuple<Funs...> funs) {
+        Register(t, funs,
+                  typename detail::_indices_builder<sizeof...(Funs)>::type{});
     }
 
-    void Unregister(const std::string &name) {
-        auto it2 = _objs.find(name);
-        if (it2 != _objs.end()) _objs.erase(it2);
+    template <typename T, typename... Funs, size_t... N>
+    void Register(T &t, std::tuple< Funs...> funs, detail::_indices<N...>) {
+        RegisterObj(t, std::get<N>(funs)...);
+    }
+
+    template <typename T, typename... Funs>
+    void RegisterObj(T &t, Funs... funs) {
+        auto tmp = std::unique_ptr<BaseClass>(
+            new Class<T, Funs...>{_l, &t, funs...});
+        _objs.push_back(std::move(tmp));
     }
 
     Selector operator[](const char *name);

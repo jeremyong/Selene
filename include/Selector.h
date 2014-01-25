@@ -66,6 +66,24 @@ public:
         return detail::_pop_n<Ret...>(_state._l);
     }
 
+    template <typename T>
+    void operator=(T t) const {
+        _traverse();
+        auto push = [t](lua_State *l) {
+            detail::_push(l, t);
+        };
+        _put(push);
+    }
+
+    template <typename T, typename... Funs>
+    void SetObj(T &t, Funs... funs) {
+        _traverse();
+        auto fun_tuple = std::make_tuple(funs...);
+        auto push = [this, &t, &fun_tuple](lua_State *) {
+            _state.Register(t, fun_tuple);
+        };
+        _put(push);
+    }
 
     template <typename Ret, typename... Args>
     void operator=(std::function<Ret(Args...)> fun) {
@@ -89,15 +107,6 @@ public:
         _traverse();
         auto push = [s](lua_State *l) {
             detail::_push(l, std::string{s});
-        };
-        _put(push);
-    }
-
-    template <typename T>
-    void operator=(T t) const {
-        _traverse();
-        auto push = [t](lua_State *l) {
-            detail::_push(l, t);
         };
         _put(push);
     }
