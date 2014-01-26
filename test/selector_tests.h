@@ -84,3 +84,15 @@ bool test_set_nested_index() {
     state["my_table"]["nested"][1] = 2;
     return state["my_table"]["nested"][1] == 2;
 }
+
+bool test_create_table_field() {
+    sel::State state;
+    state["new_table"]["test"] = 4;
+    return state["new_table"]["test"] == 4;
+}
+
+bool test_create_table_index() {
+    sel::State state;
+    state["new_table"][3] = 4;
+    return state["new_table"][3] == 4;
+}
