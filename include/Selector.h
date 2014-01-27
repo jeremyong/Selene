@@ -4,6 +4,7 @@
 #include "State.h"
 #include <string>
 #include <tuple>
+#include "Tuple.h"
 #include "util.h"
 
 extern "C" {
@@ -106,6 +107,14 @@ public:
     }
 
     void operator=(const char *s) const;
+
+    template <typename... Ret>
+    operator std::tuple<Ret...>() const {
+        _traverse();
+        _get();
+        (*_functor)(sizeof...(Ret));
+        return detail::_pop_n_reset<Ret...>(_state._l);
+    }
     operator bool() const;
     operator int() const;
     operator unsigned int() const;

@@ -24,7 +24,7 @@ bool test_add(sel::State &state) {
 bool test_multi_return(sel::State &state) {
     state.Load("../test/test.lua");
     int sum, difference;
-    std::tie(sum, difference) = state["sum_and_difference"].Call<int, int>(3, 1);
+    sel::tie(sum, difference) = state["sum_and_difference"](3, 1);
     return (sum == 4 && difference == 2);
 }
 
@@ -33,7 +33,7 @@ bool test_heterogeneous_return(sel::State &state) {
     int x;
     bool y;
     std::string z;
-    std::tie(x, y, z) = state["bar"].Call<int, bool, std::string>();
+    sel::tie(x, y, z) = state["bar"]();
     return x == 4 && y == true && z == "hi";
 }
 
@@ -114,7 +114,7 @@ bool test_multivalue_c_fun_return(sel::State &state) {
     state.Load("../test/test.lua");
     state["test_fun"] = &my_sum_and_difference;
     int sum, difference;
-    std::tie(sum, difference) = state["test_fun"].Call<int, int>(-2, 2);
+    sel::tie(sum, difference) = state["test_fun"](-2, 2);
     return sum == 0 && difference == -4;
 }
 

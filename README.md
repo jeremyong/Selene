@@ -121,7 +121,7 @@ assert(result == 7);
 
 // Call function that returns multiple values
 int sum, difference;
-std::tie(sum, difference) = state["sum_and_difference"].Call<int, int>(3, 1);
+sel::tie(sum, difference) = state["sum_and_difference"](3, 1);
 assert(sum == 4 && difference == 2);
 
 // Call function in table
@@ -142,8 +142,10 @@ Note that `Call`, unlike
 return. This is because the return types are given to `Call` as a
 template function. Without actually performing a cast, `operator()`
 has no way to know how many values to retrieve and what types to
-retrieve them as. Note that multi-value returns must leverage the
-`Call` syntax because casting to a tuple of LValues is non-trivial.
+retrieve them as. Note that multi-value returns must have `sel::tie`
+on the LHS and not `std::tie`. This will create a `sel::Tuple` as
+opposed to an `std::tuple` which has the `operator=` implemented for
+the selector type.
 
 ### Calling Free-standing C++ functions from Lua
 
