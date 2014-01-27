@@ -5,7 +5,7 @@
 #include <map>
 
 // The most ghetto unit testing framework ever!
-using Test = bool(*)();
+using Test = bool(*)(sel::State &);
 using TestMap = std::map<const char *, Test>;
 static TestMap tests = {
     {"test_function_no_args", test_function_no_args},
@@ -48,22 +48,29 @@ void ExecuteAll() {
     const int num_tests = tests.size();
     int passing = 0;
     for (auto it = tests.begin(); it != tests.end(); ++it) {
-        const bool result = it->second();
+        sel::State state{true};
+        const bool result = it->second(state);
         if (result)
             passing += 1;
         else
             std::cout << "Test \"" << it->first << "\" failed." << std::endl;
+        int size = state.Size();
+        if (size != 0)
+            std::cout << "Test \"" << it->first
+                      << "\" leaked " << size << " values" << std::endl;
     }
     std::cout << passing << " out of "
               << num_tests << " tests finished successfully." << std::endl;
 }
 
 bool ExecuteTest(const char *test) {
+    sel::State state{true};
     auto it = tests.find(test);
-    return it->second();
+    return it->second(state);
 }
 
 
 int main() {
     ExecuteAll();
+    ExecuteTest("test_call_field");
 }

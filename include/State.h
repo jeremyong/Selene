@@ -37,6 +37,10 @@ public:
     State(State &&other);
     ~State();
 
+    int Size() const {
+        return lua_gettop(_l);
+    }
+
     bool Load(const std::string &file);
 
     void Push() {} // Base case
@@ -61,11 +65,6 @@ public:
         return result;
     }
 public:
-    template <typename... T>
-    typename detail::_pop_n_impl<sizeof...(T), T...>::type Pop() {
-        return detail::_pop_n<T...>(_l);
-    }
-
     template <typename Ret, typename... Args>
     void Register(std::function<Ret(Args...)> fun) {
         constexpr int arity = detail::_arity<Ret>::value;
