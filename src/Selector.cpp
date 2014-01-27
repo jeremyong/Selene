@@ -10,6 +10,8 @@ void Selector::_check_create_table() {
             lua_newtable(_state._l);
         };
         _put(put);
+    } else {
+        lua_pop(_state._l, 1);
     }
 }
 
@@ -31,6 +33,7 @@ void Selector::operator=(const char *s) const {
         detail::_push(_state._l, std::string{s});
     };
     _put(push);
+    lua_settop(_state._l, 0);
 }
 
 Selector::operator bool() const {
@@ -40,7 +43,9 @@ Selector::operator bool() const {
         (*_functor)(1);
         _functor.release();
     }
-    return detail::_get(detail::_id<bool>{}, _state._l, -1);
+    auto ret = detail::_pop(detail::_id<bool>{}, _state._l);
+    lua_settop(_state._l, 0);
+    return ret;
 }
 
 Selector::operator int() const {
@@ -50,7 +55,9 @@ Selector::operator int() const {
         (*_functor)(1);
         _functor.release();
     }
-    return detail::_get(detail::_id<int>{}, _state._l, -1);
+    auto ret = detail::_pop(detail::_id<int>{}, _state._l);
+    lua_settop(_state._l, 0);
+    return ret;
 }
 
 Selector::operator unsigned int() const {
@@ -60,7 +67,9 @@ Selector::operator unsigned int() const {
         (*_functor)(1);
         _functor.release();
     }
-    return detail::_get(detail::_id<unsigned int>{}, _state._l, -1);
+    auto ret = detail::_pop(detail::_id<unsigned int>{}, _state._l);
+    lua_settop(_state._l, 0);
+    return ret;
 }
 
 Selector::operator lua_Number() const {
@@ -70,7 +79,9 @@ Selector::operator lua_Number() const {
         (*_functor)(1);
         _functor.release();
     }
-    return detail::_get(detail::_id<lua_Number>{}, _state._l, -1);
+    auto ret = detail::_pop(detail::_id<lua_Number>{}, _state._l);
+    lua_settop(_state._l, 0);
+    return ret;
 }
 
 Selector::operator std::string() const {
@@ -80,7 +91,9 @@ Selector::operator std::string() const {
         (*_functor)(1);
         _functor.release();
     }
-    return detail::_get(detail::_id<std::string>{}, _state._l, -1);
+    auto ret =  detail::_pop(detail::_id<std::string>{}, _state._l);
+    lua_settop(_state._l, 0);
+    return ret;
 }
 
 Selector Selector::operator[](const char *name) {

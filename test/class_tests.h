@@ -13,25 +13,22 @@ struct Foo {
     }
 };
 
-bool test_register_class() {
+bool test_register_class(sel::State &state) {
     Foo foo_instance(1);
-    sel::State state;
     state["foo_instance"].SetObj(foo_instance, "double_add", &Foo::DoubleAdd);
     const int answer = state["foo_instance"]["double_add"](3);
     return (answer == 8);
 }
 
-bool test_mutate_instance() {
+bool test_mutate_instance(sel::State &state) {
     Foo foo_instance(1);
-    sel::State state;
     state["foo_instance"].SetObj(foo_instance, "set_x", &Foo::SetX);
     state["foo_instance"]["set_x"].Call(4);
     return (foo_instance.x == 4);
 }
 
-bool test_multiple_methods() {
+bool test_multiple_methods(sel::State &state) {
     Foo foo_instance(1);
-    sel::State state;
     state["foo_instance"].SetObj(foo_instance,
                                  "double_add", &Foo::DoubleAdd,
                                  "set_x", &Foo::SetX);

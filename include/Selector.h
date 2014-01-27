@@ -63,7 +63,7 @@ public:
         _get();
         detail::_push_n(_state._l, std::forward<Args>(args)...);
         lua_call(_state._l, sizeof...(Args), sizeof...(Ret));
-        return detail::_pop_n<Ret...>(_state._l);
+        return detail::_pop_n_reset<Ret...>(_state._l);
     }
 
     template <typename T>
@@ -73,6 +73,7 @@ public:
             detail::_push(_state._l, t);
         };
         _put(push);
+        lua_settop(_state._l, 0);
     }
 
     template <typename T, typename... Funs>
@@ -83,6 +84,7 @@ public:
             _state.Register(t, fun_tuple);
         };
         _put(push);
+        lua_settop(_state._l, 0);
     }
 
     template <typename Ret, typename... Args>
