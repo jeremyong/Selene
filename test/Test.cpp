@@ -27,6 +27,7 @@ static TestMap tests = {
     {"test_embedded_nulls", test_embedded_nulls},
 
     {"test_register_class", test_register_class},
+    {"test_register_class_to_table", test_register_class_to_table},
     {"test_mutate_instance", test_mutate_instance},
     {"test_multiple_methods", test_multiple_methods},
 

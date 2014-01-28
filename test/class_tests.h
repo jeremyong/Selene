@@ -5,6 +5,7 @@
 struct Foo {
     int x;
     Foo(int x_) : x(x_) {}
+    int GetX() { return x; }
     int DoubleAdd(int y) {
         return 2 * (x + y);
     }
@@ -18,6 +19,20 @@ bool test_register_class(sel::State &state) {
     state["foo_instance"].SetObj(foo_instance, "double_add", &Foo::DoubleAdd);
     const int answer = state["foo_instance"]["double_add"](3);
     return (answer == 8);
+}
+
+bool test_register_class_to_table(sel::State &state) {
+    Foo foo1(1);
+    Foo foo2(2);
+    Foo foo3(3);
+    auto foos = state["foos"];
+    foos[1].SetObj(foo1, "get_x", &Foo::GetX);
+    foos[2].SetObj(foo2, "get_x", &Foo::GetX);
+    foos[3].SetObj(foo3, "get_x", &Foo::GetX);
+    const int answer = int(foos[1]["get_x"]()) +
+        int(foos[2]["get_x"]()) +
+        int(foos[3]["get_x"]());
+    return (answer == 6);
 }
 
 bool test_mutate_instance(sel::State &state) {
