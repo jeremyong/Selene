@@ -62,7 +62,7 @@ sel::State state;
 state.Load("/path/to/test.lua");
 assert(state["foo"] == 4);
 assert(state["bar"][3] == "hi");
-assert(state["bar"]["key"] == "there";
+assert(state["bar"]["key"] == "there");
 ```
 
 When the `[]` operator is invoked on a `sel::State` object, a
