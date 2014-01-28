@@ -4,6 +4,7 @@
 #include "Fun.h"
 #include <iostream>
 #include <memory>
+#include "Obj.h"
 #include <string>
 #include <tuple>
 #include "util.h"
@@ -28,7 +29,8 @@ private:
     lua_State *_l;
 
     std::vector<std::unique_ptr<BaseFun>> _funs;
-    std::vector<std::unique_ptr<BaseClass>> _objs;
+    std::vector<std::unique_ptr<BaseObj>> _objs;
+    std::vector<std::unique_ptr<BaseClass>> _classes;
 public:
     State() : State(false) {}
     State(bool should_open_libs);
@@ -94,9 +96,16 @@ public:
 
     template <typename T, typename... Funs>
     void RegisterObj(T &t, Funs... funs) {
-        auto tmp = std::unique_ptr<BaseClass>(
-            new Class<T, Funs...>{_l, &t, funs...});
+        auto tmp = std::unique_ptr<BaseObj>(
+            new Obj<T, Funs...>{_l, &t, funs...});
         _objs.push_back(std::move(tmp));
+    }
+
+    template <typename Ctor, typename... Funs>
+    void RegisterClass(Ctor ctor, Funs... funs) {
+        auto tmp = std::unique_ptr<BaseClass>(
+            new Class<Ctor, Funs...>{_l, ctor, funs...});
+        _classes.push_back(std::move(tmp));
     }
 
     Selector operator[](const char *name);

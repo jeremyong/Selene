@@ -7,19 +7,19 @@
 namespace sel {
 
 template <int N, typename Ret, typename... Args>
-class ClassFun : public BaseFun {
+class ObjFun : public BaseFun {
 private:
     using _return_type = Ret;
     using _fun_type = std::function<Ret(Args...)>;
     _fun_type _fun;
 
 public:
-    ClassFun(lua_State *l,
+    ObjFun(lua_State *l,
              const std::string &name,
              _return_type(*fun)(Args...))
-        : ClassFun(l, name, _fun_type{fun}) {}
+        : ObjFun(l, name, _fun_type{fun}) {}
 
-    ClassFun(lua_State *l,
+    ObjFun(lua_State *l,
              const std::string &name,
              _fun_type fun) : _fun(fun) {
         lua_pushlightuserdata(l, (void *)static_cast<BaseFun *>(this));
@@ -38,19 +38,19 @@ public:
 };
 
 template <typename Ret, typename... Args>
-class ClassFun<0, Ret, Args...> : public BaseFun {
+class ObjFun<0, Ret, Args...> : public BaseFun {
 private:
     using _return_type = Ret;
     using _fun_type = std::function<Ret(Args...)>;
     _fun_type _fun;
 
 public:
-    ClassFun(lua_State *l,
+    ObjFun(lua_State *l,
              const std::string &name,
              _return_type(*fun)(Args...))
-        : ClassFun(l, name, _fun_type{fun}) {}
+        : ObjFun(l, name, _fun_type{fun}) {}
 
-    ClassFun(lua_State *l,
+    ObjFun(lua_State *l,
              const std::string &name,
              _fun_type fun) : _fun(fun) {
         lua_pushlightuserdata(l, (void *)static_cast<BaseFun *>(this));

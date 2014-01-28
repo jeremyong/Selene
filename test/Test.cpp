@@ -1,10 +1,10 @@
 #include <algorithm>
-#include "class_tests.h"
+#include "obj_tests.h"
 #include "interop_tests.h"
 #include "selector_tests.h"
 #include <map>
 
-// The most ghetto unit testing framework ever!
+// A very simple testing framework
 // To add a test, author a function with the Test function signature
 // and include it in the Map of tests below.
 using Test = bool(*)(sel::State &);
@@ -26,8 +26,8 @@ static TestMap tests = {
     {"test_multivalue_c_fun_from_lua", test_multivalue_c_fun_from_lua},
     {"test_embedded_nulls", test_embedded_nulls},
 
-    {"test_register_class", test_register_class},
-    {"test_register_class_to_table", test_register_class_to_table},
+    {"test_register_obj", test_register_obj},
+    {"test_register_obj_to_table", test_register_obj_to_table},
     {"test_mutate_instance", test_mutate_instance},
     {"test_multiple_methods", test_multiple_methods},
 
@@ -49,21 +49,32 @@ static TestMap tests = {
 
 void ExecuteAll() {
     const int num_tests = tests.size();
+    std::cout << "Executing " << num_tests << " tests..." << std::endl;
+    std::vector<std::string> failures;
     int passing = 0;
     for (auto it = tests.begin(); it != tests.end(); ++it) {
         sel::State state{true};
         const bool result = it->second(state);
-        if (result)
+        if (result) {
             passing += 1;
-        else
-            std::cout << "Test \"" << it->first << "\" failed." << std::endl;
+            std::cout << "." << std::flush;
+        } else {
+            std::cout << "x" << std::flush;
+            failures.push_back(std::string{"Test \""} +
+                               it->first + "\" failed.");
+        }
         int size = state.Size();
         if (size != 0)
-            std::cout << "Test \"" << it->first
-                      << "\" leaked " << size << " values" << std::endl;
+            failures.push_back(std::string{"Test \""} + it->first
+                               + "\" leaked " + std::to_string(size) + " values");
     }
-    std::cout << passing << " out of "
+    std::cout << std::endl << passing << " out of "
               << num_tests << " tests finished successfully." << std::endl;
+    std::cout << std::endl;
+    for_each(failures.begin(), failures.end(),
+             [](std::string failure) {
+                 std::cout << failure << std::endl;
+             });
 }
 
 bool ExecuteTest(const char *test) {

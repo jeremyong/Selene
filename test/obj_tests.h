@@ -14,14 +14,14 @@ struct Foo {
     }
 };
 
-bool test_register_class(sel::State &state) {
+bool test_register_obj(sel::State &state) {
     Foo foo_instance(1);
     state["foo_instance"].SetObj(foo_instance, "double_add", &Foo::DoubleAdd);
     const int answer = state["foo_instance"]["double_add"](3);
     return (answer == 8);
 }
 
-bool test_register_class_to_table(sel::State &state) {
+bool test_register_obj_to_table(sel::State &state) {
     Foo foo1(1);
     Foo foo2(2);
     Foo foo3(3);
