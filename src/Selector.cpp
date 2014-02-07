@@ -16,7 +16,7 @@ void Selector::_check_create_table() {
 }
 
 Selector::Selector(State &s, const char *name)
-    : _state(s), _functor{nullptr} {
+    : _name(name), _state(s), _functor{nullptr} {
     _traverse = [](){};
     _get = [this, name]() {
         lua_getglobal(_state._l, name);
@@ -50,8 +50,10 @@ Selector::operator bool() const {
 
 Selector::operator int() const {
     _traverse();
+    //std::cout << _name << " " << _state << std::endl;
     _get();
     if (_functor != nullptr) {
+        //std::cout << _name << " " << _state << std::endl;
         (*_functor)(1);
         _functor.reset();
     }
@@ -97,6 +99,7 @@ Selector::operator std::string() const {
 }
 
 Selector Selector::operator[](const char *name) {
+    _name += std::string(".") + name;
     _check_create_table();
     Fun traverse = [this]() {
         _traverse();
@@ -114,6 +117,7 @@ Selector Selector::operator[](const char *name) {
 }
 
 Selector Selector::operator[](const int index) {
+    _name += std::string(".") + std::to_string(index);
     _check_create_table();
     Fun traverse = [this]() {
         _traverse();

@@ -16,6 +16,7 @@ class State;
 class Selector {
 private:
     friend class State;
+    std::string _name;
     State &_state;
     using Fun = std::function<void()>;
     using PFun = std::function<void(Fun)>;
@@ -49,7 +50,7 @@ public:
     const Selector& operator()(Args... args) const {
         auto tuple_args = std::make_tuple(std::forward<Args>(args)...);
         constexpr int num_args = sizeof...(Args);
-        Functor *tmp = new Functor([this, tuple_args, num_args](int num_ret) {
+        auto tmp = new Functor([this, tuple_args, num_args](int num_ret) {
                 detail::_push(_state._l, tuple_args);
                 lua_call(_state._l, num_args, num_ret);
             });
@@ -83,6 +84,18 @@ public:
         auto fun_tuple = std::make_tuple(funs...);
         auto push = [this, &t, &fun_tuple]() {
             _state.Register(t, fun_tuple);
+        };
+        _put(push);
+        lua_settop(_state._l, 0);
+    }
+
+    template <typename T, typename... Args, typename... Funs>
+    void SetClass(Funs... funs) {
+        _traverse();
+        auto fun_tuple = std::make_tuple(funs...);
+        auto push = [this, &fun_tuple]() {
+            typename detail::_indices_builder<sizeof...(Funs)>::type d;
+            _state.RegisterClass<T, Args...>(_name, fun_tuple, d);
         };
         _put(push);
         lua_settop(_state._l, 0);

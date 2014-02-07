@@ -2,7 +2,6 @@
 
 #include "ObjFun.h"
 #include <functional>
-#include "LuaName.h"
 #include <memory>
 #include "State.h"
 #include <string>
@@ -43,7 +42,7 @@ private:
         _register_funs(state, t, funs...);
     }
 public:
-    Obj(lua_State *&state, T *t, Funs... funs) {
+    Obj(lua_State *state, T *t, Funs... funs) {
         lua_createtable(state, 0, sizeof...(Funs));
         _register_funs(state, t, funs...);
     }

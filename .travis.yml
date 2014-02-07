@@ -4,7 +4,11 @@ compiler:
   - clang
 before_install: sudo apt-get update
 install:
-  - sudo apt-get install lua5.2
+  - curl -R -O http://www.lua.org/ftp/lua-5.2.3.tar.gz
+  - tar zxf lua-5.2.3.tar.gz
+  - cd lua-5.2.3
+  - make linux
+  - sudo make install
 before_script:
   - mkdir build
   - cd build

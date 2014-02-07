@@ -1,4 +1,5 @@
 #include <algorithm>
+#include "class_tests.h"
 #include "obj_tests.h"
 #include "interop_tests.h"
 #include "selector_tests.h"
@@ -44,7 +45,11 @@ static TestMap tests = {
     {"test_set_nested_field", test_set_nested_field},
     {"test_set_nested_index", test_set_nested_index},
     {"test_create_table_field", test_create_table_field},
-    {"test_create_table_index", test_create_table_index}
+    {"test_create_table_index", test_create_table_index},
+
+    {"test_register_class", test_register_class},
+    {"test_class_field_set", test_class_field_set},
+    {"test_class_gc", test_class_gc}
 };
 
 // Executes all tests and returns the number of failures.
@@ -92,4 +97,8 @@ int main() {
     // stack size afterwards. It is expected that the stack size
     // post-test is 0.
     return ExecuteAll();
+
+    // For debugging anything in particular, you can run an individual
+    //test like so:
+    //ExecuteTest("test_register_class");
 }

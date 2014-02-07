@@ -12,6 +12,16 @@ extern "C" {
 namespace sel {
 std::ostream &operator<<(std::ostream &os, lua_State *l);
 
+inline void _print() {
+    std::cout << std::endl;
+}
+
+template <typename T, typename... Ts>
+inline void _print(T arg, Ts... args) {
+    std::cout << arg << ", ";
+    _print(args...);
+}
+
 inline bool check(lua_State *L, int code) {
     if (code == LUA_OK) {
         return true;

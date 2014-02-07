@@ -7,12 +7,12 @@
 namespace sel {
 struct BaseFun {
     virtual ~BaseFun() {}
-    virtual int Apply(lua_State *l) = 0;
+    virtual int Apply(lua_State *state) = 0;
 };
 
 namespace detail {
 
-int _lua_dispatcher(lua_State *l);
+int _lua_dispatcher(lua_State *state);
 
 template <typename Ret, typename... Args, std::size_t... N>
 Ret _lift(std::function<Ret(Args...)> fun,
@@ -29,14 +29,14 @@ Ret _lift(std::function<Ret(Args...)> fun,
 
 
 template <typename... T, std::size_t... N>
-std::tuple<T...> _get_args(lua_State *l, _indices<N...>) {
-    return std::make_tuple(_check_get<T>(l, N + 1)...);
+std::tuple<T...> _get_args(lua_State *state, _indices<N...>) {
+    return std::make_tuple(_check_get<T>(state, N + 1)...);
 }
 
 template <typename... T>
-std::tuple<T...> _get_args(lua_State *l) {
+std::tuple<T...> _get_args(lua_State *state) {
     constexpr std::size_t num_args = sizeof...(T);
-    return _get_args<T...>(l, typename _indices_builder<num_args>::type());
+    return _get_args<T...>(state, typename _indices_builder<num_args>::type());
 }
 }
 }

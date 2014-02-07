@@ -1,7 +1,6 @@
 #pragma once
 
 #include "BaseFun.h"
-#include "LuaName.h"
 #include <string>
 
 namespace sel {
@@ -15,13 +14,13 @@ private:
 
 public:
     ObjFun(lua_State *l,
-             const std::string &name,
-             _return_type(*fun)(Args...))
+           const std::string &name,
+           _return_type(*fun)(Args...))
         : ObjFun(l, name, _fun_type{fun}) {}
 
     ObjFun(lua_State *l,
-             const std::string &name,
-             _fun_type fun) : _fun(fun) {
+           const std::string &name,
+           _fun_type fun) : _fun(fun) {
         lua_pushlightuserdata(l, (void *)static_cast<BaseFun *>(this));
         lua_pushcclosure(l, &detail::_lua_dispatcher, 1);
         lua_setfield(l, -2, name.c_str());
@@ -46,13 +45,13 @@ private:
 
 public:
     ObjFun(lua_State *l,
-             const std::string &name,
-             _return_type(*fun)(Args...))
+           const std::string &name,
+           _return_type(*fun)(Args...))
         : ObjFun(l, name, _fun_type{fun}) {}
 
     ObjFun(lua_State *l,
-             const std::string &name,
-             _fun_type fun) : _fun(fun) {
+           const std::string &name,
+           _fun_type fun) : _fun(fun) {
         lua_pushlightuserdata(l, (void *)static_cast<BaseFun *>(this));
         lua_pushcclosure(l, &detail::_lua_dispatcher, 1);
         lua_setfield(l, -2, name.c_str());

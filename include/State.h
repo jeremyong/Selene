@@ -8,6 +8,7 @@
 #include <string>
 #include <tuple>
 #include "util.h"
+#include <vector>
 
 extern "C" {
 #include "lua.h"
@@ -86,11 +87,11 @@ public:
     template <typename T, typename... Funs>
     void Register(T &t, std::tuple<Funs...> funs) {
         Register(t, funs,
-                  typename detail::_indices_builder<sizeof...(Funs)>::type{});
+                 typename detail::_indices_builder<sizeof...(Funs)>::type{});
     }
 
     template <typename T, typename... Funs, size_t... N>
-    void Register(T &t, std::tuple< Funs...> funs, detail::_indices<N...>) {
+    void Register(T &t, std::tuple<Funs...> funs, detail::_indices<N...>) {
         RegisterObj(t, std::get<N>(funs)...);
     }
 
@@ -101,14 +102,29 @@ public:
         _objs.push_back(std::move(tmp));
     }
 
-    template <typename Ctor, typename... Funs>
-    void RegisterClass(Ctor ctor, Funs... funs) {
+    template <typename T, typename... CtorArgs, typename... Funs, size_t... N>
+    void RegisterClass(const std::string &name, std::tuple<Funs...> funs,
+                       detail::_indices<N...>) {
+        RegisterClassWorker<T, CtorArgs...>(name, std::get<N>(funs)...);
+    }
+
+    template <typename T, typename... CtorArgs, typename... Funs>
+    void RegisterClassWorker(const std::string &name, Funs... funs) {
         auto tmp = std::unique_ptr<BaseClass>(
-            new Class<Ctor, Funs...>{_l, ctor, funs...});
+            new Class<T, Ctor<T, CtorArgs...>, Funs...>
+            {_l, name, funs...});
         _classes.push_back(std::move(tmp));
     }
 
     Selector operator[](const char *name);
+
+    void operator()(const char *code) {
+        luaL_dostring(_l, code);
+    }
+
+    void ForceGC() {
+        lua_gc(_l, LUA_GCCOLLECT, 0);
+    }
 
     friend std::ostream &operator<<(std::ostream &os, const State &state);
 };
