@@ -47,7 +47,8 @@ static TestMap tests = {
     {"test_create_table_index", test_create_table_index}
 };
 
-void ExecuteAll() {
+// Executes all tests and returns the number of failures.
+int ExecuteAll() {
     const int num_tests = tests.size();
     std::cout << "Executing " << num_tests << " tests..." << std::endl;
     std::vector<std::string> failures;
@@ -75,8 +76,10 @@ void ExecuteAll() {
              [](std::string failure) {
                  std::cout << failure << std::endl;
              });
+    return num_tests - passing;
 }
 
+// Not used in general runs. For debugging purposes
 bool ExecuteTest(const char *test) {
     sel::State state{true};
     auto it = tests.find(test);
@@ -88,5 +91,5 @@ int main() {
     // Executing all tests will run all test cases and check leftover
     // stack size afterwards. It is expected that the stack size
     // post-test is 0.
-    ExecuteAll();
+    return ExecuteAll();
 }
