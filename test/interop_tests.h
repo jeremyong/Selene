@@ -12,7 +12,7 @@ void no_return() {
 
 bool test_function_no_args(sel::State &state) {
     state.Load("../test/test.lua");
-    state["foo"]();
+    state["foo"].Call();
     return true;
 }
 

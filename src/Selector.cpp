@@ -41,7 +41,7 @@ Selector::operator bool() const {
     _get();
     if (_functor != nullptr) {
         (*_functor)(1);
-        _functor.release();
+        _functor.reset();
     }
     auto ret = detail::_pop(detail::_id<bool>{}, _state._l);
     lua_settop(_state._l, 0);
@@ -53,7 +53,7 @@ Selector::operator int() const {
     _get();
     if (_functor != nullptr) {
         (*_functor)(1);
-        _functor.release();
+        _functor.reset();
     }
     auto ret = detail::_pop(detail::_id<int>{}, _state._l);
     lua_settop(_state._l, 0);
@@ -65,7 +65,7 @@ Selector::operator unsigned int() const {
     _get();
     if (_functor != nullptr) {
         (*_functor)(1);
-        _functor.release();
+        _functor.reset();
     }
     auto ret = detail::_pop(detail::_id<unsigned int>{}, _state._l);
     lua_settop(_state._l, 0);
@@ -77,7 +77,7 @@ Selector::operator lua_Number() const {
     _get();
     if (_functor != nullptr) {
         (*_functor)(1);
-        _functor.release();
+        _functor.reset();
     }
     auto ret = detail::_pop(detail::_id<lua_Number>{}, _state._l);
     lua_settop(_state._l, 0);
@@ -89,7 +89,7 @@ Selector::operator std::string() const {
     _get();
     if (_functor != nullptr) {
         (*_functor)(1);
-        _functor.release();
+        _functor.reset();
     }
     auto ret =  detail::_pop(detail::_id<std::string>{}, _state._l);
     lua_settop(_state._l, 0);
