@@ -4,7 +4,7 @@ compiler:
   - clang
 before_install: sudo apt-get update
 install:
-  - sudo apt-get install lua5.2 cmake
+  - sudo apt-get install lua5.2
 before_script:
   - mkdir build
   - cd build
