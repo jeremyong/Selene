@@ -4,7 +4,6 @@
 ____/ \___| _| \___| _| _| \___|
 ```
 
-[![Build Status](https://travis-ci.org/jeremyong/Selene.png?branch=master)](https://travis-ci.org/jeremyong/Selene)
 Simple C++11 friendly bindings to Lua.
 
 ![Lua logo](http://www.lua.org/images/lua-logo.gif)
