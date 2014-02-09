@@ -219,6 +219,29 @@ are not supported at this time. The arguments to the `SetClass`
 function are a list of member functions you wish to register (callable
 from Lua). The format is [function name, function pointer, ...].
 
+#### Registering Class Member Variables
+
+For convenience, if you pass a pointer to a member instead of a member
+function, Selene will automatically generate a setter and getter for
+the member. The getter name is just the name of the member variable
+you supply and the setter has "set_" prepended to that name.
+
+```c++
+// Define Bar as above
+sel::State state;
+state["Bar"].SetClass<Bar, int>("x", &Bar::x);
+```
+
+```lua
+-- now we can do the following:
+bar = Bar.new(4)
+
+print(bar.x()) -- will print '4'
+
+bar.set_x(-4)
+print(bar.x()) -- will print '-4'
+```
+
 ### Registering Object Instances
 
 You can also register an explicit object which was instantiated from

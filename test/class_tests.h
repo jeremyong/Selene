@@ -62,6 +62,21 @@ bool test_register_class(sel::State &state) {
     return result1 == 8 && result2 == "8+2";
 }
 
+bool test_get_member_variable(sel::State &state) {
+    state["Bar"].SetClass<Bar, int>("x", &Bar::x);
+    state("bar = Bar.new(-2)");
+    state("barx = bar:x()");
+    return state["barx"] == -2;
+}
+
+bool test_set_member_variable(sel::State &state) {
+    state["Bar"].SetClass<Bar, int>("x", &Bar::x);
+    state("bar = Bar.new(-2)");
+    state("bar:set_x(-4)");
+    state("barx = bar:x()");
+    return state["barx"] == -4;
+}
+
 bool test_class_field_set(sel::State &state) {
     state["Bar"].SetClass<Bar, int>("set", &Bar::SetX, "get", &Bar::GetX);
     state("bar = Bar.new(4)");

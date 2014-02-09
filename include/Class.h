@@ -23,7 +23,7 @@ struct BaseClass {
 
 template <typename T,
           typename A,
-          typename... Funs>
+          typename... Members>
 class Class : public BaseClass {
 private:
     std::string _name;
@@ -33,8 +33,7 @@ private:
     std::vector<std::unique_ptr<T>> _instances;
 
     std::string _get_metatable_name() {
-        //return _name + "_lib";
-        return _name;
+        return _name + "_lib";
     }
 
     void _register_ctor(lua_State *state) {
@@ -45,10 +44,30 @@ private:
         _dtor.reset(new Dtor<T>(state, _get_metatable_name()));
     }
 
+    template <typename M>
+    void _register_member(lua_State *state,
+                          const char *member_name,
+                          M T::*member) {
+        std::function<M(T*)> lambda_get = [member](T *t) {
+            return t->*member;
+        };
+        _funs.emplace_back(
+            new ClassFun<1, T, M>
+            {state, std::string{member_name}, _get_metatable_name(), lambda_get});
+
+        std::function<void(T*, M)> lambda_set = [member](T *t, M value) {
+            (t->*member) = value;
+        };
+        _funs.emplace_back(
+            new ClassFun<0, T, void, M>
+            {state, std::string("set_") + member_name,
+                    _get_metatable_name(), lambda_set});
+    }
+
     template <typename Ret, typename... Args>
-    void _register_fun(lua_State *state,
-                       const char *fun_name,
-                       Ret(T::*fun)(Args...)) {
+    void _register_member(lua_State *state,
+                          const char *fun_name,
+                          Ret(T::*fun)(Args...)) {
         std::function<Ret(T*, Args...)> lambda = [fun](T *t, Args... args) {
             return (t->*fun)(args...);
         };
@@ -58,24 +77,24 @@ private:
             {state, std::string(fun_name), _get_metatable_name(), lambda});
     }
 
-    void _register_funs(lua_State *state) {}
+    void _register_members(lua_State *state) {}
 
-    template <typename F, typename... Fs>
-    void _register_funs(lua_State *state,
-                        const char *name,
-                        F fun,
-                        Fs... funs) {
-        _register_fun(state, name, fun);
-        _register_funs(state, funs...);
+    template <typename M, typename... Ms>
+    void _register_members(lua_State *state,
+                           const char *name,
+                           M member,
+                           Ms... members) {
+        _register_member(state, name, member);
+        _register_members(state, members...);
     }
 
 public:
     Class(lua_State *state, const std::string &name,
-          Funs... funs) : _name(name) {
+          Members... members) : _name(name) {
         luaL_newmetatable(state, _get_metatable_name().c_str());
         _register_ctor(state);
         _register_dtor(state);
-        _register_funs(state, funs...);
+        _register_members(state, members...);
         lua_pushvalue(state, -1);
         lua_setfield(state, -1, "__index");
     }

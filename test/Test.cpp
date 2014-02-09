@@ -48,6 +48,8 @@ static TestMap tests = {
     {"test_create_table_index", test_create_table_index},
 
     {"test_register_class", test_register_class},
+    {"test_get_member_variable", test_get_member_variable},
+    {"test_set_member_variable", test_set_member_variable},
     {"test_class_field_set", test_class_field_set},
     {"test_class_gc", test_class_gc},
     {"test_pass_pointer", test_pass_pointer},
