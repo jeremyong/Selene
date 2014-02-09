@@ -167,7 +167,61 @@ assert(result == 10);
 You can also register functor objects, lambdas, and any fully
 qualified `std::function`. See `test/interop_tests.h` for details.
 
+### Running arbitrary code
+
+```c++
+sel::State state;
+state("x = 5");
+```
+
+After running this snippet, `x` will have value 5 in the Lua runtime.
+Snippets run in this way cannot return anything to the caller at this time.
+
+### Registering Classes
+
+```c++
+struct Bar {
+    int x;
+    Bar(int x_) : x(x_) {}
+    int AddThis(int y) { return x + y; }
+};
+
+sel::State state;
+state["Bar"].SetClass<Bar, int>("add_this", &Bar::AddThis);
+```
+
+```lua
+bar = Bar.new(5)
+-- bar now refers to a new instance of Bar with Bar.x = 5
+
+x = bar:add_this(2)
+-- x is now 7
+
+bar = nil
+--[[ the bar object will be destroyed the next time a garbage
+     collection is run ]]--
+```
+
+The signature of the `SetClass` template method looks like the
+following:
+
+```c++
+template <typename T, typename... CtorArgs, typename... Funs>
+void Selector::SetClass(Funs... funs);
+```
+
+The template parameters supplied explicitly are first `T`, the class
+you wish to register followed by `CtorArgs...`, the types that are
+accepted by the class's constructor. Note that constructor overloading
+are not supported at this time. The arguments to the `SetClass`
+function are a list of member functions you wish to register (callable
+from Lua). The format is [function name, function pointer, ...].
+
 ### Registering Object Instances
+
+You can also register an explicit object which was instantiated from
+C++. However, this object cannot be inherited from and you are in
+charge of the object's lifetime.
 
 ```c++
 struct Foo {

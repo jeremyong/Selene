@@ -120,6 +120,7 @@ public:
 
     void operator()(const char *code) {
         luaL_dostring(_l, code);
+        lua_settop(_l, 0);
     }
 
     void ForceGC() {
