@@ -1,6 +1,7 @@
 #pragma once
 
 #include <tuple>
+#include "Selector.h"
 
 namespace sel {
 template <typename... T>
@@ -11,7 +12,7 @@ public:
     Tuple(T&... args) : _tuple(args...) {}
 
     void operator=(const sel::Selector &s) {
-        _tuple = std::tuple<typename std::remove_reference<T>::type...>(s);
+        _tuple = s.GetTuple<typename std::remove_reference<T>::type...>();
     }
 };
 

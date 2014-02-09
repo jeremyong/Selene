@@ -21,8 +21,7 @@ file(GLOB headers RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
 add_library(Selene ${headers} ${sources})
 
 if(APPLE)
-    find_library(lua lua)
-    target_link_libraries(Selene ${lua})
+    target_link_libraries(Selene lua)
 elseif(UNIX)
     target_link_libraries(Selene lua)
 elseif(WIN32)
