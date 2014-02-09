@@ -9,6 +9,7 @@ install:
   - cd lua-5.2.3
   - make linux
   - sudo make install
+  - cd ..
 before_script:
   - mkdir build
   - cd build
