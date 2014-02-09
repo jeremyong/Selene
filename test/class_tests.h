@@ -45,6 +45,14 @@ struct GCTest {
     }
 };
 
+std::string ShowBarRef(Bar &bar) {
+    return std::to_string(bar.x);
+}
+
+std::string ShowBarPtr(Bar *bar) {
+    return std::to_string(bar->x);
+}
+
 
 bool test_register_class(sel::State &state) {
     state["Bar"].SetClass<Bar, int>("print", &Bar::Print, "get_x", &Bar::GetX);
@@ -94,4 +102,20 @@ bool test_pass_ref(sel::State &state) {
     state("zoo:change_bar(bar)");
     state("barx = bar:get()");
     return state["barx"] == 8;
+}
+
+bool test_freestanding_fun_ref(sel::State &state) {
+    state["Bar"].SetClass<Bar, int>();
+    state("bar = Bar.new(4)");
+    state["print_bar"] = &ShowBarRef;
+    state("barstring = print_bar(bar)");
+    return state["barstring"] == "4";
+}
+
+bool test_freestanding_fun_ptr(sel::State &state) {
+    state["Bar"].SetClass<Bar, int>();
+    state("bar = Bar.new(4)");
+    state["print_bar"] = &ShowBarPtr;
+    state("barstring = print_bar(bar)");
+    return state["barstring"] == "4";
 }

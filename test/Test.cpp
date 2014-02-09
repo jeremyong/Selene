@@ -51,7 +51,9 @@ static TestMap tests = {
     {"test_class_field_set", test_class_field_set},
     {"test_class_gc", test_class_gc},
     {"test_pass_pointer", test_pass_pointer},
-    {"test_pass_ref", test_pass_ref}
+    {"test_pass_ref", test_pass_ref},
+    {"test_freestanding_fun_ref", test_freestanding_fun_ref},
+    {"test_freestanding_fun_ptr", test_freestanding_fun_ptr}
 };
 
 // Executes all tests and returns the number of failures.

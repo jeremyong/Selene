@@ -66,6 +66,11 @@ inline T* _get(_id<T*>, lua_State *l, const int index) {
     return *(T **)lua_topointer(l, index);
 }
 
+template <typename T>
+inline T& _get(_id<T&>, lua_State *l, const int index) {
+    return **(T **)lua_topointer(l, index);
+}
+
 inline bool _get(_id<bool>, lua_State *l, const int index) {
     return lua_toboolean(l, index);
 }
