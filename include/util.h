@@ -61,6 +61,10 @@ struct _indices_builder<0, Is...> {
 
 template <typename T> struct _id {};
 
+template <typename T>
+inline T* _get(_id<T*>, lua_State *l, const int index) {
+    return *(T **)lua_topointer(l, index);
+}
 
 inline bool _get(_id<bool>, lua_State *l, const int index) {
     return lua_toboolean(l, index);
@@ -84,7 +88,39 @@ inline std::string _get(_id<std::string>, lua_State *l, const int index) {
     return std::string{buff, size};
 }
 
-template <typename T> T _check_get(lua_State *l, const int index);
+template <typename T>
+inline T* _check_get(_id<T*>, lua_State *l, const int index) {
+    return *(T **)lua_topointer(l, index);
+};
+
+template <typename T>
+inline T& _check_get(_id<T&>, lua_State *l, const int index) {
+    return **(T **)lua_topointer(l, index);
+};
+
+inline int _check_get(_id<int>, lua_State *l, const int index) {
+    return luaL_checkint(l, index);
+};
+
+inline unsigned int _check_get(_id<unsigned int>, lua_State *l, const int index) {
+    return luaL_checkunsigned(l, index);
+}
+
+inline lua_Number _check_get(_id<lua_Number>, lua_State *l, const int index) {
+    return luaL_checknumber(l, index);
+}
+
+inline bool _check_get(_id<bool>, lua_State *l, const int index) {
+    return lua_toboolean(l, index);
+}
+
+inline std::string _check_get(_id<std::string>, lua_State *l, const int index) {
+    size_t size;
+    const char *buff = luaL_checklstring(l, index, &size);
+    return std::string{buff, size};
+}
+
+//template <typename T> T _check_get(lua_State *l, const int index);
 
 inline void _push(lua_State *l) {} // Necessary in the case no arguments are passed
 void _push(lua_State *l, bool value);

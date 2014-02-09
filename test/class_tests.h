@@ -19,6 +19,19 @@ struct Bar {
     }
 };
 
+struct Zoo {
+    int x;
+    Zoo(Bar *bar) {
+        x = bar->x;
+    }
+    int GetX() {
+        return x;
+    }
+    void ChangeBar(Bar &bar) {
+        bar.x = x * 2;
+    }
+};
+
 static int gc_counter;
 struct GCTest {
     GCTest() {
@@ -62,4 +75,23 @@ bool test_class_gc(sel::State &state) {
     state.ForceGC();
     bool check2 = gc_counter == 0;
     return check1 && check2;
+}
+
+bool test_pass_pointer(sel::State &state) {
+    state["Bar"].SetClass<Bar, int>();
+    state["Zoo"].SetClass<Zoo, Bar*>("get", &Zoo::GetX);
+    state("bar = Bar.new(4)");
+    state("zoo = Zoo.new(bar)");
+    state("zoox = zoo:get()");
+    return state["zoox"] == 4;
+}
+
+bool test_pass_ref(sel::State &state) {
+    state["Bar"].SetClass<Bar, int>("get", &Bar::GetX);
+    state["Zoo"].SetClass<Zoo, Bar*>("change_bar", &Zoo::ChangeBar);
+    state("bar = Bar.new(4)");
+    state("zoo = Zoo.new(bar)");
+    state("zoo:change_bar(bar)");
+    state("barx = bar:get()");
+    return state["barx"] == 8;
 }

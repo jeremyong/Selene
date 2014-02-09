@@ -212,7 +212,9 @@ void Selector::SetClass(Funs... funs);
 
 The template parameters supplied explicitly are first `T`, the class
 you wish to register followed by `CtorArgs...`, the types that are
-accepted by the class's constructor. Note that constructor overloading
+accepted by the class's constructor. In addition to primitive types,
+you may also pass pointers or references to other types that have been
+or will be registered. Note that constructor overloading
 are not supported at this time. The arguments to the `SetClass`
 function are a list of member functions you wish to register (callable
 from Lua). The format is [function name, function pointer, ...].

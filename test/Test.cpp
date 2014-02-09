@@ -49,7 +49,9 @@ static TestMap tests = {
 
     {"test_register_class", test_register_class},
     {"test_class_field_set", test_class_field_set},
-    {"test_class_gc", test_class_gc}
+    {"test_class_gc", test_class_gc},
+    {"test_pass_pointer", test_pass_pointer},
+    {"test_pass_ref", test_pass_ref}
 };
 
 // Executes all tests and returns the number of failures.
@@ -100,5 +102,5 @@ int main() {
 
     // For debugging anything in particular, you can run an individual
     //test like so:
-    //ExecuteTest("test_register_class");
+    //ExecuteTest("test_call_c_function");
 }
