@@ -30,7 +30,6 @@ private:
     std::unique_ptr<A> _ctor;
     std::unique_ptr<Dtor<T>> _dtor;
     std::vector<std::unique_ptr<BaseFun>> _funs;
-    std::vector<std::unique_ptr<T>> _instances;
 
     std::string _get_metatable_name() {
         return _name + "_lib";

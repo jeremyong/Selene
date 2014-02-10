@@ -8,7 +8,6 @@ namespace sel {
 template <int N, typename T, typename Ret, typename... Args>
 class ClassFun : public BaseFun {
 private:
-    using _return_type = Ret;
     using _fun_type = std::function<Ret(T*, Args...)>;
     _fun_type _fun;
     std::string _name;
@@ -24,7 +23,7 @@ public:
     ClassFun(lua_State *l,
              const std::string &name,
              const std::string &metatable_name,
-             _return_type(*fun)(Args...))
+             Ret(*fun)(Args...))
         : ClassFun(l, name, _fun_type{fun}) {}
 
     ClassFun(lua_State *l,
@@ -41,17 +40,16 @@ public:
         std::tuple<T*> t = std::make_tuple(_get(l));
         std::tuple<Args...> args = detail::_get_args<Args...>(l);
         std::tuple<T*, Args...> pack = std::tuple_cat(t, args);
-        _return_type value = detail::_lift(_fun, pack);
-        detail::_push(l, std::forward<_return_type>(value));
+        Ret value = detail::_lift(_fun, pack);
+        detail::_push(l, std::forward<Ret>(value));
         return N;
     }
 };
 
-template <typename T, typename Ret, typename... Args>
-class ClassFun<0, T, Ret, Args...> : public BaseFun {
+template <typename T, typename... Args>
+class ClassFun<0, T, void, Args...> : public BaseFun {
 private:
-    using _return_type = Ret;
-    using _fun_type = std::function<Ret(T*, Args...)>;
+    using _fun_type = std::function<void(T*, Args...)>;
     _fun_type _fun;
     std::string _name;
     std::string _metatable_name;
@@ -66,7 +64,7 @@ public:
     ClassFun(lua_State *l,
              const std::string &name,
              const std::string &metatable_name,
-             _return_type(*fun)(Args...))
+             void(*fun)(Args...))
         : ClassFun(l, name, _fun_type{fun}) {}
 
     ClassFun(lua_State *l,

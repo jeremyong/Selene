@@ -8,14 +8,13 @@ namespace sel {
 template <int N, typename Ret, typename... Args>
 class ObjFun : public BaseFun {
 private:
-    using _return_type = Ret;
     using _fun_type = std::function<Ret(Args...)>;
     _fun_type _fun;
 
 public:
     ObjFun(lua_State *l,
            const std::string &name,
-           _return_type(*fun)(Args...))
+           Ret(*fun)(Args...))
         : ObjFun(l, name, _fun_type{fun}) {}
 
     ObjFun(lua_State *l,
@@ -30,23 +29,22 @@ public:
     // this argument is necessary.
     int Apply(lua_State *l) {
         std::tuple<Args...> args = detail::_get_args<Args...>(l);
-        _return_type value = detail::_lift(_fun, args);
-        detail::_push(l, std::forward<_return_type>(value));
+        Ret value = detail::_lift(_fun, args);
+        detail::_push(l, std::forward<Ret>(value));
         return N;
     }
 };
 
-template <typename Ret, typename... Args>
-class ObjFun<0, Ret, Args...> : public BaseFun {
+template <typename... Args>
+class ObjFun<0, void, Args...> : public BaseFun {
 private:
-    using _return_type = Ret;
-    using _fun_type = std::function<Ret(Args...)>;
+    using _fun_type = std::function<void(Args...)>;
     _fun_type _fun;
 
 public:
     ObjFun(lua_State *l,
            const std::string &name,
-           _return_type(*fun)(Args...))
+           void(*fun)(Args...))
         : ObjFun(l, name, _fun_type{fun}) {}
 
     ObjFun(lua_State *l,
