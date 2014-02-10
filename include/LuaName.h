@@ -3,7 +3,7 @@
 #include <string>
 
 extern "C" {
-#include "lua.h"
+#include <lua.h>
 }
 
 namespace sel {

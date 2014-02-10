@@ -8,12 +8,6 @@
 #include <vector>
 #include <stack>
 
-extern "C" {
-#include "lua.h"
-#include "lauxlib.h"
-#include "lualib.h"
-}
-
 namespace sel {
 
 struct BaseClass {

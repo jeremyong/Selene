@@ -10,12 +10,6 @@
 #include "util.h"
 #include <vector>
 
-extern "C" {
-#include "lua.h"
-#include "lauxlib.h"
-#include "lualib.h"
-}
-
 template <typename T, typename... Rest>
 T singular_t();
 

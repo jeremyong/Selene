@@ -6,10 +6,6 @@
 #include <tuple>
 #include "util.h"
 
-extern "C" {
-#include "lua.h"
-}
-
 namespace sel {
 class State;
 class Selector {

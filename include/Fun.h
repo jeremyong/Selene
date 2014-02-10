@@ -1,7 +1,6 @@
 #pragma once
 
 #include "BaseFun.h"
-#include "LuaName.h"
 #include <string>
 
 namespace sel {
