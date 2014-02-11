@@ -4,17 +4,20 @@
 ____/ \___| _| \___| _| _| \___|
 ```
 
-Simple C++11 friendly bindings to Lua.
+Simple C++11 friendly bindings to Lua 5.2+.
 
 ![Lua logo](http://www.lua.org/images/lua-logo.gif)
 
 Note that this library is still in the alpha stages and may undergo
 significant change.
 
-## Building
+## Requirements
 
-The project requires Cmake > v2.8.11 although an older Cmake is likely
-to work and creates a shared library.
+- Cmake 2.8+
+- Lua 5.2+
+- C++11 compliant compiler
+
+## Building
 
 ```
 mkdir build
@@ -25,7 +28,7 @@ make
 
 This will create an `libSelene.so` library that your application can
 link against. Remember to add the `include` directory as well. In
-addition, this will build all tests in the `test` directory. If you
+addition, this will build a `test` executable that you can run. If you
 wish to build a static library, you can do so by supply an option to
 cmake in the above steps like so:
 
