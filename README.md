@@ -266,11 +266,14 @@ sel::State state;
 Foo foo(2);
 
 // Binds the C++ instance foo to a table also called foo in Lua along
-// with two methods bound to fields of that table.
-// The user is not required to bind all methods
+// with the DoubleAdd method and variable x. Binding a member variable
+// will create a getter and setter as illustrated below.
+// The user is not required to bind all members
 state["foo"].SetObj(foo,
                     "double_add", &Foo::DoubleAdd,
-                    "set_x", &Foo::SetX);
+                    "x", &Foo::x);
+
+assert(state["foo"]["x"]() == 2);
 
 state["foo"]["set_x"].Call(4);
 assert(foo.x == 4);
