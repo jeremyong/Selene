@@ -2,6 +2,7 @@
 #include "class_tests.h"
 #include "obj_tests.h"
 #include "interop_tests.h"
+#include "reference_tests.h"
 #include "selector_tests.h"
 #include <map>
 
@@ -56,7 +57,12 @@ static TestMap tests = {
     {"test_pass_pointer", test_pass_pointer},
     {"test_pass_ref", test_pass_ref},
     {"test_freestanding_fun_ref", test_freestanding_fun_ref},
-    {"test_freestanding_fun_ptr", test_freestanding_fun_ptr}
+    {"test_freestanding_fun_ptr", test_freestanding_fun_ptr},
+
+    {"test_function_reference", test_function_reference},
+    {"test_function_in_constructor", test_function_in_constructor},
+    {"test_pass_function_to_lua", test_pass_function_to_lua},
+    {"test_call_returned_lua_function", test_call_returned_lua_function}
 };
 
 // Executes all tests and returns the number of failures.
@@ -107,5 +113,5 @@ int main() {
 
     // For debugging anything in particular, you can run an individual
     //test like so:
-    //ExecuteTest("test_call_c_function");
+    //ExecuteTest("test_function_reference");
 }

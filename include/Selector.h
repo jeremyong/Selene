@@ -1,5 +1,6 @@
 #pragma once
 
+#include "exotics.h"
 #include <functional>
 #include "State.h"
 #include <string>
@@ -128,6 +129,20 @@ public:
     operator unsigned int() const;
     operator lua_Number() const;
     operator std::string() const;
+
+    template <typename R, typename... Args>
+    operator sel::function<R(Args...)>() {
+        _traverse();
+        _get();
+        if (_functor != nullptr) {
+            (*_functor)(1);
+            _functor.reset();
+        }
+        auto ret = detail::_pop(detail::_id<sel::function<R(Args...)>>{},
+                                _state._l);
+        lua_settop(_state._l, 0);
+        return ret;
+    }
 
     // Chaining operators
     Selector operator[](const char *name);

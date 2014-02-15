@@ -50,10 +50,8 @@ Selector::operator bool() const {
 
 Selector::operator int() const {
     _traverse();
-    //std::cout << _name << " " << _state << std::endl;
     _get();
     if (_functor != nullptr) {
-        //std::cout << _name << " " << _state << std::endl;
         (*_functor)(1);
         _functor.reset();
     }

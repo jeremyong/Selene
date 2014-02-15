@@ -170,6 +170,42 @@ assert(result == 10);
 You can also register functor objects, lambdas, and any fully
 qualified `std::function`. See `test/interop_tests.h` for details.
 
+#### Accepting Lua functions as Arguments
+
+To retrieve a Lua function as a callable object in C++, you can use
+the `sel::function` type like so:
+
+```lua
+-- test.lua
+
+function add(a, b)
+    return a+b
+end
+
+function pass_add(x, y)
+    take_fun_arg(add, x, y)
+end
+```
+
+```c++
+int take_fun_arg(sel::function<int(int, int)> fun, int a, int b) {
+    return fun(a, b);
+}
+
+sel::State state;
+state["take_fun_arg"] = &take_fun_arg;
+state.Load("test.lua");
+assert(state["pass_add"](3, 5) == 8)
+```
+
+The `sel::function` type is pretty much identical to the
+`std::function` type excepts it holds a `shared_ptr` to a Lua
+reference. Once all instances of a particular `sel::function` go out
+of scope, the Lua reference will automatically become unbound. Simply
+copying and retaining an instance of a `sel::function` will allow it
+to be callable later. You can also return a `sel::function` which will
+then be callable in C++ or Lua.
+
 ### Running arbitrary code
 
 ```c++

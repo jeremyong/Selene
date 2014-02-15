@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Class.h"
+#include "exotics.h"
 #include "Fun.h"
 #include <iostream>
 #include <memory>
