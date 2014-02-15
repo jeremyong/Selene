@@ -4,7 +4,6 @@
 #include "LuaRef.h"
 #include <memory>
 #include "primitives.h"
-#include "util.h"
 
 namespace sel {
 /*

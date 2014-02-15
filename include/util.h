@@ -1,7 +1,6 @@
 #pragma once
 
 #include <iostream>
-#include "function.h"
 
 extern "C" {
 #include <lua.h>

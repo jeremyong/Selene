@@ -5,7 +5,6 @@
 #include "State.h"
 #include <string>
 #include <tuple>
-#include "util.h"
 
 namespace sel {
 class State;

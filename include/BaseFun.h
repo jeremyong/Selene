@@ -3,7 +3,6 @@
 #include "exotics.h"
 #include <functional>
 #include <tuple>
-#include "util.h"
 
 namespace sel {
 struct BaseFun {

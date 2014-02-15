@@ -5,7 +5,6 @@
 #include <memory>
 #include "State.h"
 #include <string>
-#include "util.h"
 #include <vector>
 
 namespace sel {
