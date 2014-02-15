@@ -5,6 +5,7 @@
 #include "State.h"
 #include <string>
 #include <tuple>
+#include <list>
 
 namespace sel {
 class State;
@@ -17,7 +18,8 @@ private:
     using PFun = std::function<void(Fun)>;
 
     // Traverses the structure up to this element
-    Fun _traverse;
+    std::list<Fun> _traversal;
+
     // Pushes this element to the stack
     Fun _get;
     // Sets this element from a function that pushes a value to the
@@ -29,19 +31,25 @@ private:
     using Functor = std::function<void(int)>;
     mutable std::unique_ptr<Functor> _functor;
 
-    Selector(State &s, Fun traverse, Fun get, PFun put)
-        : _state(s), _traverse(traverse),
+    Selector(const std::string &name, State &s,
+             std::list<Fun> traversal, Fun get, PFun put)
+        : _name(name), _state(s), _traversal{traversal},
           _get(get), _put(put), _functor{nullptr} {}
 
     Selector(State &s, const char *name);
 
-    void _check_create_table();
+    void _check_create_table() const;
+    void _traverse() const {
+        for (auto it = _traversal.begin(); it != _traversal.end(); ++it) {
+            (*it)();
+        }
+    }
 public:
 
     Selector(const Selector &other)
         : _name{other._name},
         _state(other._state),
-        _traverse{other._traverse},
+        _traversal{other._traversal},
         _get{other._get},
         _put{other._put} {}
 
@@ -159,9 +167,12 @@ public:
         return ret;
     }
 
-    // Chaining operators
-    Selector operator[](const char *name);
-    Selector operator[](const int index);
+    // Chaining operators. If the selector is an rvalue, modify in
+    // place. Otherwise, create a new Selector and return it.
+    Selector& operator[](const char *name) &&;
+    Selector& operator[](const int index) &&;
+    Selector operator[](const char *name) const &;
+    Selector operator[](const int index) const &;
 };
 
 inline bool operator==(const Selector &s, const char *c) {

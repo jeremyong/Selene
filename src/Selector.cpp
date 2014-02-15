@@ -1,7 +1,7 @@
 #include "Selector.h"
 
 namespace sel {
-void Selector::_check_create_table() {
+void Selector::_check_create_table() const {
     _traverse();
     _get();
     if (lua_istable(_state._l, -1) == 0 ) { // not table
@@ -17,7 +17,6 @@ void Selector::_check_create_table() {
 
 Selector::Selector(State &s, const char *name)
     : _name(name), _state(s), _functor{nullptr} {
-    _traverse = [](){};
     _get = [this, name]() {
         lua_getglobal(_state._l, name);
     };
@@ -96,13 +95,43 @@ Selector::operator std::string() const {
     return ret;
 }
 
-Selector Selector::operator[](const char *name) {
+Selector &Selector::operator[](const char *name) && {
     _name += std::string(".") + name;
     _check_create_table();
-    Fun traverse = [this]() {
-        _traverse();
-        _get();
+    _traversal.push_back(_get);
+    _get = [this, name]() {
+        lua_getfield(_state._l, -1, name);
     };
+    _put = [this, name](Fun fun) {
+        fun();
+        lua_setfield(_state._l, -2, name);
+        lua_pop(_state._l, 1);
+    };
+    return *this;
+}
+
+Selector &Selector::operator[](const int index) && {
+    _name += std::string(".") + std::to_string(index);
+    _check_create_table();
+    _traversal.push_back(_get);
+    _get = [this, index]() {
+        lua_pushinteger(_state._l, index);
+        lua_gettable(_state._l, -2);
+    };
+    _put = [this, index](Fun fun) {
+        lua_pushinteger(_state._l, index);
+        fun();
+        lua_settable(_state._l, -3);
+        lua_pop(_state._l, 1);
+    };
+    return *this;
+}
+
+Selector Selector::operator[](const char *name) const & {
+    auto n = _name + "." + name;
+    _check_create_table();
+    auto traversal = _traversal;
+    traversal.push_back(_get);
     Fun get = [this, name]() {
         lua_getfield(_state._l, -1, name);
     };
@@ -111,16 +140,14 @@ Selector Selector::operator[](const char *name) {
         lua_setfield(_state._l, -2, name);
         lua_pop(_state._l, 1);
     };
-    return Selector{_state, traverse, get, put};
+    return Selector{n, _state, traversal, get, put};
 }
 
-Selector Selector::operator[](const int index) {
-    _name += std::string(".") + std::to_string(index);
+Selector Selector::operator[](const int index) const & {
+    auto name = _name + "." + std::to_string(index);
     _check_create_table();
-    Fun traverse = [this]() {
-        _traverse();
-        _get();
-    };
+    auto traversal = _traversal;
+    traversal.push_back(_get);
     Fun get = [this, index]() {
         lua_pushinteger(_state._l, index);
         lua_gettable(_state._l, -2);
@@ -131,6 +158,6 @@ Selector Selector::operator[](const int index) {
         lua_settable(_state._l, -3);
         lua_pop(_state._l, 1);
     };
-    return Selector{_state, traverse, get, put};
+    return Selector{name, _state, traversal, get, put};
 }
 }

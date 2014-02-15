@@ -114,5 +114,5 @@ int main() {
 
     // For debugging anything in particular, you can run an individual
     //test like so:
-    //ExecuteTest("test_call_multivalue_lua_function");
+    //ExecuteTest("test_call_field");
 }
