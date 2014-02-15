@@ -62,7 +62,8 @@ static TestMap tests = {
     {"test_function_reference", test_function_reference},
     {"test_function_in_constructor", test_function_in_constructor},
     {"test_pass_function_to_lua", test_pass_function_to_lua},
-    {"test_call_returned_lua_function", test_call_returned_lua_function}
+    {"test_call_returned_lua_function", test_call_returned_lua_function},
+    {"test_call_multivalue_lua_function", test_call_multivalue_lua_function}
 };
 
 // Executes all tests and returns the number of failures.
@@ -113,5 +114,5 @@ int main() {
 
     // For debugging anything in particular, you can run an individual
     //test like so:
-    //ExecuteTest("test_function_reference");
+    //ExecuteTest("test_call_multivalue_lua_function");
 }

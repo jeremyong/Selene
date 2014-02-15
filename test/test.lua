@@ -6,7 +6,7 @@ function add(a, b)
 end
 
 function sum_and_difference(a, b)
-   return (a+b), (a-b);
+   return (a+b), (a-b)
 end
 
 function bar()

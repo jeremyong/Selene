@@ -63,13 +63,13 @@ private:
     LuaRef _ref;
     lua_State *_state;
 public:
-    function(int ref, lua_State *state) : _ref(ref), _state(state) {}
+    function(int ref, lua_State *state) : _ref(state, ref), _state(state) {}
 
     std::tuple<R...> operator()(Args... args) {
         _ref.Push(_state);
         detail::_push_n(_state, args...);
         constexpr int num_args = sizeof...(Args);
-        constexpr int num_ret = sizeof...(Args);
+        constexpr int num_ret = sizeof...(R);
         lua_call(_state, num_args, num_ret);
         return detail::_pop_n_reset<R...>(_state);
     }

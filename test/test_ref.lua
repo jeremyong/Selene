@@ -29,3 +29,7 @@ end
 function bar()
    test = "bar"
 end
+
+function return_two()
+   return 1, 2
+end
