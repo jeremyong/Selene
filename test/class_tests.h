@@ -92,9 +92,9 @@ bool test_class_gc(sel::State &state) {
     gc_counter = 0;
     state["GCTest"].SetClass<GCTest>();
     state.Load("../test/test_gc.lua");
-    state["make_ten"].Call();
+    state["make_ten"]();
     bool check1 = gc_counter == 10;
-    state["destroy_ten"].Call();
+    state["destroy_ten"]();
     state.ForceGC();
     bool check2 = gc_counter == 0;
     return check1 && check2;

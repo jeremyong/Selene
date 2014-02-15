@@ -12,7 +12,7 @@ void no_return() {
 
 bool test_function_no_args(sel::State &state) {
     state.Load("../test/test.lua");
-    state["foo"].Call();
+    state["foo"]();
     return true;
 }
 
@@ -59,7 +59,7 @@ bool test_call_c_fun_from_lua(sel::State &state) {
 
 bool test_no_return(sel::State &state) {
     state["no_return"] = &no_return;
-    state["no_return"].Call();
+    state["no_return"]();
     return true;
 }
 

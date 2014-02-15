@@ -38,6 +38,22 @@ private:
     void _check_create_table();
 public:
 
+    Selector(const Selector &other)
+        : _name{other._name},
+        _state(other._state),
+        _traverse{other._traverse},
+        _get{other._get},
+        _put{other._put} {}
+
+    ~Selector() {
+        // If there is a functor present, execute it and collect no args
+        if (_functor != nullptr) {
+            _traverse();
+            _get();
+            (*_functor)(0);
+        }
+    }
+
     // Allow automatic casting when used in comparisons
     bool operator==(Selector &other) = delete;
 

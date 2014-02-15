@@ -113,7 +113,7 @@ sel::State state;
 state.Load("/path/to/test.lua");
 
 // Call function with no arguments or returns
-state["foo"].Call();
+state["foo"]();
 
 // Call function with two arguments that returns an int
 // The type parameter can be one of int, lua_Number, std::string,
@@ -140,12 +140,7 @@ statement like `int answer = state["add"](5, 2)`, then the invocation
 of the function will occur. This is short hand for
 `int answer = state["add"].Call<int>(5, 2)`.
 
-Note that `Call`, unlike
-`operator()`, will in fact execute the statement immediately and
-return. This is because the return types are given to `Call` as a
-template function. Without actually performing a cast, `operator()`
-has no way to know how many values to retrieve and what types to
-retrieve them as. Note that multi-value returns must have `sel::tie`
+Note that multi-value returns must have `sel::tie`
 on the LHS and not `std::tie`. This will create a `sel::Tuple` as
 opposed to an `std::tuple` which has the `operator=` implemented for
 the selector type.
@@ -311,7 +306,7 @@ state["foo"].SetObj(foo,
 
 assert(state["foo"]["x"]() == 2);
 
-state["foo"]["set_x"].Call(4);
+state["foo"]["set_x"](4);
 assert(foo.x == 4);
 
 int result = state["foo"]["double_add"](3);
