@@ -1,7 +1,6 @@
 #pragma once
 
 #include "function.h"
-#include "primitives.h"
 
 /*
  * Extends manipulation of primitives on the stack with more exotic
@@ -25,7 +24,7 @@ inline sel::function<R(Args...)> _get(_id<sel::function<R(Args...)>> id,
 }
 
 template <typename R, typename... Args>
-void _push(lua_State *l, sel::function<R(Args...)> fun) {
+inline void _push(lua_State *l, sel::function<R(Args...)> fun) {
     fun.Push(l);
 }
 
