@@ -169,8 +169,8 @@ public:
 
     // Chaining operators. If the selector is an rvalue, modify in
     // place. Otherwise, create a new Selector and return it.
-    Selector& operator[](const char *name) &&;
-    Selector& operator[](const int index) &&;
+    Selector&& operator[](const char *name) &&;
+    Selector&& operator[](const int index) &&;
     Selector operator[](const char *name) const &;
     Selector operator[](const int index) const &;
 };

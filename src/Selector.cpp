@@ -95,7 +95,7 @@ Selector::operator std::string() const {
     return ret;
 }
 
-Selector &Selector::operator[](const char *name) && {
+Selector&& Selector::operator[](const char *name) && {
     _name += std::string(".") + name;
     _check_create_table();
     _traversal.push_back(_get);
@@ -107,10 +107,10 @@ Selector &Selector::operator[](const char *name) && {
         lua_setfield(_state._l, -2, name);
         lua_pop(_state._l, 1);
     };
-    return *this;
+    return std::move(*this);
 }
 
-Selector &Selector::operator[](const int index) && {
+Selector&& Selector::operator[](const int index) && {
     _name += std::string(".") + std::to_string(index);
     _check_create_table();
     _traversal.push_back(_get);
@@ -124,7 +124,7 @@ Selector &Selector::operator[](const int index) && {
         lua_settable(_state._l, -3);
         lua_pop(_state._l, 1);
     };
-    return *this;
+    return std::move(*this);
 }
 
 Selector Selector::operator[](const char *name) const & {
