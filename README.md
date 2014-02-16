@@ -4,6 +4,8 @@
 ____/ \___| _| \___| _| _| \___|
 ```
 
+# Selene
+
 Simple C++11 friendly bindings to Lua 5.2+.
 
 ![Lua logo](http://www.lua.org/images/lua-logo.gif)
@@ -76,7 +78,7 @@ If you access the same element frequently, it is recommended that you
 cache the selector for fast access later like so:
 
 ```c++
-auto bar3 = state["bar"][3]; // foo has type sel::Selector
+auto bar3 = state["bar"][3]; // bar3 has type sel::Selector
 bar3 = 4;
 bar3 = 6;
 std::cout << int(bar3) << std::endl;
