@@ -5,7 +5,7 @@
 #include "State.h"
 #include <string>
 #include <tuple>
-#include <list>
+#include <vector>
 
 namespace sel {
 class State;
@@ -18,7 +18,7 @@ private:
     using PFun = std::function<void(Fun)>;
 
     // Traverses the structure up to this element
-    std::list<Fun> _traversal;
+    std::vector<Fun> _traversal;
 
     // Pushes this element to the stack
     Fun _get;
@@ -32,7 +32,7 @@ private:
     mutable std::unique_ptr<Functor> _functor;
 
     Selector(const std::string &name, State &s,
-             std::list<Fun> traversal, Fun get, PFun put)
+             std::vector<Fun> traversal, Fun get, PFun put)
         : _name(name), _state(s), _traversal{traversal},
           _get(get), _put(put), _functor{nullptr} {}
 
@@ -40,8 +40,8 @@ private:
 
     void _check_create_table() const;
     void _traverse() const {
-        for (auto it = _traversal.begin(); it != _traversal.end(); ++it) {
-            (*it)();
+        for (auto &fun : _traversal) {
+            fun();
         }
     }
 public:
