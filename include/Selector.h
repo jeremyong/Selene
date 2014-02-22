@@ -2,7 +2,7 @@
 
 #include "exotics.h"
 #include <functional>
-#include "State.h"
+#include "Registry.h"
 #include <string>
 #include <tuple>
 #include <vector>
@@ -10,10 +10,11 @@
 namespace sel {
 class State;
 class Selector {
-private:
     friend class State;
+private:
+    lua_State *_state;
+    Registry &_registry;
     std::string _name;
-    State &_state;
     using Fun = std::function<void()>;
     using PFun = std::function<void(Fun)>;
 
@@ -31,14 +32,36 @@ private:
     using Functor = std::function<void(int)>;
     mutable std::unique_ptr<Functor> _functor;
 
-    Selector(const std::string &name, State &s,
+    Selector(lua_State *s, Registry &r, const std::string &name,
              std::vector<Fun> traversal, Fun get, PFun put)
-        : _name(name), _state(s), _traversal{traversal},
+        : _state(s), _registry(r), _name(name), _traversal{traversal},
           _get(get), _put(put), _functor{nullptr} {}
 
-    Selector(State &s, const char *name);
+    Selector(lua_State *s, Registry &r, const char *name)
+        : _state(s), _registry(r), _name(name), _functor{nullptr} {
+        _get = [this, name]() {
+            lua_getglobal(_state, name);
+        };
+        _put = [this, name](Fun fun) {
+            fun();
+            lua_setglobal(_state, name);
+        };
+    }
 
-    void _check_create_table() const;
+    void _check_create_table() const {
+        _traverse();
+        _get();
+        if (lua_istable(_state, -1) == 0 ) { // not table
+            lua_pop(_state, 1); // flush the stack
+            auto put = [this]() {
+                lua_newtable(_state);
+            };
+            _put(put);
+        } else {
+            lua_pop(_state, 1);
+        }
+    }
+
     void _traverse() const {
         for (auto &fun : _traversal) {
             fun();
@@ -47,8 +70,9 @@ private:
 public:
 
     Selector(const Selector &other)
-        : _name{other._name},
-        _state(other._state),
+        : _state(other._state),
+          _registry(other._registry),
+          _name{other._name},
         _traversal{other._traversal},
         _get{other._get},
         _put{other._put} {}
@@ -70,8 +94,8 @@ public:
         auto tuple_args = std::make_tuple(std::forward<Args>(args)...);
         constexpr int num_args = sizeof...(Args);
         auto tmp = new Functor([this, tuple_args, num_args](int num_ret) {
-                detail::_push(_state._l, tuple_args);
-                lua_call(_state._l, num_args, num_ret);
+                detail::_push(_state, tuple_args);
+                lua_call(_state, num_args, num_ret);
             });
         _functor.reset(std::move(tmp));
         return *this;
@@ -82,19 +106,19 @@ public:
     Call(Args&&... args) const {
         _traverse();
         _get();
-        detail::_push_n(_state._l, std::forward<Args>(args)...);
-        lua_call(_state._l, sizeof...(Args), sizeof...(Ret));
-        return detail::_pop_n_reset<Ret...>(_state._l);
+        detail::_push_n(_state, std::forward<Args>(args)...);
+        lua_call(_state, sizeof...(Args), sizeof...(Ret));
+        return detail::_pop_n_reset<Ret...>(_state);
     }
 
     template <typename T>
     void operator=(T t) const {
         _traverse();
         auto push = [this, t]() {
-            detail::_push(_state._l, t);
+            detail::_push(_state, t);
         };
         _put(push);
-        lua_settop(_state._l, 0);
+        lua_settop(_state, 0);
     }
 
     template <typename T, typename... Funs>
@@ -102,10 +126,10 @@ public:
         _traverse();
         auto fun_tuple = std::make_tuple(funs...);
         auto push = [this, &t, &fun_tuple]() {
-            _state.Register(t, fun_tuple);
+            _registry.Register(t, fun_tuple);
         };
         _put(push);
-        lua_settop(_state._l, 0);
+        lua_settop(_state, 0);
     }
 
     template <typename T, typename... Args, typename... Funs>
@@ -114,17 +138,17 @@ public:
         auto fun_tuple = std::make_tuple(funs...);
         auto push = [this, &fun_tuple]() {
             typename detail::_indices_builder<sizeof...(Funs)>::type d;
-            _state.RegisterClass<T, Args...>(_name, fun_tuple, d);
+            _registry.RegisterClass<T, Args...>(_name, fun_tuple, d);
         };
         _put(push);
-        lua_settop(_state._l, 0);
+        lua_settop(_state, 0);
     }
 
     template <typename Ret, typename... Args>
     void operator=(std::function<Ret(Args...)> fun) {
         _traverse();
         auto push = [this, fun]() {
-            _state.Register(fun);
+            _registry.Register(fun);
         };
         _put(push);
     }
@@ -133,25 +157,83 @@ public:
     void operator=(Ret (*fun)(Args...)) {
         _traverse();
         auto push = [this, fun]() {
-            _state.Register(fun);
+            _registry.Register(fun);
         };
         _put(push);
     }
 
-    void operator=(const char *s) const;
+    void operator=(const char *s) const {
+        _traverse();
+        auto push = [this, s]() {
+            detail::_push(_state, std::string{s});
+        };
+        _put(push);
+        lua_settop(_state, 0);
+    }
 
     template <typename... Ret>
     std::tuple<Ret...> GetTuple() const {
         _traverse();
         _get();
         (*_functor)(sizeof...(Ret));
-        return detail::_pop_n_reset<Ret...>(_state._l);
+        return detail::_pop_n_reset<Ret...>(_state);
     }
-    operator bool() const;
-    operator int() const;
-    operator unsigned int() const;
-    operator lua_Number() const;
-    operator std::string() const;
+
+    operator bool() const {
+        _traverse();
+        _get();
+        if (_functor != nullptr) {
+            (*_functor)(1);
+            _functor.reset();
+        }
+        auto ret = detail::_pop(detail::_id<bool>{}, _state);
+        lua_settop(_state, 0);
+        return ret;
+    }
+    operator int() const {
+        _traverse();
+        _get();
+        if (_functor != nullptr) {
+            (*_functor)(1);
+            _functor.reset();
+        }
+        auto ret = detail::_pop(detail::_id<int>{}, _state);
+        lua_settop(_state, 0);
+        return ret;
+    }
+    operator unsigned int() const {
+        _traverse();
+        _get();
+        if (_functor != nullptr) {
+            (*_functor)(1);
+            _functor.reset();
+        }
+        auto ret = detail::_pop(detail::_id<unsigned int>{}, _state);
+        lua_settop(_state, 0);
+        return ret;
+    }
+    operator lua_Number() const {
+        _traverse();
+        _get();
+        if (_functor != nullptr) {
+            (*_functor)(1);
+            _functor.reset();
+        }
+        auto ret = detail::_pop(detail::_id<lua_Number>{}, _state);
+        lua_settop(_state, 0);
+        return ret;
+    }
+    operator std::string() const {
+        _traverse();
+        _get();
+        if (_functor != nullptr) {
+            (*_functor)(1);
+            _functor.reset();
+        }
+        auto ret =  detail::_pop(detail::_id<std::string>{}, _state);
+        lua_settop(_state, 0);
+        return ret;
+    }
 
     template <typename R, typename... Args>
     operator sel::function<R(Args...)>() {
@@ -162,17 +244,75 @@ public:
             _functor.reset();
         }
         auto ret = detail::_pop(detail::_id<sel::function<R(Args...)>>{},
-                                _state._l);
-        lua_settop(_state._l, 0);
+                                _state);
+        lua_settop(_state, 0);
         return ret;
     }
 
     // Chaining operators. If the selector is an rvalue, modify in
     // place. Otherwise, create a new Selector and return it.
-    Selector&& operator[](const char *name) &&;
-    Selector&& operator[](const int index) &&;
-    Selector operator[](const char *name) const &;
-    Selector operator[](const int index) const &;
+    Selector&& operator[](const char *name) && {
+        _name += std::string(".") + name;
+        _check_create_table();
+        _traversal.push_back(_get);
+        _get = [this, name]() {
+            lua_getfield(_state, -1, name);
+        };
+        _put = [this, name](Fun fun) {
+            fun();
+            lua_setfield(_state, -2, name);
+            lua_pop(_state, 1);
+        };
+        return std::move(*this);
+    }
+    Selector&& operator[](const int index) && {
+        _name += std::string(".") + std::to_string(index);
+        _check_create_table();
+        _traversal.push_back(_get);
+        _get = [this, index]() {
+            lua_pushinteger(_state, index);
+            lua_gettable(_state, -2);
+        };
+        _put = [this, index](Fun fun) {
+            lua_pushinteger(_state, index);
+            fun();
+            lua_settable(_state, -3);
+            lua_pop(_state, 1);
+        };
+        return std::move(*this);
+    }
+    Selector operator[](const char *name) const & {
+        auto n = _name + "." + name;
+        _check_create_table();
+        auto traversal = _traversal;
+        traversal.push_back(_get);
+        Fun get = [this, name]() {
+            lua_getfield(_state, -1, name);
+        };
+        PFun put = [this, name](Fun fun) {
+            fun();
+            lua_setfield(_state, -2, name);
+            lua_pop(_state, 1);
+        };
+        return Selector{_state, _registry, n, traversal, get, put};
+    }
+    Selector operator[](const int index) const & {
+        auto name = _name + "." + std::to_string(index);
+        _check_create_table();
+        auto traversal = _traversal;
+        traversal.push_back(_get);
+        Fun get = [this, index]() {
+            lua_pushinteger(_state, index);
+            lua_gettable(_state, -2);
+        };
+        PFun put = [this, index](Fun fun) {
+            lua_pushinteger(_state, index);
+            fun();
+            lua_settable(_state, -3);
+            lua_pop(_state, 1);
+        };
+        return Selector{_state, _registry, name, traversal, get, put};
+    }
 };
 
 inline bool operator==(const Selector &s, const char *c) {

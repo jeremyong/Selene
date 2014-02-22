@@ -177,11 +177,29 @@ T _pop(_id<T> t, lua_State *l) {
 /* Setters */
 
 inline void _push(lua_State *l) {}
-void _push(lua_State *l, bool value);
-void _push(lua_State *l, int value);
-void _push(lua_State *l, unsigned int value);
-void _push(lua_State *l, lua_Number value);
-void _push(lua_State *l, const std::string &value);
+void _push(lua_State *l, bool b) {
+    lua_pushboolean(l, b);
+}
+
+void _push(lua_State *l, int i) {
+    lua_pushinteger(l, i);
+}
+
+void _push(lua_State *l, unsigned int u) {
+    lua_pushunsigned(l, u);
+}
+
+void _push(lua_State *l, lua_Number f) {
+    lua_pushnumber(l, f);
+}
+
+void _push(lua_State *l, const std::string &s) {
+    lua_pushlstring(l, s.c_str(), s.size());
+}
+
+void _push(lua_State *l, const char *s) {
+    lua_pushstring(l, s);
+}
 
 template <typename T>
 void _set(lua_State *l, T &&value, const int index) {

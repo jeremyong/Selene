@@ -6,7 +6,7 @@ ____/ \___| _| \___| _| _| \___|
 
 # Selene
 
-Simple C++11 friendly bindings to Lua 5.2+.
+Simple C++11 friendly header-only bindings to Lua 5.2+.
 
 ![Lua logo](http://www.lua.org/images/lua-logo.gif)
 
@@ -19,7 +19,12 @@ significant change.
 - Lua 5.2+
 - C++11 compliant compiler
 
-## Building
+## Usage
+
+Selene is a headers-only library so you just need to include
+"selene.h" to use this project.
+
+To build the tests, do the following:
 
 ```
 mkdir build
@@ -28,15 +33,7 @@ cmake ..
 make
 ```
 
-This will create an `libSelene.so` library that your application can
-link against. Remember to add the `include` directory as well. In
-addition, this will build a `test` executable that you can run. If you
-wish to build a static library, you can do so by supply an option to
-cmake in the above steps like so:
-
-```
-cmake -DBUILD_SHARED_LIBS=off ..
-```
+This will build a `test` executable that you can run.
 
 ## Usage
 
