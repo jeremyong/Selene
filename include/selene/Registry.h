@@ -7,6 +7,15 @@
 #include <vector>
 
 namespace sel {
+namespace detail {
+template <typename T>
+struct lambda_traits : public lambda_traits<decltype(&T::operator())> {};
+
+template <typename T, typename Ret, typename... Args>
+struct lambda_traits<Ret(T::*)(Args...) const> {
+    using Fun = std::function<Ret(Args...)>;
+};
+}
 class Registry {
 private:
     std::vector<std::unique_ptr<BaseFun>> _funs;
@@ -15,6 +24,11 @@ private:
     lua_State *_state;
 public:
     Registry(lua_State *state) : _state(state) {}
+
+    template <typename L>
+    void Register(L lambda) {
+        Register((typename detail::lambda_traits<L>::Fun)(lambda));
+    }
 
     template <typename Ret, typename... Args>
     void Register(std::function<Ret(Args...)> fun) {

@@ -84,6 +84,7 @@ public:
             _get();
             (*_functor)(0);
         }
+        lua_settop(_state, 0);
     }
 
     // Allow automatic casting when used in comparisons
@@ -101,34 +102,57 @@ public:
         return *this;
     }
 
-    template <typename T>
-    void operator=(T t) const {
+    template <typename L>
+    void operator=(L lambda) const {
         _traverse();
-        auto push = [this, t]() {
-            detail::_push(_state, t);
+        auto push = [this, lambda]() {
+            _registry.Register(lambda);
         };
         _put(push);
         lua_settop(_state, 0);
     }
 
-    template <typename T, typename... Funs>
-    void SetObj(T &t, Funs... funs) {
+
+    void operator=(bool b) const {
         _traverse();
-        auto fun_tuple = std::make_tuple(funs...);
-        auto push = [this, &t, &fun_tuple]() {
-            _registry.Register(t, fun_tuple);
+        auto push = [this, b]() {
+            detail::_push(_state, b);
         };
         _put(push);
         lua_settop(_state, 0);
     }
 
-    template <typename T, typename... Args, typename... Funs>
-    void SetClass(Funs... funs) {
+    void operator=(int i) const {
         _traverse();
-        auto fun_tuple = std::make_tuple(funs...);
-        auto push = [this, &fun_tuple]() {
-            typename detail::_indices_builder<sizeof...(Funs)>::type d;
-            _registry.RegisterClass<T, Args...>(_name, fun_tuple, d);
+        auto push = [this, i]() {
+            detail::_push(_state, i);
+        };
+        _put(push);
+        lua_settop(_state, 0);
+    }
+
+    void operator=(unsigned int i) const {
+        _traverse();
+        auto push = [this, i]() {
+            detail::_push(_state, i);
+        };
+        _put(push);
+        lua_settop(_state, 0);
+    }
+
+    void operator=(lua_Number n) const {
+        _traverse();
+        auto push = [this, n]() {
+            detail::_push(_state, n);
+        };
+        _put(push);
+        lua_settop(_state, 0);
+    }
+
+    void operator=(const std::string &s) const {
+        _traverse();
+        auto push = [this, s]() {
+            detail::_push(_state, s);
         };
         _put(push);
         lua_settop(_state, 0);
@@ -156,6 +180,29 @@ public:
         _traverse();
         auto push = [this, s]() {
             detail::_push(_state, std::string{s});
+        };
+        _put(push);
+        lua_settop(_state, 0);
+    }
+
+    template <typename T, typename... Funs>
+    void SetObj(T &t, Funs... funs) {
+        _traverse();
+        auto fun_tuple = std::make_tuple(funs...);
+        auto push = [this, &t, &fun_tuple]() {
+            _registry.Register(t, fun_tuple);
+        };
+        _put(push);
+        lua_settop(_state, 0);
+    }
+
+    template <typename T, typename... Args, typename... Funs>
+    void SetClass(Funs... funs) {
+        _traverse();
+        auto fun_tuple = std::make_tuple(funs...);
+        auto push = [this, &fun_tuple]() {
+            typename detail::_indices_builder<sizeof...(Funs)>::type d;
+            _registry.RegisterClass<T, Args...>(_name, fun_tuple, d);
         };
         _put(push);
         lua_settop(_state, 0);

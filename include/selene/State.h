@@ -35,7 +35,9 @@ public:
         other._l = nullptr;
     }
     ~State() {
-        if (_l != nullptr) lua_close(_l);
+        if (_l != nullptr) {
+            lua_close(_l);
+        }
         _l = nullptr;
     }
 

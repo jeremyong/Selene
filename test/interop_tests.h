@@ -63,10 +63,17 @@ bool test_no_return(sel::State &state) {
     return true;
 }
 
-bool test_call_lambda(sel::State &state) {
+bool test_call_std_fun(sel::State &state) {
     state.Load("../test/test.lua");
     std::function<int(int, int)> mult = [](int x, int y){ return x * y; };
     state["cmultiply"] = mult;
+    int answer = state["cmultiply"](5, 6);
+    return answer == 30;
+}
+
+bool test_call_lambda(sel::State &state) {
+    state.Load("../test/test.lua");
+    state["cmultiply"] = [](int x, int y){ return x * y; };
     int answer = state["cmultiply"](5, 6);
     return answer == 30;
 }

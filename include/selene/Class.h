@@ -85,8 +85,8 @@ public:
     Class(lua_State *state, const std::string &name,
           Members... members) : _name(name) {
         luaL_newmetatable(state, _get_metatable_name().c_str());
-        _register_ctor(state);
         _register_dtor(state);
+        _register_ctor(state);
         _register_members(state, members...);
         lua_pushvalue(state, -1);
         lua_setfield(state, -1, "__index");
