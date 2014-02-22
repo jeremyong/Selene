@@ -130,3 +130,11 @@ bool test_embedded_nulls(sel::State &state) {
     std::string result = state["embedded_nulls"]();
     return result.size() == 4;
 }
+
+bool test_coroutine(sel::State &state) {
+    state.Load("../test/test.lua");
+    bool check1 = state["resume_co"]() == 1;
+    bool check2 = state["resume_co"]() == 2;
+    bool check3 = state["resume_co"]() == 3;
+    return check1 && check2 && check3;
+}

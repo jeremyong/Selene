@@ -45,3 +45,16 @@ my_table["nested"] = nested_table
 
 global1 = 5
 global2 = 5
+
+function resumable()
+   coroutine.yield(1)
+   coroutine.yield(2)
+   return 3
+end
+
+co = coroutine.create(resumable)
+
+function resume_co()
+   ran, value = coroutine.resume(co)
+   return value
+end

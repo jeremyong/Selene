@@ -27,6 +27,7 @@ static TestMap tests = {
     {"test_multivalue_c_fun_return", test_multivalue_c_fun_return},
     {"test_multivalue_c_fun_from_lua", test_multivalue_c_fun_from_lua},
     {"test_embedded_nulls", test_embedded_nulls},
+    {"test_coroutine", test_coroutine},
 
     {"test_register_obj", test_register_obj},
     {"test_register_obj_member_variable", test_register_obj_member_variable},
