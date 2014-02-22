@@ -101,16 +101,6 @@ public:
         return *this;
     }
 
-    template <typename... Ret, typename... Args>
-    typename detail::_pop_n_impl<sizeof...(Ret), Ret...>::type
-    Call(Args&&... args) const {
-        _traverse();
-        _get();
-        detail::_push_n(_state, std::forward<Args>(args)...);
-        lua_call(_state, sizeof...(Args), sizeof...(Ret));
-        return detail::_pop_n_reset<Ret...>(_state);
-    }
-
     template <typename T>
     void operator=(T t) const {
         _traverse();

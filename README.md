@@ -131,14 +131,6 @@ result = state["mytable"]["foo"]();
 assert(result == 4);
 ```
 
-Generally, the `operator()` implemenation *does not* actually execute
-the function call until a typecast occurs. In otherwords, the actual
-type of something like `state["add"](5, 2)` is still a
-`sel::Selector`. However, if the `Selector` is then typecast, as in a
-statement like `int answer = state["add"](5, 2)`, then the invocation
-of the function will occur. This is short hand for
-`int answer = state["add"].Call<int>(5, 2)`.
-
 Note that multi-value returns must have `sel::tie`
 on the LHS and not `std::tie`. This will create a `sel::Tuple` as
 opposed to an `std::tuple` which has the `operator=` implemented for
