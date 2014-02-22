@@ -10,8 +10,7 @@ Simple C++11 friendly header-only bindings to Lua 5.2+.
 
 ![Lua logo](http://www.lua.org/images/lua-logo.gif)
 
-Note that this library is still in the alpha stages and may undergo
-significant change.
+[![Support via Gittip](https://rawgithub.com/twolfson/gittip-badge/0.2.0/dist/gittip.png)](https://www.gittip.com/jeremyong/)
 
 ## Requirements
 
