@@ -52,7 +52,7 @@ public:
     void Push() {} // Base case
     
     void OpenLib(const std::string& modname, lua_CFunction openf) {
-        luaL_requireF(_l, modname, openf, 0);
+        luaL_requiref(_l, modname, openf, 1);
     }
 
     template <typename T, typename... Ts>
