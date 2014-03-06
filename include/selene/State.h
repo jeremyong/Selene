@@ -48,6 +48,10 @@ public:
     bool Load(const std::string &file) {
         return !luaL_dofile(_l, file.c_str());
     }
+    
+    void OpenLib(const std::string& modname, lua_CFunction openf) {
+        luaL_requiref(_l, modname, openf, 1);
+    }
 
     void Push() {} // Base case
 
