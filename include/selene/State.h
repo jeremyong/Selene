@@ -50,6 +50,10 @@ public:
     }
 
     void Push() {} // Base case
+    
+    void OpenLib(const std::string& modname, lua_CFunction openf) {
+        luaL_requiref(_l, modname, openf, 1);
+    }
 
     template <typename T, typename... Ts>
     void Push(T &&value, Ts&&... values) {
