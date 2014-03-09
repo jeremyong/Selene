@@ -16,6 +16,31 @@ extern "C" {
 namespace sel {
 namespace detail {
 
+template <typename T>
+struct is_primitive {
+    static constexpr bool value = false;
+};
+template <>
+struct is_primitive<int> {
+    static constexpr bool value = true;
+};
+template <>
+struct is_primitive<unsigned int> {
+    static constexpr bool value = true;
+};
+template <>
+struct is_primitive<bool> {
+    static constexpr bool value = true;
+};
+template <>
+struct is_primitive<lua_Number> {
+    static constexpr bool result = true;
+};
+template <>
+struct is_primitive<std::string> {
+    static constexpr bool value = true;
+};
+
 /* getters */
 template <typename T>
 inline T* _get(_id<T*>, lua_State *l, const int index) {
@@ -24,6 +49,8 @@ inline T* _get(_id<T*>, lua_State *l, const int index) {
 
 template <typename T>
 inline T& _get(_id<T&>, lua_State *l, const int index) {
+    static_assert(!is_primitive<T>::value,
+                  "Reference types must not be primitives.");
     return **(T **)lua_topointer(l, index);
 }
 
@@ -56,6 +83,8 @@ inline T* _check_get(_id<T*>, lua_State *l, const int index) {
 
 template <typename T>
 inline T& _check_get(_id<T&>, lua_State *l, const int index) {
+    static_assert(!is_primitive<T>::value,
+                  "Reference types must not be primitives.");
     return **(T **)lua_topointer(l, index);
 };
 
