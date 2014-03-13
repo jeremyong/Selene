@@ -50,7 +50,7 @@ public:
     }
     
     void OpenLib(const std::string& modname, lua_CFunction openf) {
-        luaL_requiref(_l, modname, openf, 1);
+        luaL_requiref(_l, modname.c_str(), openf, 1);
     }
 
     void Push() {} // Base case
