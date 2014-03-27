@@ -324,3 +324,7 @@ The following features are planned, although nothing is guaranteed:
 - Object lifetime handling
 - Smarter Lua module loading
 - Hooks for module reloading
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/jeremyong/selene/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
