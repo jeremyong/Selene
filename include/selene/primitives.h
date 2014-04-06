@@ -206,32 +206,32 @@ T _pop(_id<T> t, lua_State *l) {
 /* Setters */
 
 inline void _push(lua_State *l) {}
-void _push(lua_State *l, bool b) {
+inline void _push(lua_State *l, bool b) {
     lua_pushboolean(l, b);
 }
 
-void _push(lua_State *l, int i) {
+inline void _push(lua_State *l, int i) {
     lua_pushinteger(l, i);
 }
 
-void _push(lua_State *l, unsigned int u) {
+inline void _push(lua_State *l, unsigned int u) {
     lua_pushunsigned(l, u);
 }
 
-void _push(lua_State *l, lua_Number f) {
+inline void _push(lua_State *l, lua_Number f) {
     lua_pushnumber(l, f);
 }
 
-void _push(lua_State *l, const std::string &s) {
+inline void _push(lua_State *l, const std::string &s) {
     lua_pushlstring(l, s.c_str(), s.size());
 }
 
-void _push(lua_State *l, const char *s) {
+inline void _push(lua_State *l, const char *s) {
     lua_pushstring(l, s);
 }
 
 template <typename T>
-void _set(lua_State *l, T &&value, const int index) {
+inline void _set(lua_State *l, T &&value, const int index) {
     _push(l, std::forward<T>(value));
     lua_replace(l, index);
 }
@@ -239,13 +239,13 @@ void _set(lua_State *l, T &&value, const int index) {
 inline void _push_n(lua_State *) {}
 
 template <typename T, typename... Rest>
-void _push_n(lua_State *l, T value, Rest... rest) {
+inline void _push_n(lua_State *l, T value, Rest... rest) {
     _push(l, std::forward<T>(value));
     _push_n(l, rest...);
 }
 
 template <typename... T, std::size_t... N>
-void _push_dispatcher(lua_State *l,
+inline void _push_dispatcher(lua_State *l,
                       const std::tuple<T...> &values,
                       _indices<N...>) {
     _push_n(l, std::get<N>(values)...);
@@ -254,7 +254,7 @@ void _push_dispatcher(lua_State *l,
 inline void _push(lua_State *l, std::tuple<>) {}
 
 template <typename... T>
-void _push(lua_State *l, const std::tuple<T...> &values) {
+inline void _push(lua_State *l, const std::tuple<T...> &values) {
     constexpr int num_values = sizeof...(T);
     _push_dispatcher(l, values,
                      typename _indices_builder<num_values>::type());
