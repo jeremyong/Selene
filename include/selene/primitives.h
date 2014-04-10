@@ -55,7 +55,7 @@ inline T& _get(_id<T&>, lua_State *l, const int index) {
 }
 
 inline bool _get(_id<bool>, lua_State *l, const int index) {
-    return lua_toboolean(l, index);
+    return lua_toboolean(l, index) != 0;
 }
 
 inline int _get(_id<int>, lua_State *l, const int index) {
@@ -101,7 +101,7 @@ inline lua_Number _check_get(_id<lua_Number>, lua_State *l, const int index) {
 }
 
 inline bool _check_get(_id<bool>, lua_State *l, const int index) {
-    return lua_toboolean(l, index);
+    return lua_toboolean(l, index) != 0;
 }
 
 inline std::string _check_get(_id<std::string>, lua_State *l, const int index) {
