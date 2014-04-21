@@ -100,6 +100,10 @@ inline lua_Number _check_get(_id<lua_Number>, lua_State *l, const int index) {
     return luaL_checknumber(l, index);
 }
 
+inline float _check_get(_id<float>, lua_State *l, const int index) {
+	return luaL_checknumber(l, index);
+}
+
 inline bool _check_get(_id<bool>, lua_State *l, const int index) {
     return lua_toboolean(l, index) != 0;
 }
