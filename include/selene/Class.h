@@ -69,6 +69,19 @@ private:
             new ClassFun<arity, T, Ret, Args...>
             {state, std::string(fun_name), _get_metatable_name(), lambda});
     }
+    
+    template <typename Ret, typename... Args>
+    void _register_member(lua_State *state,
+                          const char *fun_name,
+                          Ret(T::*fun)(Args...) const) {
+        std::function<Ret(T*, Args...)> lambda = [fun](T *t, Args... args) {
+            return (t->*fun)(args...);
+        };
+        constexpr int arity = detail::_arity<Ret>::value;
+        _funs.emplace_back(
+            new ClassFun<arity, T, Ret, Args...>
+            {state, std::string(fun_name), _get_metatable_name(), lambda});
+    }
 
     void _register_members(lua_State *state) {}
 
