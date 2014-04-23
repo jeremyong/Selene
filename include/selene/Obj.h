@@ -21,6 +21,16 @@ private:
                           T *t,
                           const char *member_name,
                           M T::*member) {
+        _register_member(state, t, member_name, member,
+                         typename std::is_const<M>::type{});
+    }
+
+    template <typename M>
+    void _register_member(lua_State *state,
+                          T *t,
+                          const char *member_name,
+                          M T::*member,
+                          std::false_type) {
         std::function<M()> lambda_get = [t, member]() {
             return t->*member;
         };
@@ -33,6 +43,19 @@ private:
         _funs.emplace_back(
             new ObjFun<0, void, M>
             {state, std::string{"set_"} + member_name, lambda_set});
+    }
+
+    template <typename M>
+    void _register_member(lua_State *state,
+                          T *t,
+                          const char *member_name,
+                          M T::*member,
+                          std::true_type) {
+        std::function<M()> lambda_get = [t, member]() {
+            return t->*member;
+        };
+        _funs.emplace_back(
+            new ObjFun<1, M>{state, std::string{member_name}, lambda_get});
     }
 
     template <typename Ret, typename... Args>

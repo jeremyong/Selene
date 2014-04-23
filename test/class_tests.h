@@ -66,7 +66,8 @@ bool test_get_member_variable(sel::State &state) {
     state["Bar"].SetClass<Bar, int>("x", &Bar::x);
     state("bar = Bar.new(-2)");
     state("barx = bar:x()");
-    return state["barx"] == -2;
+    state("tmp = bar.x ~= nil");
+    return state["barx"] == -2 && state["tmp"];
 }
 
 bool test_set_member_variable(sel::State &state) {
@@ -133,4 +134,27 @@ bool test_freestanding_fun_ptr(sel::State &state) {
     state["print_bar"] = &ShowBarPtr;
     state("barstring = print_bar(bar)");
     return state["barstring"] == "4";
+}
+
+struct ConstMemberTest {
+    const bool foo = true;
+
+    bool get_bool() const {
+        return true;
+    }
+};
+
+bool test_const_member_function(sel::State &state) {
+    state["ConstMemberTest"].SetClass<ConstMemberTest>(
+        "get_bool", &ConstMemberTest::get_bool);
+    state("tmp = ConstMemberTest.new()");
+    return state["tmp"];
+}
+
+bool test_const_member_variable(sel::State &state) {
+    state["ConstMemberTest"].SetClass<ConstMemberTest>(
+        "foo", &ConstMemberTest::foo);
+    state("tmp1 = ConstMemberTest.new().foo ~= nil");
+    state("tmp2 = ConstMemberTest.new().set_foo == nil");
+    return state["tmp1"] && state["tmp2"];
 }

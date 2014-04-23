@@ -10,8 +10,6 @@ Simple C++11 friendly header-only bindings to Lua 5.2+.
 
 ![Lua logo](http://www.lua.org/images/lua-logo.gif)
 
-[![Support via Gittip](https://rawgithub.com/twolfson/gittip-badge/0.2.0/dist/gittip.png)](https://www.gittip.com/jeremyong/)
-
 ## Requirements
 
 - Cmake 2.8+
@@ -266,6 +264,9 @@ bar.set_x(-4)
 print(bar.x()) -- will print '-4'
 ```
 
+Member variables registered in this way which are declared `const`
+will not have a setter generated for them.
+
 ### Registering Object Instances
 
 You can also register an explicit object which was instantiated from
@@ -304,7 +305,9 @@ assert(result == 14);
 ```
 
 In the above example, the functions `foo.double_add` and `foo.set_x`
-will also be accessible from within Lua after registration occurs.
+will also be accessible from within Lua after registration occurs. As
+with class member variables, object instance variables which are
+`const` will not have a setter generated for them.
 
 ## Writeup
 
@@ -324,7 +327,3 @@ The following features are planned, although nothing is guaranteed:
 - Object lifetime handling
 - Smarter Lua module loading
 - Hooks for module reloading
-
-
-[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/jeremyong/selene/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
-

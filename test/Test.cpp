@@ -35,6 +35,7 @@ static TestMap tests = {
     {"test_register_obj_to_table", test_register_obj_to_table},
     {"test_mutate_instance", test_mutate_instance},
     {"test_multiple_methods", test_multiple_methods},
+    {"test_register_obj_const_member_variable", test_register_obj_const_member_variable},
 
     {"test_select_global", test_select_global},
     {"test_select_field", test_select_field},
@@ -60,6 +61,8 @@ static TestMap tests = {
     {"test_pass_ref", test_pass_ref},
     {"test_freestanding_fun_ref", test_freestanding_fun_ref},
     {"test_freestanding_fun_ptr", test_freestanding_fun_ptr},
+    {"test_const_member_function", test_const_member_function},
+    {"test_const_member_variable", test_const_member_variable},
 
     {"test_function_reference", test_function_reference},
     {"test_function_in_constructor", test_function_in_constructor},
@@ -104,7 +107,11 @@ int ExecuteAll() {
 bool ExecuteTest(const char *test) {
     sel::State state{true};
     auto it = tests.find(test);
-    return it->second(state);
+    const bool result = it->second(state);
+    const std::string pretty_result = result ? "pass!" : "fail.";
+    std::cout << "Ran test " << test << " with result: "
+              << pretty_result << std::endl;
+    return result;
 }
 
 
@@ -116,5 +123,5 @@ int main() {
 
     // For debugging anything in particular, you can run an individual
     //test like so:
-    //ExecuteTest("test_function_in_constructor");
+    //ExecuteTest("test_const_member_variable");
 }

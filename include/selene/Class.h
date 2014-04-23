@@ -23,7 +23,8 @@ private:
     std::string _name;
     std::unique_ptr<A> _ctor;
     std::unique_ptr<Dtor<T>> _dtor;
-    std::vector<std::unique_ptr<BaseFun>> _funs;
+    using Funs = std::vector<std::unique_ptr<BaseFun>>;
+    Funs _funs;
 
     std::string _get_metatable_name() {
         return _name + "_lib";
@@ -41,6 +42,15 @@ private:
     void _register_member(lua_State *state,
                           const char *member_name,
                           M T::*member) {
+        _register_member(state, member_name, member,
+                         typename std::is_const<M>::type{});
+    }
+
+    template <typename M>
+    void _register_member(lua_State *state,
+                          const char *member_name,
+                          M T::*member,
+                          std::false_type) {
         std::function<M(T*)> lambda_get = [member](T *t) {
             return t->*member;
         };
@@ -57,6 +67,19 @@ private:
                     _get_metatable_name(), lambda_set});
     }
 
+    template <typename M>
+    void _register_member(lua_State *state,
+                          const char *member_name,
+                          M T::*member,
+                          std::true_type) {
+        std::function<M(T*)> lambda_get = [member](T *t) {
+            return t->*member;
+        };
+        _funs.emplace_back(
+            new ClassFun<1, T, M>
+            {state, std::string{member_name}, _get_metatable_name(), lambda_get});
+    }
+
     template <typename Ret, typename... Args>
     void _register_member(lua_State *state,
                           const char *fun_name,
@@ -67,6 +90,20 @@ private:
         constexpr int arity = detail::_arity<Ret>::value;
         _funs.emplace_back(
             new ClassFun<arity, T, Ret, Args...>
+            {state, std::string(fun_name), _get_metatable_name(), lambda});
+    }
+
+    template <typename Ret, typename... Args>
+    void _register_member(lua_State *state,
+                          const char *fun_name,
+                          Ret(T::*fun)(Args...) const) {
+        std::function<Ret(const T*, Args...)> lambda =
+            [fun](const T *t, Args... args) {
+                return (t->*fun)(args...);
+            };
+        constexpr int arity = detail::_arity<Ret>::value;
+        _funs.emplace_back(
+            new ClassFun<arity, const T, Ret, Args...>
             {state, std::string(fun_name), _get_metatable_name(), lambda});
     }
 

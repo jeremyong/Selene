@@ -4,7 +4,8 @@
 
 struct Foo {
     int x;
-    Foo(int x_) : x(x_) {}
+    const int y;
+    Foo(int x_) : x(x_), y(3) {}
     int GetX() { return x; }
     int DoubleAdd(int y) {
         return 2 * (x + y);
@@ -58,4 +59,12 @@ bool test_multiple_methods(sel::State &state) {
     state["foo_instance"]["set_x"](4);
     const int answer = state["foo_instance"]["double_add"](3);
     return answer == 14;
+}
+
+bool test_register_obj_const_member_variable(sel::State &state) {
+    Foo foo_instance(1);
+    state["foo_instance"].SetObj(foo_instance, "y", &Foo::y);
+    const int answer = state["foo_instance"]["y"]();
+    state("tmp = foo_instance.set_y == nil");
+    return answer == 3 && state["tmp"];
 }
