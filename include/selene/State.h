@@ -79,11 +79,12 @@ public:
         return Selector(_l, *_registry, name);
     }
 
-    void operator()(const char *code) {
-        luaL_dostring(_l, code);
-        lua_settop(_l, 0);
+    bool operator()(const char *code) {
+        bool result = !luaL_dostring(_l, code);
+        if(result)
+            lua_settop(_l, 0);
+        return result;
     }
-
     void ForceGC() {
         lua_gc(_l, LUA_GCCOLLECT, 0);
     }
