@@ -214,7 +214,7 @@ state["Bar"].SetClass<Bar, int>("add_this", &Bar::AddThis);
 
 ```lua
 bar = Bar.new(5)
--- bar now refers to a new instance of Bar with Bar.x = 5
+-- bar now refers to a new instance of Bar with its member x set to 5
 
 x = bar:add_this(2)
 -- x is now 7
@@ -258,10 +258,10 @@ state["Bar"].SetClass<Bar, int>("x", &Bar::x);
 -- now we can do the following:
 bar = Bar.new(4)
 
-print(bar.x()) -- will print '4'
+print(bar:x()) -- will print '4'
 
 bar.set_x(-4)
-print(bar.x()) -- will print '-4'
+print(bar:x()) -- will print '-4'
 ```
 
 Member variables registered in this way which are declared `const`

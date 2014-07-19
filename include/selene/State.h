@@ -48,7 +48,7 @@ public:
     bool Load(const std::string &file) {
         return !luaL_dofile(_l, file.c_str());
     }
-    
+
     void OpenLib(const std::string& modname, lua_CFunction openf) {
         luaL_requiref(_l, modname.c_str(), openf, 1);
     }
@@ -86,6 +86,10 @@ public:
 
     void ForceGC() {
         lua_gc(_l, LUA_GCCOLLECT, 0);
+    }
+
+    void InteractiveDebug() {
+        luaL_dostring(_l, "debug.debug()");
     }
 
     friend std::ostream &operator<<(std::ostream &os, const State &state);
