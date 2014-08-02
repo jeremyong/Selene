@@ -82,10 +82,10 @@ bool test_class_field_set(sel::State &state) {
     state["Bar"].SetClass<Bar, int>("set", &Bar::SetX, "get", &Bar::GetX);
     state("bar = Bar.new(4)");
     state("x = bar:get()");
-    bool check1 = state["x"] == 4;
+    const bool check1 = state["x"] == 4;
     state("bar:set(6)");
     state("x = bar:get()");
-    bool check2 = state["x"] == 6;
+    const bool check2 = state["x"] == 6;
     return check1 && check2;
 }
 
@@ -94,10 +94,10 @@ bool test_class_gc(sel::State &state) {
     state["GCTest"].SetClass<GCTest>();
     state.Load("../test/test_gc.lua");
     state["make_ten"]();
-    bool check1 = gc_counter == 10;
+    const bool check1 = gc_counter == 10;
     state["destroy_ten"]();
     state.ForceGC();
-    bool check2 = gc_counter == 0;
+    const bool check2 = gc_counter == 0;
     return check1 && check2;
 }
 

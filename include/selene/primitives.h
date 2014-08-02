@@ -44,14 +44,8 @@ struct is_primitive<std::string> {
 /* getters */
 template <typename T>
 inline T* _get(_id<T*>, lua_State *l, const int index) {
-    return *(T **)lua_topointer(l, index);
-}
-
-template <typename T>
-inline T& _get(_id<T&>, lua_State *l, const int index) {
-    static_assert(!is_primitive<T>::value,
-                  "Reference types must not be primitives.");
-    return **(T **)lua_topointer(l, index);
+    auto t = lua_topointer(l, index);
+    return (T*)(t);
 }
 
 inline bool _get(_id<bool>, lua_State *l, const int index) {
@@ -206,6 +200,17 @@ T _pop(_id<T> t, lua_State *l) {
 /* Setters */
 
 inline void _push(lua_State *l) {}
+
+template <typename T>
+inline void _push(lua_State *l, T* t) {
+    lua_pushlightuserdata(l, t);
+}
+
+template <typename T>
+inline void _push(lua_State *l, T& t) {
+    lua_pushlightuserdata(l, &t);
+}
+
 inline void _push(lua_State *l, bool b) {
     lua_pushboolean(l, b);
 }

@@ -29,6 +29,8 @@ static TestMap tests = {
     {"test_multivalue_c_fun_from_lua", test_multivalue_c_fun_from_lua},
     {"test_embedded_nulls", test_embedded_nulls},
     {"test_coroutine", test_coroutine},
+    {"test_pointer_return", test_pointer_return},
+    {"test_reference_return", test_reference_return},
 
     {"test_register_obj", test_register_obj},
     {"test_register_obj_member_variable", test_register_obj_member_variable},
@@ -123,5 +125,5 @@ int main() {
 
     // For debugging anything in particular, you can run an individual
     //test like so:
-    //ExecuteTest("test_const_member_variable");
+    //ExecuteTest("test_pointer_return");
 }

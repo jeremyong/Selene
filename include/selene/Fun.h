@@ -23,12 +23,13 @@ public:
 
     // Each application of a function receives a new Lua context so
     // this argument is necessary.
-    int Apply(lua_State *l) {
+    int Apply(lua_State *l) override {
         std::tuple<Args...> args = detail::_get_args<Args...>(l);
         Ret value = detail::_lift(_fun, args);
         detail::_push(l, std::forward<Ret>(value));
         return N;
     }
+
 };
 
 template <typename... Args>

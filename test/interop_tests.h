@@ -134,7 +134,7 @@ bool test_multivalue_c_fun_from_lua(sel::State &state) {
 
 bool test_embedded_nulls(sel::State &state) {
     state.Load("../test/test.lua");
-    std::string result = state["embedded_nulls"]();
+    const std::string result = state["embedded_nulls"]();
     return result.size() == 4;
 }
 
@@ -144,4 +144,25 @@ bool test_coroutine(sel::State &state) {
     bool check2 = state["resume_co"]() == 2;
     bool check3 = state["resume_co"]() == 3;
     return check1 && check2 && check3;
+}
+
+struct Special {
+    int foo = 3;
+};
+
+static Special special;
+
+Special* return_special_pointer() { return &special; }
+
+bool test_pointer_return(sel::State &state) {
+    state["return_special_pointer"] = &return_special_pointer;
+    return state["return_special_pointer"]() == &special;
+}
+
+Special& return_special_reference() { return special; }
+
+bool test_reference_return(sel::State &state) {
+    state["return_special_reference"] = &return_special_reference;
+    Special &ref = state["return_special_reference"]();
+    return &ref == &special;
 }

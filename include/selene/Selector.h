@@ -216,6 +216,32 @@ public:
         return detail::_pop_n_reset<Ret...>(_state);
     }
 
+    template <typename T>
+    operator T&() const {
+        _traverse();
+        _get();
+        if (_functor != nullptr) {
+            (*_functor)(1);
+            _functor.reset();
+        }
+        auto ret = detail::_pop(detail::_id<T*>{}, _state);
+        lua_settop(_state, 0);
+        return *ret;
+    }
+
+    template <typename T>
+    operator T*() const {
+        _traverse();
+        _get();
+        if (_functor != nullptr) {
+            (*_functor)(1);
+            _functor.reset();
+        }
+        auto ret = detail::_pop(detail::_id<T*>{}, _state);
+        lua_settop(_state, 0);
+        return ret;
+    }
+
     operator bool() const {
         _traverse();
         _get();
@@ -227,6 +253,7 @@ public:
         lua_settop(_state, 0);
         return ret;
     }
+
     operator int() const {
         _traverse();
         _get();
@@ -238,6 +265,7 @@ public:
         lua_settop(_state, 0);
         return ret;
     }
+
     operator unsigned int() const {
         _traverse();
         _get();
@@ -249,6 +277,7 @@ public:
         lua_settop(_state, 0);
         return ret;
     }
+
     operator lua_Number() const {
         _traverse();
         _get();
@@ -260,6 +289,7 @@ public:
         lua_settop(_state, 0);
         return ret;
     }
+
     operator std::string() const {
         _traverse();
         _get();
@@ -350,14 +380,31 @@ public:
         };
         return Selector{_state, _registry, name, traversal, get, put};
     }
+
+    friend bool operator==(const Selector &, const char *);
+
+    friend bool operator==(const char *, const Selector &);
+
+private:
+    std::string ToString() const {
+        _traverse();
+        _get();
+        if (_functor != nullptr) {
+            (*_functor)(1);
+            _functor.reset();
+        }
+        auto ret =  detail::_pop(detail::_id<std::string>{}, _state);
+        lua_settop(_state, 0);
+        return ret;
+    }
 };
 
 inline bool operator==(const Selector &s, const char *c) {
-    return std::string{c} == std::string(s);
+    return std::string{c} == s.ToString();
 }
 
 inline bool operator==(const char *c, const Selector &s) {
-    return std::string{c} == std::string(s);
+    return std::string{c} == s.ToString();
 }
 
 template <typename T>
