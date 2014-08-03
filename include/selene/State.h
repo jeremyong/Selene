@@ -19,11 +19,12 @@ namespace sel {
 class State {
 private:
     lua_State *_l;
+	bool _l_owner;
     std::unique_ptr<Registry> _registry;
 
 public:
     State() : State(false) {}
-    State(bool should_open_libs) : _l(nullptr) {
+    State(bool should_open_libs) : _l(nullptr), _l_owner(true) {
         _l = luaL_newstate();
         if (_l == nullptr) throw 0;
         if (should_open_libs) luaL_openlibs(_l);
@@ -31,11 +32,14 @@ public:
     }
     State(const State &other) = delete;
     State &operator=(const State &other) = delete;
-    State(State &&other) : _l(other._l), _registry(std::move(other._registry)) {
+    State(State &&other) : _l(other._l), _l_owner(other._l_owner), _registry(std::move(other._registry)) {
         other._l = nullptr;
     }
+	State(lua_State *l) : _l(l), _l_owner(false) {
+        _registry.reset(new Registry(_l));
+    }
     ~State() {
-        if (_l != nullptr) {
+        if (_l != nullptr && _l_owner) {
             lua_close(_l);
         }
         _l = nullptr;
