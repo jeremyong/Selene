@@ -50,7 +50,13 @@ public:
     }
 
     void OpenLib(const std::string& modname, lua_CFunction openf) {
+#if LUA_VERSION_NUM >= 502
         luaL_requiref(_l, modname.c_str(), openf, 1);
+#else
+        lua_pushcfunction(_l, openf);
+        lua_pushstring(_l, modname.c_str());
+        lua_call(_l, 1, 0);
+#endif
     }
 
     void Push() {} // Base case

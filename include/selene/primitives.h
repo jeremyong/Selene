@@ -57,7 +57,11 @@ inline int _get(_id<int>, lua_State *l, const int index) {
 }
 
 inline unsigned int _get(_id<unsigned int>, lua_State *l, const int index) {
+#if LUA_VERSION_NUM >= 502
     return lua_tounsigned(l, index);
+#else
+    return static_cast<unsigned>(lua_tointeger(l, index));
+#endif
 }
 
 inline lua_Number _get(_id<lua_Number>, lua_State *l, const int index) {
@@ -87,7 +91,11 @@ inline int _check_get(_id<int>, lua_State *l, const int index) {
 };
 
 inline unsigned int _check_get(_id<unsigned int>, lua_State *l, const int index) {
+#if LUA_VERSION_NUM >= 502
     return luaL_checkunsigned(l, index);
+#else
+    return static_cast<unsigned>(luaL_checkint(l, index));
+#endif
 }
 
 inline lua_Number _check_get(_id<lua_Number>, lua_State *l, const int index) {
@@ -220,7 +228,11 @@ inline void _push(lua_State *l, int i) {
 }
 
 inline void _push(lua_State *l, unsigned int u) {
+#if LUA_VERSION_NUM >= 502
     lua_pushunsigned(l, u);
+#else
+    lua_pushinteger(l, static_cast<int>(u));
+#endif
 }
 
 inline void _push(lua_State *l, lua_Number f) {
