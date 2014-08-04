@@ -43,7 +43,11 @@ inline void _print(T arg, Ts... args) {
 }
 
 inline bool check(lua_State *L, int code) {
+#if LUA_VERSION_NUM >= 502
     if (code == LUA_OK) {
+#else
+    if (code == 0) {
+#endif
         return true;
     } else {
         std::cout << lua_tostring(L, -1) << std::endl;
