@@ -28,9 +28,6 @@ public:
     }
 
     inline void Erase(TypeID type) {
-        //auto it = _metatables.find(type);
-        //if (it != _metatables.end()) _metatables.erase(it);
-        //std::cout << type.get().name() << std::endl;
         _metatables.erase(type);
     }
 
