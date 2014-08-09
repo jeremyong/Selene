@@ -16,14 +16,14 @@ bool test_select_field(sel::State &state) {
 
 bool test_select_index(sel::State &state) {
     state.Load("../test/test.lua");
-    //std::string answer = state["my_table"][3];
-    //return answer == "hi";
+    std::string answer = state["my_table"][3];
+    return answer == "hi";
 }
 
 bool test_select_nested_field(sel::State &state) {
     state.Load("../test/test.lua");
-    //std::string answer = state["my_table"]["nested"]["foo"];
-    //return answer == "bar";
+    std::string answer = state["my_table"]["nested"]["foo"];
+    return answer == "bar";
 }
 
 bool test_select_nested_index(sel::State &state) {

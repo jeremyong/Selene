@@ -9,12 +9,6 @@
 #include "util.h"
 #include <vector>
 
-template <typename T, typename... Rest>
-T singular_t();
-
-template <typename... T>
-std::tuple<T...> tuple_t();
-
 namespace sel {
 class State {
 private:
@@ -35,8 +29,19 @@ public:
     }
     State(const State &other) = delete;
     State &operator=(const State &other) = delete;
-    State(State &&other) : _l(other._l), _l_owner(other._l_owner), _registry(std::move(other._registry)) {
+    State(State &&other)
+        : _l(other._l),
+          _l_owner(other._l_owner),
+          _registry(std::move(other._registry)) {
         other._l = nullptr;
+    }
+    State &operator=(State &&other) {
+        if (&other == this) return *this;
+        _l = other._l;
+        _l_owner = other._l_owner;
+        _registry = std::move(other._registry);
+        other._l = nullptr;
+        return *this;
     }
     ~State() {
         if (_l != nullptr && _l_owner) {

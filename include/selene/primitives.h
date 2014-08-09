@@ -2,6 +2,7 @@
 
 #include <string>
 #include "traits.h"
+#include "MetatableRegistry.h"
 
 extern "C" {
 #include <lua.h>
@@ -210,6 +211,52 @@ T _pop(_id<T> t, lua_State *l) {
 inline void _push(lua_State *l) {}
 
 template <typename T>
+inline void _push(lua_State *l, MetatableRegistry &m, T* t) {
+    lua_pushlightuserdata(l, t);
+    if (const std::string* metatable = m.Find(typeid(T))) {
+        luaL_getmetatable(l, metatable->c_str());
+        lua_setmetatable(l, -2);
+    }
+}
+
+template <typename T>
+inline void _push(lua_State *l, MetatableRegistry &m, T& t) {
+    lua_pushlightuserdata(l, &t);
+    if (const std::string* metatable = m.Find(typeid(T))) {
+        luaL_getmetatable(l, metatable->c_str());
+        lua_setmetatable(l, -2);
+    }
+}
+
+inline void _push(lua_State *l, MetatableRegistry &, bool b) {
+    lua_pushboolean(l, b);
+}
+
+inline void _push(lua_State *l, MetatableRegistry &, int i) {
+    lua_pushinteger(l, i);
+}
+
+inline void _push(lua_State *l, MetatableRegistry &, unsigned int u) {
+#if LUA_VERSION_NUM >= 502
+    lua_pushunsigned(l, u);
+#else
+    lua_pushinteger(l, static_cast<int>(u));
+#endif
+}
+
+inline void _push(lua_State *l, MetatableRegistry &, lua_Number f) {
+    lua_pushnumber(l, f);
+}
+
+inline void _push(lua_State *l, MetatableRegistry &, const std::string &s) {
+    lua_pushlstring(l, s.c_str(), s.size());
+}
+
+inline void _push(lua_State *l, MetatableRegistry &, const char *s) {
+    lua_pushstring(l, s);
+}
+
+template <typename T>
 inline void _push(lua_State *l, T* t) {
     lua_pushlightuserdata(l, t);
 }
@@ -253,6 +300,31 @@ inline void _set(lua_State *l, T &&value, const int index) {
     lua_replace(l, index);
 }
 
+inline void _push_n(lua_State *, MetatableRegistry &) {}
+
+template <typename T, typename... Rest>
+inline void _push_n(lua_State *l, MetatableRegistry &m, T value, Rest... rest) {
+    _push(l, m, std::forward<T>(value));
+    _push_n(l, m, rest...);
+}
+
+template <typename... T, std::size_t... N>
+inline void _push_dispatcher(lua_State *l,
+                             MetatableRegistry &m,
+                             const std::tuple<T...> &values,
+                             _indices<N...>) {
+    _push_n(l, m, std::get<N>(values)...);
+}
+
+inline void _push(lua_State *l, MetatableRegistry &, std::tuple<>) {}
+
+template <typename... T>
+inline void _push(lua_State *l, MetatableRegistry &m, const std::tuple<T...> &values) {
+    constexpr int num_values = sizeof...(T);
+    _push_dispatcher(l, m, values,
+                     typename _indices_builder<num_values>::type());
+}
+
 inline void _push_n(lua_State *) {}
 
 template <typename T, typename... Rest>
@@ -263,8 +335,8 @@ inline void _push_n(lua_State *l, T value, Rest... rest) {
 
 template <typename... T, std::size_t... N>
 inline void _push_dispatcher(lua_State *l,
-                      const std::tuple<T...> &values,
-                      _indices<N...>) {
+                             const std::tuple<T...> &values,
+                             _indices<N...>) {
     _push_n(l, std::get<N>(values)...);
 }
 
