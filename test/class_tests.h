@@ -53,7 +53,6 @@ std::string ShowBarPtr(Bar *bar) {
     return std::to_string(bar->x);
 }
 
-
 bool test_register_class(sel::State &state) {
     state["Bar"].SetClass<Bar, int>("print", &Bar::Print, "get_x", &Bar::GetX);
     state.Load("../test/test_class.lua");

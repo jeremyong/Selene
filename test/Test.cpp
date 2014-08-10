@@ -35,6 +35,8 @@ static TestMap tests = {
 
     {"test_metatable_registry_ptr", test_metatable_registry_ptr},
     {"test_metatable_registry_ref", test_metatable_registry_ref},
+    {"test_metatable_ptr_member", test_metatable_ptr_member},
+    {"test_metatable_ref_member", test_metatable_ptr_member},
 
     {"test_register_obj", test_register_obj},
     {"test_register_obj_member_variable", test_register_obj_member_variable},
@@ -129,5 +131,5 @@ int main() {
 
     // For debugging anything in particular, you can run an individual
     //test like so:
-    //ExecuteTest("test_pointer_return");
+    //ExecuteTest("test_metatable_ptr_member");
 }

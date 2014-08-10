@@ -77,14 +77,14 @@ inline std::string _get(_id<std::string>, lua_State *l, const int index) {
 
 template <typename T>
 inline T* _check_get(_id<T*>, lua_State *l, const int index) {
-    return *(T **)lua_topointer(l, index);
+    return (T *)lua_topointer(l, index);
 };
 
 template <typename T>
 inline T& _check_get(_id<T&>, lua_State *l, const int index) {
     static_assert(!is_primitive<T>::value,
                   "Reference types must not be primitives.");
-    return **(T **)lua_topointer(l, index);
+    return *(T *)lua_topointer(l, index);
 };
 
 inline int _check_get(_id<int>, lua_State *l, const int index) {
@@ -214,8 +214,7 @@ template <typename T>
 inline void _push(lua_State *l, MetatableRegistry &m, T* t) {
     lua_pushlightuserdata(l, t);
     if (const std::string* metatable = m.Find(typeid(T))) {
-        luaL_getmetatable(l, metatable->c_str());
-        lua_setmetatable(l, -2);
+        luaL_setmetatable(l, metatable->c_str());
     }
 }
 
@@ -223,8 +222,7 @@ template <typename T>
 inline void _push(lua_State *l, MetatableRegistry &m, T& t) {
     lua_pushlightuserdata(l, &t);
     if (const std::string* metatable = m.Find(typeid(T))) {
-        luaL_getmetatable(l, metatable->c_str());
-        lua_setmetatable(l, -2);
+        luaL_setmetatable(l, metatable->c_str());
     }
 }
 

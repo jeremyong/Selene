@@ -19,14 +19,14 @@ inline int _lua_dispatcher(lua_State *l) {
 
 template <typename Ret, typename... Args, std::size_t... N>
 inline Ret _lift(std::function<Ret(Args...)> fun,
-          std::tuple<Args...> args,
-          _indices<N...>) {
+                 std::tuple<Args...> args,
+                 _indices<N...>) {
     return fun(std::get<N>(args)...);
 }
 
 template <typename Ret, typename... Args>
 inline Ret _lift(std::function<Ret(Args...)> fun,
-          std::tuple<Args...> args) {
+                 std::tuple<Args...> args) {
     return _lift(fun, args, typename _indices_builder<sizeof...(Args)>::type());
 }
 

@@ -14,7 +14,7 @@ private:
     std::string _metatable_name;
 
     T *_get(lua_State *state) {
-        T *ret = *(T **)luaL_checkudata(state, 1, _metatable_name.c_str());
+        T *ret = (T *)luaL_checkudata(state, 1, _metatable_name.c_str());
         lua_remove(state, 1);
         return ret;
     }
@@ -55,7 +55,7 @@ private:
     std::string _metatable_name;
 
     T *_get(lua_State *state) {
-        T *ret = *(T **)luaL_checkudata(state, 1, _metatable_name.c_str());
+        T *ret = (T *)luaL_checkudata(state, 1, _metatable_name.c_str());
         lua_remove(state, 1);
         return ret;
     }
@@ -65,7 +65,7 @@ public:
              const std::string &name,
              const std::string &metatable_name,
              void(*fun)(Args...))
-        : ClassFun(l, name, _fun_type{fun}) {}
+        : ClassFun(l, name, metatable_name, _fun_type{fun}) {}
 
     ClassFun(lua_State *l,
              const std::string &name,
