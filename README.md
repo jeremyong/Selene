@@ -13,7 +13,7 @@ Simple C++11 friendly header-only bindings to Lua 5.2+.
 ## Requirements
 
 - Cmake 2.8+
-- Lua 5.2+
+- Lua 5.1+
 - C++11 compliant compiler
 
 ## Usage
@@ -237,9 +237,13 @@ you wish to register followed by `CtorArgs...`, the types that are
 accepted by the class's constructor. In addition to primitive types,
 you may also pass pointers or references to other types that have been
 or will be registered. Note that constructor overloading
-are not supported at this time. The arguments to the `SetClass`
+is not supported at this time. The arguments to the `SetClass`
 function are a list of member functions you wish to register (callable
 from Lua). The format is [function name, function pointer, ...].
+
+After a class is registered, C++ functions and methods can return
+pointers or references to Lua, and the class metatable will be
+assigned correctly.
 
 #### Registering Class Member Variables
 
@@ -309,13 +313,14 @@ will also be accessible from within Lua after registration occurs. As
 with class member variables, object instance variables which are
 `const` will not have a setter generated for them.
 
-## Writeup
+## Writeups
 
 You can read more about this project in the three blogposts that describes it:
 
 - [first part](http://www.jeremyong.com/blog/2014/01/10/interfacing-lua-with-templates-in-c-plus-plus-11/).
 - [second part](http://www.jeremyong.com/blog/2014/01/14/interfacing-lua-with-templates-in-c-plus-plus-11-continued)
 - [third part](http://www.jeremyong.com/blog/2014/01/21/interfacing-lua-with-templates-in-c-plus-plus-11-conclusion)
+- [ref-qualifier usage](http://www.jeremyong.com/blog/2014/02/15/using-ref-qualifiers/)
 
 There have been syntax changes in library usage but the underlying
 concepts of variadic template use and generics is the same.
@@ -324,6 +329,6 @@ concepts of variadic template use and generics is the same.
 
 The following features are planned, although nothing is guaranteed:
 
-- Object lifetime handling
 - Smarter Lua module loading
 - Hooks for module reloading
+- VS support
