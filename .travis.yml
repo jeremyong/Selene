@@ -1,24 +1,20 @@
 language: cpp
 
-compiler:
-  - gcc
-  - clang
+compiler: gcc
 
 before_install:
   - if [ "$CXX" == "g++" ]; then sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test; fi
-  - if [ "$CXX" == "clang++" ]; then sudo add-apt-repository -y ppa:h-rayflood/llvm; fi
   - sudo apt-get update -qq
 
 install:
   - if [ "$CXX" = "g++" ]; then sudo apt-get install -qq g++-4.8; fi
   - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8"; fi
-  - if [ "$CXX" == "clang++" ]; then sudo apt-get install --allow-unauthenticated -qq clang-3.4; fi
-  - if [ "$CXX" == "clang++" ]; then export CXX="clang++-3.4"; fi
   - sudo apt-get install lua5.2 liblua5.2-dev
+  - sudo ln -s /usr/lib/x86_64-linux-gnu/liblua5.2.so /usr/lib/liblua.so
 
 before_script:
   - mkdir build
   - cd build
-  - cmake ..
+  - cmake .. -DLUA_INCLUDE_DIR=/usr/include/lua5.2
 
 script: make && ./test_runner

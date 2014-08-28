@@ -1,14 +1,8 @@
-```
-  __|        |
-\__ \   -_)  |   -_)    \    -_)
-____/ \___| _| \___| _| _| \___|
-```
-
 # Selene
 
-Simple C++11 friendly header-only bindings to Lua 5.2+.
+[![Build Status](https://travis-ci.org/jeremyong/Selene.svg?branch=master)](https://travis-ci.org/jeremyong/Selene)
 
-![Lua logo](http://www.lua.org/images/lua-logo.gif)
+Simple C++11 friendly header-only bindings to Lua 5.2+.
 
 ## Requirements
 
@@ -30,7 +24,9 @@ cmake ..
 make
 ```
 
-This will build a `test` executable that you can run.
+This will build a `test_runner` executable that you can run. If you wish to
+include Lua from another location, you made pass the `LUA_INCLUDE_DIR` option
+to cmake (i.e. `cmake .. -DLUA_INCLUDE_DIR=/path/to/lua/include/dir`).
 
 ## Usage
 
