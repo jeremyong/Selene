@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <link href='https://fonts.googleapis.com/css?family=Chivo:900' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <title>Selene by jeremyong</title>
+  </head>
+
+  <body>
+    <div id="container">
+      <div class="inner">
+
+        <header>
+          <h1>Selene</h1>
+          <h2>Simple C++11 friendly header-only bindings to Lua</h2>
+        </header>
+
+        <section id="downloads" class="clearfix">
+          <a href="https://github.com/jeremyong/Selene/zipball/master" id="download-zip" class="button"><span>Download .zip</span></a>
+          <a href="https://github.com/jeremyong/Selene/tarball/master" id="download-tar-gz" class="button"><span>Download .tar.gz</span></a>
+          <a href="https://github.com/jeremyong/Selene" id="view-on-github" class="button"><span>View on GitHub</span></a>
+        </section>
+
+        <hr>
+
+        <section id="main_content">
+          <p>Simple C++11 friendly header-only bindings to Lua 5.2+.</p>
+
+<p><img src="http://www.lua.org/images/lua-logo.gif" alt="Lua logo"></p>
+
+<h2>
+<a name="requirements" class="anchor" href="#requirements"><span class="octicon octicon-link"></span></a>Requirements</h2>
+
+<ul>
+<li>Cmake 2.8+ to build the tests</li>
+<li>Lua 5.1+</li>
+<li>C++11 compliant compiler</li>
+</ul><h2>
+<a name="usage" class="anchor" href="#usage"><span class="octicon octicon-link"></span></a>Usage</h2>
+
+<p>Selene is a headers-only library so you just need to include
+"selene.h" to use this project.</p>
+
+<p>To build the tests, do the following:</p>
+
+<pre><code>mkdir build
+cd build
+cmake ..
+make
+</code></pre>
+
+<p>This will build a <code>test</code> executable that you can run.</p>
+
+<h2>
+<a name="usage-1" class="anchor" href="#usage-1"><span class="octicon octicon-link"></span></a>Usage</h2>
+
+<h3>
+<a name="establishing-lua-context" class="anchor" href="#establishing-lua-context"><span class="octicon octicon-link"></span></a>Establishing Lua Context</h3>
+
+<div class="highlight highlight-c++"><pre><span class="k">using</span> <span class="k">namespace</span> <span class="n">sel</span><span class="p">;</span>
+<span class="n">State</span> <span class="n">state</span><span class="p">;</span> <span class="c1">// creates a Lua context</span>
+<span class="n">State</span> <span class="n">state</span><span class="p">{</span><span class="nb">true</span><span class="p">};</span> <span class="c1">// creates a Lua context and loads standard Lua libraries</span>
+</pre></div>
+
+<p>When a <code>sel::State</code> object goes out of scope, the Lua context is
+automatically destroyed in addition to all objects associated with it
+(including C++ objects).</p>
+
+<h3>
+<a name="accessing-elements" class="anchor" href="#accessing-elements"><span class="octicon octicon-link"></span></a>Accessing elements</h3>
+
+<div class="highlight highlight-lua"><pre><span class="c1">-- test.lua</span>
+<span class="n">foo</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="n">bar</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">bar</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"</span><span class="s">hi"</span>
+<span class="n">bar</span><span class="p">[</span><span class="s2">"</span><span class="s">key"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"</span><span class="s">there"</span>
+</pre></div>
+
+<div class="highlight highlight-c++"><pre><span class="n">sel</span><span class="o">::</span><span class="n">State</span> <span class="n">state</span><span class="p">;</span>
+<span class="n">state</span><span class="p">.</span><span class="n">Load</span><span class="p">(</span><span class="s">"/path/to/test.lua"</span><span class="p">);</span>
+<span class="n">assert</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="s">"foo"</span><span class="p">]</span> <span class="o">==</span> <span class="mi">4</span><span class="p">);</span>
+<span class="n">assert</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="s">"bar"</span><span class="p">][</span><span class="mi">3</span><span class="p">]</span> <span class="o">==</span> <span class="s">"hi"</span><span class="p">);</span>
+<span class="n">assert</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="s">"bar"</span><span class="p">][</span><span class="s">"key"</span><span class="p">]</span> <span class="o">==</span> <span class="s">"there"</span><span class="p">);</span>
+</pre></div>
+
+<p>When the <code>[]</code> operator is invoked on a <code>sel::State</code> object, a
+<code>sel::Selector</code> object is returned. The <code>Selector</code> is type castable to
+all the basic types that Lua can return.</p>
+
+<p>If you access the same element frequently, it is recommended that you
+cache the selector for fast access later like so:</p>
+
+<div class="highlight highlight-c++"><pre><span class="k">auto</span> <span class="n">bar3</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s">"bar"</span><span class="p">][</span><span class="mi">3</span><span class="p">];</span> <span class="c1">// bar3 has type sel::Selector</span>
+<span class="n">bar3</span> <span class="o">=</span> <span class="mi">4</span><span class="p">;</span>
+<span class="n">bar3</span> <span class="o">=</span> <span class="mi">6</span><span class="p">;</span>
+<span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="kt">int</span><span class="p">(</span><span class="n">bar3</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+</pre></div>
+
+<h3>
+<a name="calling-lua-functions-from-c" class="anchor" href="#calling-lua-functions-from-c"><span class="octicon octicon-link"></span></a>Calling Lua functions from C++</h3>
+
+<div class="highlight highlight-lua"><pre><span class="c1">-- test.lua</span>
+
+<span class="k">function</span> <span class="nf">foo</span><span class="p">()</span>
+<span class="k">end</span>
+
+<span class="k">function</span> <span class="nf">add</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span>
+<span class="k">end</span>
+
+<span class="k">function</span> <span class="nf">sum_and_difference</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+  <span class="k">return</span> <span class="p">(</span><span class="n">a</span><span class="o">+</span><span class="n">b</span><span class="p">),</span> <span class="p">(</span><span class="n">a</span><span class="o">-</span><span class="n">b</span><span class="p">);</span>
+<span class="k">end</span>
+
+<span class="k">function</span> <span class="nf">bar</span><span class="p">()</span>
+  <span class="k">return</span> <span class="mi">4</span><span class="p">,</span> <span class="kc">true</span><span class="p">,</span> <span class="s2">"</span><span class="s">hi"</span>
+<span class="k">end</span>
+
+<span class="n">mytable</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">function</span> <span class="nc">mytable</span><span class="p">.</span><span class="nf">foo</span><span class="p">()</span>
+    <span class="k">return</span> <span class="mi">4</span>
+<span class="k">end</span>
+</pre></div>
+
+<div class="highlight highlight-c++"><pre><span class="n">sel</span><span class="o">::</span><span class="n">State</span> <span class="n">state</span><span class="p">;</span>
+<span class="n">state</span><span class="p">.</span><span class="n">Load</span><span class="p">(</span><span class="s">"/path/to/test.lua"</span><span class="p">);</span>
+
+<span class="c1">// Call function with no arguments or returns</span>
+<span class="n">state</span><span class="p">[</span><span class="s">"foo"</span><span class="p">]();</span>
+
+<span class="c1">// Call function with two arguments that returns an int</span>
+<span class="c1">// The type parameter can be one of int, lua_Number, std::string,</span>
+<span class="c1">// bool, or unsigned int</span>
+<span class="kt">int</span> <span class="n">result</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s">"add"</span><span class="p">](</span><span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">);</span>
+<span class="n">assert</span><span class="p">(</span><span class="n">result</span> <span class="o">==</span> <span class="mi">7</span><span class="p">);</span>
+
+
+<span class="c1">// Call function that returns multiple values</span>
+<span class="kt">int</span> <span class="n">sum</span><span class="p">,</span> <span class="n">difference</span><span class="p">;</span>
+<span class="n">sel</span><span class="o">::</span><span class="n">tie</span><span class="p">(</span><span class="n">sum</span><span class="p">,</span> <span class="n">difference</span><span class="p">)</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s">"sum_and_difference"</span><span class="p">](</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+<span class="n">assert</span><span class="p">(</span><span class="n">sum</span> <span class="o">==</span> <span class="mi">4</span> <span class="o">&amp;&amp;</span> <span class="n">difference</span> <span class="o">==</span> <span class="mi">2</span><span class="p">);</span>
+
+<span class="c1">// Call function in table</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s">"mytable"</span><span class="p">][</span><span class="s">"foo"</span><span class="p">]();</span>
+<span class="n">assert</span><span class="p">(</span><span class="n">result</span> <span class="o">==</span> <span class="mi">4</span><span class="p">);</span>
+</pre></div>
+
+<p>Note that multi-value returns must have <code>sel::tie</code>
+on the LHS and not <code>std::tie</code>. This will create a <code>sel::Tuple</code> as
+opposed to an <code>std::tuple</code> which has the <code>operator=</code> implemented for
+the selector type.</p>
+
+<h3>
+<a name="calling-free-standing-c-functions-from-lua" class="anchor" href="#calling-free-standing-c-functions-from-lua"><span class="octicon octicon-link"></span></a>Calling Free-standing C++ functions from Lua</h3>
+
+<div class="highlight highlight-c++"><pre><span class="kt">int</span> <span class="nf">my_multiply</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span><span class="p">,</span> <span class="kt">int</span> <span class="n">b</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">a</span><span class="o">*</span><span class="n">b</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="n">sel</span><span class="o">::</span><span class="n">State</span> <span class="n">state</span><span class="p">;</span>
+
+<span class="c1">// Register the function to the Lua global "c_multiply"</span>
+<span class="n">state</span><span class="p">[</span><span class="s">"c_multiply"</span><span class="p">]</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">my_multiply</span><span class="p">;</span>
+
+<span class="c1">// Now we can call it (we can also call it from within lua)</span>
+<span class="kt">int</span> <span class="n">result</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s">"c_multiply"</span><span class="p">](</span><span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">);</span>
+<span class="n">assert</span><span class="p">(</span><span class="n">result</span> <span class="o">==</span> <span class="mi">10</span><span class="p">);</span>
+</pre></div>
+
+<p>You can also register functor objects, lambdas, and any fully
+qualified <code>std::function</code>. See <code>test/interop_tests.h</code> for details.</p>
+
+<h4>
+<a name="accepting-lua-functions-as-arguments" class="anchor" href="#accepting-lua-functions-as-arguments"><span class="octicon octicon-link"></span></a>Accepting Lua functions as Arguments</h4>
+
+<p>To retrieve a Lua function as a callable object in C++, you can use
+the <code>sel::function</code> type like so:</p>
+
+<div class="highlight highlight-lua"><pre><span class="c1">-- test.lua</span>
+
+<span class="k">function</span> <span class="nf">add</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">a</span><span class="o">+</span><span class="n">b</span>
+<span class="k">end</span>
+
+<span class="k">function</span> <span class="nf">pass_add</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="n">take_fun_arg</span><span class="p">(</span><span class="n">add</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+<span class="k">end</span>
+</pre></div>
+
+<div class="highlight highlight-c++"><pre><span class="kt">int</span> <span class="nf">take_fun_arg</span><span class="p">(</span><span class="n">sel</span><span class="o">::</span><span class="n">function</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="p">)</span><span class="o">&gt;</span> <span class="n">fun</span><span class="p">,</span> <span class="kt">int</span> <span class="n">a</span><span class="p">,</span> <span class="kt">int</span> <span class="n">b</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">fun</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="n">sel</span><span class="o">::</span><span class="n">State</span> <span class="n">state</span><span class="p">;</span>
+<span class="n">state</span><span class="p">[</span><span class="s">"take_fun_arg"</span><span class="p">]</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">take_fun_arg</span><span class="p">;</span>
+<span class="n">state</span><span class="p">.</span><span class="n">Load</span><span class="p">(</span><span class="s">"test.lua"</span><span class="p">);</span>
+<span class="n">assert</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="s">"pass_add"</span><span class="p">](</span><span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span> <span class="o">==</span> <span class="mi">8</span><span class="p">)</span>
+</pre></div>
+
+<p>The <code>sel::function</code> type is pretty much identical to the
+<code>std::function</code> type excepts it holds a <code>shared_ptr</code> to a Lua
+reference. Once all instances of a particular <code>sel::function</code> go out
+of scope, the Lua reference will automatically become unbound. Simply
+copying and retaining an instance of a <code>sel::function</code> will allow it
+to be callable later. You can also return a <code>sel::function</code> which will
+then be callable in C++ or Lua.</p>
+
+<h3>
+<a name="running-arbitrary-code" class="anchor" href="#running-arbitrary-code"><span class="octicon octicon-link"></span></a>Running arbitrary code</h3>
+
+<div class="highlight highlight-c++"><pre><span class="n">sel</span><span class="o">::</span><span class="n">State</span> <span class="n">state</span><span class="p">;</span>
+<span class="n">state</span><span class="p">(</span><span class="s">"x = 5"</span><span class="p">);</span>
+</pre></div>
+
+<p>After running this snippet, <code>x</code> will have value 5 in the Lua runtime.
+Snippets run in this way cannot return anything to the caller at this time.</p>
+
+<h3>
+<a name="registering-classes" class="anchor" href="#registering-classes"><span class="octicon octicon-link"></span></a>Registering Classes</h3>
+
+<div class="highlight highlight-c++"><pre><span class="k">struct</span> <span class="n">Bar</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">x</span><span class="p">;</span>
+    <span class="n">Bar</span><span class="p">(</span><span class="kt">int</span> <span class="n">x_</span><span class="p">)</span> <span class="o">:</span> <span class="n">x</span><span class="p">(</span><span class="n">x_</span><span class="p">)</span> <span class="p">{}</span>
+    <span class="kt">int</span> <span class="n">AddThis</span><span class="p">(</span><span class="kt">int</span> <span class="n">y</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="p">;</span> <span class="p">}</span>
+<span class="p">};</span>
+
+<span class="n">sel</span><span class="o">::</span><span class="n">State</span> <span class="n">state</span><span class="p">;</span>
+<span class="n">state</span><span class="p">[</span><span class="s">"Bar"</span><span class="p">].</span><span class="n">SetClass</span><span class="o">&lt;</span><span class="n">Bar</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"add_this"</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">Bar</span><span class="o">::</span><span class="n">AddThis</span><span class="p">);</span>
+</pre></div>
+
+<div class="highlight highlight-lua"><pre><span class="n">bar</span> <span class="o">=</span> <span class="n">Bar</span><span class="p">.</span><span class="n">new</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+<span class="c1">-- bar now refers to a new instance of Bar with its member x set to 5</span>
+
+<span class="n">x</span> <span class="o">=</span> <span class="n">bar</span><span class="p">:</span><span class="n">add_this</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="c1">-- x is now 7</span>
+
+<span class="n">bar</span> <span class="o">=</span> <span class="kc">nil</span>
+<span class="cm">--[[ the bar object will be destroyed the next time a garbage</span>
+<span class="cm">     collection is run ]]</span><span class="c1">--</span>
+</pre></div>
+
+<p>The signature of the <code>SetClass</code> template method looks like the
+following:</p>
+
+<div class="highlight highlight-c++"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span><span class="p">...</span> <span class="n">CtorArgs</span><span class="p">,</span> <span class="k">typename</span><span class="p">...</span> <span class="n">Funs</span><span class="o">&gt;</span>
+<span class="kt">void</span> <span class="n">Selector</span><span class="o">::</span><span class="n">SetClass</span><span class="p">(</span><span class="n">Funs</span><span class="p">...</span> <span class="n">funs</span><span class="p">);</span>
+</pre></div>
+
+<p>The template parameters supplied explicitly are first <code>T</code>, the class
+you wish to register followed by <code>CtorArgs...</code>, the types that are
+accepted by the class's constructor. In addition to primitive types,
+you may also pass pointers or references to other types that have been
+or will be registered. Note that constructor overloading
+is not supported at this time. The arguments to the <code>SetClass</code>
+function are a list of member functions you wish to register (callable
+from Lua). The format is [function name, function pointer, ...].</p>
+
+<p>After a class is registered, C++ functions and methods can return
+pointers or references to Lua, and the class metatable will be
+assigned correctly.</p>
+
+<h4>
+<a name="registering-class-member-variables" class="anchor" href="#registering-class-member-variables"><span class="octicon octicon-link"></span></a>Registering Class Member Variables</h4>
+
+<p>For convenience, if you pass a pointer to a member instead of a member
+function, Selene will automatically generate a setter and getter for
+the member. The getter name is just the name of the member variable
+you supply and the setter has "set_" prepended to that name.</p>
+
+<div class="highlight highlight-c++"><pre><span class="c1">// Define Bar as above</span>
+<span class="n">sel</span><span class="o">::</span><span class="n">State</span> <span class="n">state</span><span class="p">;</span>
+<span class="n">state</span><span class="p">[</span><span class="s">"Bar"</span><span class="p">].</span><span class="n">SetClass</span><span class="o">&lt;</span><span class="n">Bar</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"x"</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">Bar</span><span class="o">::</span><span class="n">x</span><span class="p">);</span>
+</pre></div>
+
+<div class="highlight highlight-lua"><pre><span class="c1">-- now we can do the following:</span>
+<span class="n">bar</span> <span class="o">=</span> <span class="n">Bar</span><span class="p">.</span><span class="n">new</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">bar</span><span class="p">:</span><span class="n">x</span><span class="p">())</span> <span class="c1">-- will print '4'</span>
+
+<span class="n">bar</span><span class="p">:</span><span class="n">set_x</span><span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">bar</span><span class="p">:</span><span class="n">x</span><span class="p">())</span> <span class="c1">-- will print '-4'</span>
+</pre></div>
+
+<p>Member variables registered in this way which are declared <code>const</code>
+will not have a setter generated for them.</p>
+
+<h3>
+<a name="registering-object-instances" class="anchor" href="#registering-object-instances"><span class="octicon octicon-link"></span></a>Registering Object Instances</h3>
+
+<p>You can also register an explicit object which was instantiated from
+C++. However, this object cannot be inherited from and you are in
+charge of the object's lifetime.</p>
+
+<div class="highlight highlight-c++"><pre><span class="k">struct</span> <span class="n">Foo</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">x</span><span class="p">;</span>
+    <span class="n">Foo</span><span class="p">(</span><span class="kt">int</span> <span class="n">x_</span><span class="p">)</span> <span class="o">:</span> <span class="n">x</span><span class="p">(</span><span class="n">x_</span><span class="p">)</span> <span class="p">{}</span>
+
+    <span class="kt">int</span> <span class="n">DoubleAdd</span><span class="p">(</span><span class="kt">int</span> <span class="n">y</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="p">);</span> <span class="p">}</span>
+    <span class="kt">void</span> <span class="n">SetX</span><span class="p">(</span><span class="kt">int</span> <span class="n">x_</span><span class="p">)</span> <span class="p">{</span> <span class="n">x</span> <span class="o">=</span> <span class="n">x_</span><span class="p">;</span> <span class="p">}</span>
+<span class="p">};</span>
+
+<span class="n">sel</span><span class="o">::</span><span class="n">State</span> <span class="n">state</span><span class="p">;</span>
+
+<span class="c1">// Instantiate a foo object with x initially set to 2</span>
+<span class="n">Foo</span> <span class="nf">foo</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span>
+
+<span class="c1">// Binds the C++ instance foo to a table also called foo in Lua along</span>
+<span class="c1">// with the DoubleAdd method and variable x. Binding a member variable</span>
+<span class="c1">// will create a getter and setter as illustrated below.</span>
+<span class="c1">// The user is not required to bind all members</span>
+<span class="n">state</span><span class="p">[</span><span class="s">"foo"</span><span class="p">].</span><span class="n">SetObj</span><span class="p">(</span><span class="n">foo</span><span class="p">,</span>
+                    <span class="s">"double_add"</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">Foo</span><span class="o">::</span><span class="n">DoubleAdd</span><span class="p">,</span>
+                    <span class="s">"x"</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">Foo</span><span class="o">::</span><span class="n">x</span><span class="p">);</span>
+
+<span class="n">assert</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="s">"foo"</span><span class="p">][</span><span class="s">"x"</span><span class="p">]()</span> <span class="o">==</span> <span class="mi">2</span><span class="p">);</span>
+
+<span class="n">state</span><span class="p">[</span><span class="s">"foo"</span><span class="p">][</span><span class="s">"set_x"</span><span class="p">](</span><span class="mi">4</span><span class="p">);</span>
+<span class="n">assert</span><span class="p">(</span><span class="n">foo</span><span class="p">.</span><span class="n">x</span> <span class="o">==</span> <span class="mi">4</span><span class="p">);</span>
+
+<span class="kt">int</span> <span class="n">result</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s">"foo"</span><span class="p">][</span><span class="s">"double_add"</span><span class="p">](</span><span class="mi">3</span><span class="p">);</span>
+<span class="n">assert</span><span class="p">(</span><span class="n">result</span> <span class="o">==</span> <span class="mi">14</span><span class="p">);</span>
+</pre></div>
+
+<p>In the above example, the functions <code>foo.double_add</code> and <code>foo.set_x</code>
+will also be accessible from within Lua after registration occurs. As
+with class member variables, object instance variables which are
+<code>const</code> will not have a setter generated for them.</p>
+
+<h2>
+<a name="writeups" class="anchor" href="#writeups"><span class="octicon octicon-link"></span></a>Writeups</h2>
+
+<p>You can read more about this project in the three blogposts that describes it:</p>
+
+<ul>
+<li>
+<a href="http://www.jeremyong.com/blog/2014/01/10/interfacing-lua-with-templates-in-c-plus-plus-11/">first part</a>.</li>
+<li><a href="http://www.jeremyong.com/blog/2014/01/14/interfacing-lua-with-templates-in-c-plus-plus-11-continued">second part</a></li>
+<li><a href="http://www.jeremyong.com/blog/2014/01/21/interfacing-lua-with-templates-in-c-plus-plus-11-conclusion">third part</a></li>
+<li><a href="http://www.jeremyong.com/blog/2014/02/15/using-ref-qualifiers/">ref-qualifier usage</a></li>
+</ul><p>There have been syntax changes in library usage but the underlying
+concepts of variadic template use and generics is the same.</p>
+
+<h2>
+<a name="roadmap" class="anchor" href="#roadmap"><span class="octicon octicon-link"></span></a>Roadmap</h2>
+
+<p>The following features are planned, although nothing is guaranteed:</p>
+
+<ul>
+<li>Smarter Lua module loading</li>
+<li>Hooks for module reloading</li>
+<li>VS support</li>
+</ul>
+        </section>
+
+        <footer>
+          Selene is maintained by <a href="https://github.com/jeremyong">jeremyong</a><br>
+          This page was generated by <a href="http://pages.github.com">GitHub Pages</a>. Tactile theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.
+        </footer>
+
+                  <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("10576233");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+      </div>
+    </div>
+  </body>
+</html>
