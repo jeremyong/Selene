@@ -7,7 +7,7 @@ Simple C++11 friendly header-only bindings to Lua 5.2+.
 ## Requirements
 
 - Cmake 2.8+
-- Lua 5.1+
+- Lua 5.2+
 - C++11 compliant compiler
 
 ## Usage
