@@ -32,6 +32,7 @@ static TestMap tests = {
     {"test_coroutine", test_coroutine},
     {"test_pointer_return", test_pointer_return},
     {"test_reference_return", test_reference_return},
+    {"test_nullptr_to_nil", test_nullptr_to_nil},
 
     {"test_metatable_registry_ptr", test_metatable_registry_ptr},
     {"test_metatable_registry_ref", test_metatable_registry_ref},

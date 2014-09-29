@@ -212,10 +212,15 @@ inline void _push(lua_State *l) {}
 
 template <typename T>
 inline void _push(lua_State *l, MetatableRegistry &m, T* t) {
-    lua_pushlightuserdata(l, t);
-    if (const std::string* metatable = m.Find(typeid(T))) {
-        luaL_setmetatable(l, metatable->c_str());
-    }
+	if(t == nullptr) {
+		lua_pushnil(l);
+	}
+	else {
+		lua_pushlightuserdata(l, t);
+		if (const std::string* metatable = m.Find(typeid(T))) {
+			luaL_setmetatable(l, metatable->c_str());
+		}
+	}
 }
 
 template <typename T>
@@ -256,7 +261,12 @@ inline void _push(lua_State *l, MetatableRegistry &, const char *s) {
 
 template <typename T>
 inline void _push(lua_State *l, T* t) {
-    lua_pushlightuserdata(l, t);
+	if(t == nullptr) {
+		lua_pushnil(l);
+	}
+	else {
+		lua_pushlightuserdata(l, t);
+	}
 }
 
 template <typename T>
