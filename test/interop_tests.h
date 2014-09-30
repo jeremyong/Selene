@@ -166,3 +166,12 @@ bool test_reference_return(sel::State &state) {
     Special &ref = state["return_special_reference"]();
     return &ref == &special;
 }
+
+bool test_nullptr_to_nil(sel::State &state) {
+    state["getNullptr"] = []() {
+        return nullptr;
+    };
+    state("x = getNullptr()");
+    state("result = x == nil");
+    return static_cast<bool>(state["result"]);
+}
