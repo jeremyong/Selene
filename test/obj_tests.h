@@ -1,6 +1,7 @@
 #pragma once
 
 #include <selene.h>
+#include <vector>
 
 struct Foo {
     int x;
@@ -67,4 +68,20 @@ bool test_register_obj_const_member_variable(sel::State &state) {
     const int answer = state["foo_instance"]["y"]();
     state("tmp = foo_instance.set_y == nil");
     return answer == 3 && state["tmp"];
+}
+
+bool test_bind_vector_push_back(sel::State &state) {
+    std::vector<int> test_vector;
+    state["vec"].SetObj(test_vector, "push_back",
+                        static_cast<void(std::vector<int>::*)(int&&)>(&std::vector<int>::push_back));
+    state["vec"]["push_back"](4);
+    return test_vector[0] == 4;
+}
+
+bool test_bind_vector_push_back_string(sel::State &state) {
+    std::vector<std::string> test_vector;
+    state["vec"].SetObj(test_vector, "push_back",
+                        static_cast<void(std::vector<std::string>::*)(std::string&&)>(&std::vector<std::string>::push_back));
+    state["vec"]["push_back"]("hi");
+    return test_vector[0] == "hi";
 }

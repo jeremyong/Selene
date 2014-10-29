@@ -45,6 +45,8 @@ static TestMap tests = {
     {"test_mutate_instance", test_mutate_instance},
     {"test_multiple_methods", test_multiple_methods},
     {"test_register_obj_const_member_variable", test_register_obj_const_member_variable},
+    {"test_bind_vector_push_back", test_bind_vector_push_back},
+    {"test_bind_vector_push_back_string", test_bind_vector_push_back_string},
 
     {"test_select_global", test_select_global},
     {"test_select_field", test_select_field},

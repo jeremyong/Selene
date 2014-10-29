@@ -5,6 +5,7 @@
 #include <memory>
 #include "State.h"
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace sel {
@@ -56,6 +57,20 @@ private:
         };
         _funs.emplace_back(
             new ObjFun<1, M>{state, std::string{member_name}, lambda_get});
+    }
+
+    template <typename Ret, typename... Args>
+    void _register_member(lua_State *state,
+                          T *t,
+                          const char *fun_name,
+                          Ret(T::*fun)(Args&&...)) {
+        std::function<Ret(Args&&...)> lambda = [t, fun](Args&&... args) {
+            return (t->*fun)(std::forward<Args>(args)...);
+        };
+        constexpr int arity = detail::_arity<Ret>::value;
+        _funs.emplace_back(
+            new ObjFun<arity, Ret, Args...>
+            {state, std::string(fun_name), lambda});
     }
 
     template <typename Ret, typename... Args>

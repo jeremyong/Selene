@@ -84,6 +84,19 @@ private:
     template <typename Ret, typename... Args>
     void _register_member(lua_State *state,
                           const char *fun_name,
+                          Ret(T::*fun)(Args&&...)) {
+        std::function<Ret(T*, Args&&...)> lambda = [fun](T *t, Args&&... args) {
+            return (t->*fun)(std::forward<Args>(args)...);
+        };
+        constexpr int arity = detail::_arity<Ret>::value;
+        _funs.emplace_back(
+            new ClassFun<arity, T, Ret, Args...>
+            {state, std::string(fun_name), _metatable_name.c_str(), lambda});
+    }
+
+    template <typename Ret, typename... Args>
+    void _register_member(lua_State *state,
+                          const char *fun_name,
                           Ret(T::*fun)(Args...)) {
         std::function<Ret(T*, Args...)> lambda = [fun](T *t, Args... args) {
             return (t->*fun)(args...);

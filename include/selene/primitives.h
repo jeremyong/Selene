@@ -87,6 +87,12 @@ inline T& _check_get(_id<T&>, lua_State *l, const int index) {
     return *(T *)lua_topointer(l, index);
 };
 
+template <typename T>
+inline T _check_get(_id<T&&>, lua_State *l, const int index) {
+    return _check_get(_id<T>{}, l, index);
+};
+
+
 inline int _check_get(_id<int>, lua_State *l, const int index) {
     return luaL_checkint(l, index);
 };
