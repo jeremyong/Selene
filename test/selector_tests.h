@@ -82,3 +82,22 @@ bool test_create_table_index(sel::State &state) {
     state["new_table"][3] = 4;
     return state["new_table"][3] == 4;
 }
+
+bool test_cache_selector_field_assignment(sel::State &state) {
+    sel::Selector s = state["new_table"][3];
+    s = 4;
+    return state["new_table"][3] == 4;
+}
+
+bool test_cache_selector_field_access(sel::State &state) {
+    state["new_table"][3] = 4;
+    sel::Selector s = state["new_table"][3];
+    return s == 4;
+}
+
+bool test_cache_selector_function(sel::State &state) {
+    state.Load("../test/test.lua");
+    sel::Selector s = state["set_global"];
+    s();
+    return state["global1"] == 8;
+}

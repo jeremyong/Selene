@@ -60,6 +60,9 @@ static TestMap tests = {
     {"test_set_nested_index", test_set_nested_index},
     {"test_create_table_field", test_create_table_field},
     {"test_create_table_index", test_create_table_index},
+    {"test_cache_selector_field_assignment", test_cache_selector_field_assignment},
+    {"test_cache_selector_field_access", test_cache_selector_field_access},
+    {"test_cache_selector_function", test_cache_selector_function},
 
     {"test_register_class", test_register_class},
     {"test_get_member_variable", test_get_member_variable},

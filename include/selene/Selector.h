@@ -30,15 +30,15 @@ private:
     // Functor is stored when the () operator is invoked. The argument
     // is used to indicate how many return values are expected
     using Functor = std::function<void(int)>;
-    mutable std::unique_ptr<Functor> _functor;
+    mutable Functor _functor;
 
     Selector(lua_State *s, Registry &r, const std::string &name,
              std::vector<Fun> traversal, Fun get, PFun put)
         : _state(s), _registry(r), _name(name), _traversal{traversal},
-          _get(get), _put(put), _functor{nullptr} {}
+          _get(get), _put(put) {}
 
     Selector(lua_State *s, Registry &r, const char *name)
-        : _state(s), _registry(r), _name(name), _functor{nullptr} {
+        : _state(s), _registry(r), _name(name) {
         _get = [this, name]() {
             lua_getglobal(_state, name);
         };
@@ -73,16 +73,18 @@ public:
         : _state(other._state),
           _registry(other._registry),
           _name{other._name},
-        _traversal{other._traversal},
-        _get{other._get},
-        _put{other._put} {}
+          _traversal{other._traversal},
+          _get{other._get},
+          _put{other._put},
+          _functor(other._functor)
+        {}
 
     ~Selector() {
-        // If there is a functor present, execute it and collect no args
-        if (_functor != nullptr) {
+        // If there is a functor is not empty, execute it and collect no args
+        if (_functor) {
             _traverse();
             _get();
-            (*_functor)(0);
+            _functor(0);
         }
         lua_settop(_state, 0);
     }
@@ -91,15 +93,15 @@ public:
     bool operator==(Selector &other) = delete;
 
     template <typename... Args>
-    const Selector& operator()(Args... args) const {
+    const Selector operator()(Args... args) const {
         auto tuple_args = std::make_tuple(std::forward<Args>(args)...);
         constexpr int num_args = sizeof...(Args);
-        auto tmp = new Functor([this, tuple_args, num_args](int num_ret) {
-                detail::_push(_state, tuple_args);
-                lua_call(_state, num_args, num_ret);
-            });
-        _functor.reset(std::move(tmp));
-        return *this;
+        Selector copy{*this};
+        copy._functor = [this, tuple_args, num_args](int num_ret) {
+            detail::_push(_state, tuple_args);
+            lua_call(_state, num_args, num_ret);
+        };
+        return copy;
     }
 
     template <typename L>
@@ -212,7 +214,7 @@ public:
     std::tuple<Ret...> GetTuple() const {
         _traverse();
         _get();
-        (*_functor)(sizeof...(Ret));
+        _functor(sizeof...(Ret));
         return detail::_pop_n_reset<Ret...>(_state);
     }
 
@@ -220,9 +222,9 @@ public:
     operator T&() const {
         _traverse();
         _get();
-        if (_functor != nullptr) {
-            (*_functor)(1);
-            _functor.reset();
+        if (_functor) {
+            _functor(1);
+            _functor = nullptr;
         }
         auto ret = detail::_pop(detail::_id<T*>{}, _state);
         lua_settop(_state, 0);
@@ -233,9 +235,9 @@ public:
     operator T*() const {
         _traverse();
         _get();
-        if (_functor != nullptr) {
-            (*_functor)(1);
-            _functor.reset();
+        if (_functor) {
+            _functor(1);
+            _functor = nullptr;
         }
         auto ret = detail::_pop(detail::_id<T*>{}, _state);
         lua_settop(_state, 0);
@@ -245,9 +247,9 @@ public:
     operator bool() const {
         _traverse();
         _get();
-        if (_functor != nullptr) {
-            (*_functor)(1);
-            _functor.reset();
+        if (_functor) {
+            _functor(1);
+            _functor = nullptr;
         }
         auto ret = detail::_pop(detail::_id<bool>{}, _state);
         lua_settop(_state, 0);
@@ -257,9 +259,9 @@ public:
     operator int() const {
         _traverse();
         _get();
-        if (_functor != nullptr) {
-            (*_functor)(1);
-            _functor.reset();
+        if (_functor) {
+            _functor(1);
+            _functor = nullptr;
         }
         auto ret = detail::_pop(detail::_id<int>{}, _state);
         lua_settop(_state, 0);
@@ -269,9 +271,9 @@ public:
     operator unsigned int() const {
         _traverse();
         _get();
-        if (_functor != nullptr) {
-            (*_functor)(1);
-            _functor.reset();
+        if (_functor) {
+            _functor(1);
+            _functor = nullptr;
         }
         auto ret = detail::_pop(detail::_id<unsigned int>{}, _state);
         lua_settop(_state, 0);
@@ -281,9 +283,9 @@ public:
     operator lua_Number() const {
         _traverse();
         _get();
-        if (_functor != nullptr) {
-            (*_functor)(1);
-            _functor.reset();
+        if (_functor) {
+            _functor(1);
+            _functor = nullptr;
         }
         auto ret = detail::_pop(detail::_id<lua_Number>{}, _state);
         lua_settop(_state, 0);
@@ -293,9 +295,9 @@ public:
     operator std::string() const {
         _traverse();
         _get();
-        if (_functor != nullptr) {
-            (*_functor)(1);
-            _functor.reset();
+        if (_functor) {
+            _functor(1);
+            _functor = nullptr;
         }
         auto ret =  detail::_pop(detail::_id<std::string>{}, _state);
         lua_settop(_state, 0);
@@ -306,9 +308,9 @@ public:
     operator sel::function<R(Args...)>() {
         _traverse();
         _get();
-        if (_functor != nullptr) {
-            (*_functor)(1);
-            _functor.reset();
+        if (_functor) {
+            _functor(1);
+            _functor = nullptr;
         }
         auto ret = detail::_pop(detail::_id<sel::function<R(Args...)>>{},
                                 _state);
@@ -389,9 +391,9 @@ private:
     std::string ToString() const {
         _traverse();
         _get();
-        if (_functor != nullptr) {
-            (*_functor)(1);
-            _functor.reset();
+        if (_functor) {
+            _functor(1);
+            _functor = nullptr;
         }
         auto ret =  detail::_pop(detail::_id<std::string>{}, _state);
         lua_settop(_state, 0);

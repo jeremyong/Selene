@@ -58,3 +58,7 @@ function resume_co()
    ran, value = coroutine.resume(co)
    return value
 end
+
+function set_global()
+   global1 = 8
+end
