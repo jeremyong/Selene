@@ -45,6 +45,7 @@ public:
     }
     ~State() {
         if (_l != nullptr && _l_owner) {
+            ForceGC();
             lua_close(_l);
         }
         _l = nullptr;
