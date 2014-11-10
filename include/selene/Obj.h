@@ -64,7 +64,7 @@ private:
                           T *t,
                           const char *fun_name,
                           Ret(T::*fun)(Args&&...)) {
-        std::function<Ret(Args&&...)> lambda = [t, fun](Args&&... args) {
+        std::function<Ret(Args&&...)> lambda = [t, fun](Args&&... args) -> Ret {
             return (t->*fun)(std::forward<Args>(args)...);
         };
         constexpr int arity = detail::_arity<Ret>::value;
@@ -78,7 +78,7 @@ private:
                           T *t,
                           const char *fun_name,
                           Ret(T::*fun)(Args...)) {
-        std::function<Ret(Args...)> lambda = [t, fun](Args... args) {
+        std::function<Ret(Args...)> lambda = [t, fun](Args... args) -> Ret {
             return (t->*fun)(args...);
         };
         constexpr int arity = detail::_arity<Ret>::value;
