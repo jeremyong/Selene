@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 project(Selene)
 
 set(LUA_INCLUDE_DIR "" CACHE FILEPATH "Path to lua headers")
+set(LUA_LIB_DIR "" CACHE FILEPATH "Path to lua libs")
 
 if(${LUA_INCLUDE_DIR})
   if(NOT EXISTS ${LUA_INCLUDE_DIR}/lua.h)
@@ -10,6 +11,7 @@ if(${LUA_INCLUDE_DIR})
 endif()
 
 include_directories(${LUA_INCLUDE_DIR})
+link_directories(${LUA_LIB_DIR})
 
 if(APPLE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -std=c++11 -stdlib=libc++")
