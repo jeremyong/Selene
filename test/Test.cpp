@@ -47,6 +47,8 @@ static TestMap tests = {
     {"test_register_obj_const_member_variable", test_register_obj_const_member_variable},
     {"test_bind_vector_push_back", test_bind_vector_push_back},
     {"test_bind_vector_push_back_string", test_bind_vector_push_back_string},
+    {"test_obj_pointer_return", test_obj_pointer_return},
+    {"test_obj_reference_return", test_obj_reference_return},
 
     {"test_select_global", test_select_global},
     {"test_select_field", test_select_field},
