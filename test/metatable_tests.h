@@ -12,10 +12,6 @@ static Qux qux;
 Qux *GetQuxPtr() { return &qux; }
 Qux &GetQuxRef() { return qux; }
 
-struct Baz {
-    Qux &GetQuxRef() { return qux;}
-};
-
 bool test_metatable_registry_ptr(sel::State &state) {
     state["get_instance"] = &GetQuxPtr;
     state["Qux"].SetClass<Qux>("baz", &Qux::baz);
