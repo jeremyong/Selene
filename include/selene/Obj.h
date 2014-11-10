@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ObjFun.h"
+#include "MetatableRegistry.h"
 #include <functional>
 #include <memory>
 #include "State.h"
@@ -16,6 +17,7 @@ template <typename T, typename... Members>
 class Obj : public BaseObj {
 private:
     std::vector<std::unique_ptr<BaseFun>> _funs;
+    MetatableRegistry& _meta_registry;
 
     template <typename M>
     void _register_member(lua_State *state,
@@ -84,7 +86,7 @@ private:
         constexpr int arity = detail::_arity<Ret>::value;
         _funs.emplace_back(
             new ObjFun<arity, Ret, Args...>
-            {state, std::string(fun_name), lambda});
+            {state, _meta_registry, std::string(fun_name), lambda});
     }
 
     void _register_members(lua_State *state, T *t) {}
@@ -98,7 +100,7 @@ private:
         _register_members(state, t, members...);
     }
 public:
-    Obj(lua_State *state, T *t, Members... members) {
+    Obj(lua_State *state, MetatableRegistry & meta_registry, T *t, Members... members) : _meta_registry(meta_registry) {
         lua_createtable(state, 0, sizeof...(Members));
         _register_members(state, t, members...);
     }
