@@ -4,6 +4,7 @@
 #include "LuaRef.h"
 #include <memory>
 #include "primitives.h"
+#include "util.h"
 
 namespace sel {
 /*
@@ -21,10 +22,12 @@ public:
     function(int ref, lua_State *state) : _ref(state, ref), _state(state) {}
 
     R operator()(Args... args) {
+        int handler_index = SetErrorHandler(_state);
         _ref.Push(_state);
         detail::_push_n(_state, args...);
         constexpr int num_args = sizeof...(Args);
-        lua_call(_state, num_args, 1);
+        lua_pcall(_state, num_args, 1, handler_index);
+        lua_remove(_state, handler_index);
         R ret = detail::_pop(detail::_id<R>{}, _state);
         lua_settop(_state, 0);
         return ret;
@@ -44,10 +47,12 @@ public:
     function(int ref, lua_State *state) : _ref(state, ref), _state(state) {}
 
     void operator()(Args... args) {
+        int handler_index = SetErrorHandler(_state);
         _ref.Push(_state);
         detail::_push_n(_state, args...);
         constexpr int num_args = sizeof...(Args);
-        lua_call(_state, num_args, 1);
+        lua_pcall(_state, num_args, 1, handler_index);
+        lua_remove(_state, handler_index);
         lua_settop(_state, 0);
     }
 
@@ -66,11 +71,13 @@ public:
     function(int ref, lua_State *state) : _ref(state, ref), _state(state) {}
 
     std::tuple<R...> operator()(Args... args) {
+        int handler_index = SetErrorHandler(_state);
         _ref.Push(_state);
         detail::_push_n(_state, args...);
         constexpr int num_args = sizeof...(Args);
         constexpr int num_ret = sizeof...(R);
-        lua_call(_state, num_args, num_ret);
+        lua_pcall(_state, num_args, num_ret, handler_index);
+        lua_remove(_state, handler_index);
         return detail::_pop_n_reset<R...>(_state);
     }
 
