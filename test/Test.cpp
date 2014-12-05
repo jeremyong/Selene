@@ -5,6 +5,7 @@
 #include "metatable_tests.h"
 #include "reference_tests.h"
 #include "selector_tests.h"
+#include "error_tests.h"
 #include <map>
 
 // A very simple testing framework
@@ -13,6 +14,12 @@
 using Test = bool(*)(sel::State &);
 using TestMap = std::map<const char *, Test>;
 static TestMap tests = {
+    {"test_load_error", test_load_error},
+    {"test_load_syntax_error", test_load_syntax_error},
+    {"test_call_undefined_function", test_call_undefined_function},
+    {"test_call_undefined_function2", test_call_undefined_function2},
+    {"test_call_stackoverflow", test_call_stackoverflow},
+
     {"test_function_no_args", test_function_no_args},
     {"test_add", test_add},
     {"test_multi_return", test_multi_return},
@@ -103,9 +110,11 @@ int ExecuteAll() {
                                it->first + "\" failed.");
         }
         int size = state.Size();
-        if (size != 0)
+        if (size != 0) {
             failures.push_back(std::string{"Test \""} + it->first
                                + "\" leaked " + std::to_string(size) + " values");
+            std::cout << state << std::endl;
+        }
     }
     std::cout << std::endl << passing << " out of "
               << num_tests << " tests finished successfully." << std::endl;
