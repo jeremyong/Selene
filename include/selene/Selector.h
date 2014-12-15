@@ -7,6 +7,8 @@
 #include <tuple>
 #include <vector>
 
+#include "util.h"
+
 namespace sel {
 class State;
 class Selector {
@@ -98,8 +100,25 @@ public:
         constexpr int num_args = sizeof...(Args);
         Selector copy{*this};
         copy._functor = [this, tuple_args, num_args](int num_ret) {
+            // install handler, and swap(handler, function) on lua stack
+            int handler_index = SetErrorHandler(_state);
+            int func_index = handler_index - 1;
+#if LUA_VERSION_NUM >= 502
+            lua_pushvalue(_state, func_index);
+            lua_copy(_state, handler_index, func_index);
+            lua_replace(_state, handler_index);
+#else
+            lua_pushvalue(_state, func_index);
+            lua_push_value(_state, handler_index);
+            lua_replace(_state, func_index);
+            lua_replace(_state, handler_index);
+#endif
+            // call lua function with error handler
             detail::_push(_state, tuple_args);
-            lua_call(_state, num_args, num_ret);
+            lua_pcall(_state, num_args, num_ret, handler_index - 1);
+
+            // remove error handler
+            lua_remove(_state, handler_index - 1);
         };
         return copy;
     }

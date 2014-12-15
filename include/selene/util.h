@@ -54,4 +54,28 @@ inline bool check(lua_State *L, int code) {
         return false;
     }
 }
+
+inline int ErrorHandler(lua_State *L) {
+    // call debug.traceback
+    lua_getglobal(L, "debug");
+    lua_getfield(L, -1, "traceback");
+    lua_pushvalue(L, 1);
+    lua_pushinteger(L, 2);
+    lua_call(L, 2, 1);
+
+    // _print(<error-message> + call stack)
+    const char* msg = "<not set>";
+    if (!lua_isnil(L, -1)) {
+        msg = lua_tostring(L, -1);
+        if (!msg)
+            msg = "<error object>";
+    }
+    _print(msg);
+    return 1;
+}
+
+inline int SetErrorHandler(lua_State *L) {
+    lua_pushcfunction(L, &ErrorHandler);
+    return lua_gettop(L);
+}
 }
