@@ -36,7 +36,7 @@ private:
 
     Selector(lua_State *s, Registry &r, const std::string &name,
              std::vector<Fun> traversal, Fun get, PFun put)
-        : _state(s), _registry(r), _name(name), _traversal{traversal},
+        : _state(s), _registry(r), _name(name), _traversal(traversal),
           _get(get), _put(put) {}
 
     Selector(lua_State *s, Registry &r, const char *name)
@@ -74,10 +74,10 @@ public:
     Selector(const Selector &other)
         : _state(other._state),
           _registry(other._registry),
-          _name{other._name},
-          _traversal{other._traversal},
-          _get{other._get},
-          _put{other._put},
+          _name(other._name),
+          _traversal(other._traversal),
+          _get(other._get),
+          _put(other._put),
           _functor(other._functor)
         {}
 
