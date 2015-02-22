@@ -62,3 +62,9 @@ end
 function set_global()
    global1 = 8
 end
+
+should_be_one = 0
+
+function should_run_once()
+   should_be_one = should_be_one + 1
+end

@@ -81,6 +81,17 @@ public:
           _functor(other._functor)
         {}
 
+    Selector(Selector&& other)
+        : _state(other._state),
+          _registry(other._registry),
+          _name(other._name),
+          _traversal(other._traversal),
+          _get(other._get),
+          _put(other._put),
+          _functor(other._functor) {
+        other._functor = nullptr;
+    }
+
     ~Selector() {
         // If there is a functor is not empty, execute it and collect no args
         if (_functor) {

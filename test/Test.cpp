@@ -72,6 +72,7 @@ static TestMap tests = {
     {"test_cache_selector_field_assignment", test_cache_selector_field_assignment},
     {"test_cache_selector_field_access", test_cache_selector_field_access},
     {"test_cache_selector_function", test_cache_selector_function},
+    {"test_function_should_run_once", test_function_should_run_once},
 
     {"test_register_class", test_register_class},
     {"test_get_member_variable", test_get_member_variable},
@@ -146,5 +147,5 @@ int main() {
 
     // For debugging anything in particular, you can run an individual
     //test like so:
-    //ExecuteTest("test_metatable_ptr_member");
+    //ExecuteTest("test_function_should_run_once");
 }

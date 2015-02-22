@@ -101,3 +101,10 @@ bool test_cache_selector_function(sel::State &state) {
     s();
     return state["global1"] == 8;
 }
+
+bool test_function_should_run_once(sel::State &state) {
+    state.Load("../test/test.lua");
+    auto should_run_once = state["should_run_once"];
+    should_run_once();
+    return state["should_be_one"] == 1;
+}
