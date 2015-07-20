@@ -58,7 +58,7 @@ inline int _get(_id<int>, lua_State *l, const int index) {
 }
 
 inline unsigned int _get(_id<unsigned int>, lua_State *l, const int index) {
-#if LUA_VERSION_NUM >= 502
+#if LUA_VERSION_NUM >= 502 && LUA_VERSION_NUM < 503
     return lua_tounsigned(l, index);
 #else
     return static_cast<unsigned>(lua_tointeger(l, index));
@@ -94,11 +94,17 @@ inline T _check_get(_id<T&&>, lua_State *l, const int index) {
 
 
 inline int _check_get(_id<int>, lua_State *l, const int index) {
+#if LUA_VERSION_NUM >= 503
+    return luaL_checkinteger(l, index);
+#else
     return luaL_checkint(l, index);
+#endif
 };
 
 inline unsigned int _check_get(_id<unsigned int>, lua_State *l, const int index) {
-#if LUA_VERSION_NUM >= 502
+#if LUA_VERSION_NUM >= 503
+    return static_cast<unsigned>(luaL_l(checkinteger, index));
+#elif LUA_VERSION_NUM >= 502
     return luaL_checkunsigned(l, index);
 #else
     return static_cast<unsigned>(luaL_checkint(l, index));
@@ -246,7 +252,9 @@ inline void _push(lua_State *l, MetatableRegistry &, int i) {
 }
 
 inline void _push(lua_State *l, MetatableRegistry &, unsigned int u) {
-#if LUA_VERSION_NUM >= 502
+#if LUA_VERSION_NUM >= 503
+	lua_pushinteger(l, (lua_Integer)u);
+#elif LUA_VERSION_NUM >= 502
     lua_pushunsigned(l, u);
 #else
     lua_pushinteger(l, static_cast<int>(u));
@@ -289,7 +297,9 @@ inline void _push(lua_State *l, int i) {
 }
 
 inline void _push(lua_State *l, unsigned int u) {
-#if LUA_VERSION_NUM >= 502
+#if LUA_VERSION_NUM >= 503
+	lua_pushinteger(l, (lua_Integer)u);
+#elif LUA_VERSION_NUM >= 502
     lua_pushunsigned(l, u);
 #else
     lua_pushinteger(l, static_cast<int>(u));
