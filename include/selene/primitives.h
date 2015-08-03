@@ -224,15 +224,15 @@ inline void _push(lua_State *l) {}
 
 template <typename T>
 inline void _push(lua_State *l, MetatableRegistry &m, T* t) {
-	if(t == nullptr) {
-		lua_pushnil(l);
-	}
-	else {
-		lua_pushlightuserdata(l, t);
-		if (const std::string* metatable = m.Find(typeid(T))) {
-			luaL_setmetatable(l, metatable->c_str());
-		}
-	}
+  if(t == nullptr) {
+    lua_pushnil(l);
+  }
+  else {
+    lua_pushlightuserdata(l, t);
+    if (const std::string* metatable = m.Find(typeid(T))) {
+      luaL_setmetatable(l, metatable->c_str());
+    }
+  }
 }
 
 template <typename T>
@@ -253,7 +253,7 @@ inline void _push(lua_State *l, MetatableRegistry &, int i) {
 
 inline void _push(lua_State *l, MetatableRegistry &, unsigned int u) {
 #if LUA_VERSION_NUM >= 503
-	lua_pushinteger(l, (lua_Integer)u);
+  lua_pushinteger(l, (lua_Integer)u);
 #elif LUA_VERSION_NUM >= 502
     lua_pushunsigned(l, u);
 #else
@@ -275,12 +275,12 @@ inline void _push(lua_State *l, MetatableRegistry &, const char *s) {
 
 template <typename T>
 inline void _push(lua_State *l, T* t) {
-	if(t == nullptr) {
-		lua_pushnil(l);
-	}
-	else {
-		lua_pushlightuserdata(l, t);
-	}
+  if(t == nullptr) {
+    lua_pushnil(l);
+  }
+  else {
+    lua_pushlightuserdata(l, t);
+  }
 }
 
 template <typename T>
@@ -298,7 +298,7 @@ inline void _push(lua_State *l, int i) {
 
 inline void _push(lua_State *l, unsigned int u) {
 #if LUA_VERSION_NUM >= 503
-	lua_pushinteger(l, (lua_Integer)u);
+  lua_pushinteger(l, (lua_Integer)u);
 #elif LUA_VERSION_NUM >= 502
     lua_pushunsigned(l, u);
 #else
