@@ -103,7 +103,7 @@ inline int _check_get(_id<int>, lua_State *l, const int index) {
 
 inline unsigned int _check_get(_id<unsigned int>, lua_State *l, const int index) {
 #if LUA_VERSION_NUM >= 503
-    return static_cast<unsigned>(luaL_l(checkinteger, index));
+    return static_cast<unsigned>(luaL_checkinteger(l, index));
 #elif LUA_VERSION_NUM >= 502
     return luaL_checkunsigned(l, index);
 #else
