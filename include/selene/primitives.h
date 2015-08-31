@@ -54,7 +54,7 @@ inline bool _get(_id<bool>, lua_State *l, const int index) {
 }
 
 inline int _get(_id<int>, lua_State *l, const int index) {
-    return lua_tointeger(l, index);
+    return static_cast<int>(lua_tointeger(l, index));
 }
 
 inline unsigned int _get(_id<unsigned int>, lua_State *l, const int index) {
@@ -95,7 +95,7 @@ inline T _check_get(_id<T&&>, lua_State *l, const int index) {
 
 inline int _check_get(_id<int>, lua_State *l, const int index) {
 #if LUA_VERSION_NUM >= 503
-    return luaL_checkinteger(l, index);
+    return static_cast<int>(luaL_checkinteger(l, index));
 #else
     return luaL_checkint(l, index);
 #endif
@@ -220,7 +220,7 @@ T _pop(_id<T> t, lua_State *l) {
 
 /* Setters */
 
-inline void _push(lua_State *l) {}
+inline void _push(lua_State *) {}
 
 template <typename T>
 inline void _push(lua_State *l, MetatableRegistry &m, T* t) {
@@ -340,7 +340,7 @@ inline void _push_dispatcher(lua_State *l,
     _push_n(l, m, std::get<N>(values)...);
 }
 
-inline void _push(lua_State *l, MetatableRegistry &, std::tuple<>) {}
+inline void _push(lua_State *, MetatableRegistry &, std::tuple<>) {}
 
 template <typename... T>
 inline void _push(lua_State *l, MetatableRegistry &m, const std::tuple<T...> &values) {
@@ -364,7 +364,7 @@ inline void _push_dispatcher(lua_State *l,
     _push_n(l, std::get<N>(values)...);
 }
 
-inline void _push(lua_State *l, std::tuple<>) {}
+inline void _push(lua_State *, std::tuple<>) {}
 
 template <typename... T>
 inline void _push(lua_State *l, const std::tuple<T...> &values) {
