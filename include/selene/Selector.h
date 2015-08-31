@@ -41,12 +41,15 @@ private:
 
     Selector(lua_State *s, Registry &r, const char *name)
         : _state(s), _registry(r), _name(name) {
-        _get = [this, name]() {
-            lua_getglobal(_state, name);
+        // lambda's lifetime maybe longer than lifetime of `name'
+        const std::string nCopy{name};
+        const auto state = _state; // gcc-5.1 doesn't support implicit member capturing
+        _get = [state, nCopy]() {
+            lua_getglobal(state, nCopy.c_str());
         };
-        _put = [this, name](Fun fun) {
+        _put = [state, nCopy](Fun fun) {
             fun();
-            lua_setglobal(_state, name);
+            lua_setglobal(state, nCopy.c_str());
         };
     }
 
@@ -110,26 +113,27 @@ public:
         auto tuple_args = std::make_tuple(std::forward<Args>(args)...);
         constexpr int num_args = sizeof...(Args);
         Selector copy{*this};
-        copy._functor = [this, tuple_args, num_args](int num_ret) {
+        const auto state = _state; // gcc-5.1 doesn't support implicit member capturing
+        copy._functor = [state, tuple_args, num_args](int num_ret) {
             // install handler, and swap(handler, function) on lua stack
-            int handler_index = SetErrorHandler(_state);
+            int handler_index = SetErrorHandler(state);
             int func_index = handler_index - 1;
 #if LUA_VERSION_NUM >= 502
-            lua_pushvalue(_state, func_index);
-            lua_copy(_state, handler_index, func_index);
-            lua_replace(_state, handler_index);
+            lua_pushvalue(state, func_index);
+            lua_copy(state, handler_index, func_index);
+            lua_replace(state, handler_index);
 #else
-            lua_pushvalue(_state, func_index);
-            lua_push_value(_state, handler_index);
-            lua_replace(_state, func_index);
-            lua_replace(_state, handler_index);
+            lua_pushvalue(state, func_index);
+            lua_push_value(state, handler_index);
+            lua_replace(state, func_index);
+            lua_replace(state, handler_index);
 #endif
             // call lua function with error handler
-            detail::_push(_state, tuple_args);
-            lua_pcall(_state, num_args, num_ret, handler_index - 1);
+            detail::_push(state, tuple_args);
+            lua_pcall(state, num_args, num_ret, handler_index - 1);
 
             // remove error handler
-            lua_remove(_state, handler_index - 1);
+            lua_remove(state, handler_index - 1);
         };
         return copy;
     }
@@ -354,13 +358,16 @@ public:
         _name += std::string(".") + name;
         _check_create_table();
         _traversal.push_back(_get);
-        _get = [this, name]() {
-            lua_getfield(_state, -1, name);
+        // explicitly copy `name' because lambda lifetime may be longer
+        const std::string nCopy{name};
+        const auto state = _state; // gcc-5.1 doesn't support implicit member capturing
+        _get = [state, nCopy]() {
+            lua_getfield(state, -1, nCopy.c_str());
         };
-        _put = [this, name](Fun fun) {
+        _put = [state, nCopy](Fun fun) {
             fun();
-            lua_setfield(_state, -2, name);
-            lua_pop(_state, 1);
+            lua_setfield(state, -2, nCopy.c_str());
+            lua_pop(state, 1);
         };
         return std::move(*this);
     }
@@ -368,15 +375,16 @@ public:
         _name += std::string(".") + std::to_string(index);
         _check_create_table();
         _traversal.push_back(_get);
-        _get = [this, index]() {
-            lua_pushinteger(_state, index);
-            lua_gettable(_state, -2);
+        const auto state = _state; // gcc-5.1 doesn't support implicit member capturing
+        _get = [state, index]() {
+            lua_pushinteger(state, index);
+            lua_gettable(state, -2);
         };
-        _put = [this, index](Fun fun) {
-            lua_pushinteger(_state, index);
+        _put = [state, index](Fun fun) {
+            lua_pushinteger(state, index);
             fun();
-            lua_settable(_state, -3);
-            lua_pop(_state, 1);
+            lua_settable(state, -3);
+            lua_pop(state, 1);
         };
         return std::move(*this);
     }
@@ -385,13 +393,16 @@ public:
         _check_create_table();
         auto traversal = _traversal;
         traversal.push_back(_get);
-        Fun get = [this, name]() {
-            lua_getfield(_state, -1, name);
+        // explicitly copy `name' because lambda lifetime may be longer
+        const std::string nCopy{name};
+        const auto state = _state; // gcc-5.1 doesn't support implicit member capturing
+        Fun get = [state, nCopy]() {
+            lua_getfield(state, -1, nCopy.c_str());
         };
-        PFun put = [this, name](Fun fun) {
+        PFun put = [state, nCopy](Fun fun) {
             fun();
-            lua_setfield(_state, -2, name);
-            lua_pop(_state, 1);
+            lua_setfield(state, -2, nCopy.c_str());
+            lua_pop(state, 1);
         };
         return Selector{_state, _registry, n, traversal, get, put};
     }
@@ -400,15 +411,16 @@ public:
         _check_create_table();
         auto traversal = _traversal;
         traversal.push_back(_get);
-        Fun get = [this, index]() {
-            lua_pushinteger(_state, index);
-            lua_gettable(_state, -2);
+        const auto state = _state; // gcc-5.1 doesn't support implicit member capturing
+        Fun get = [state, index]() {
+            lua_pushinteger(state, index);
+            lua_gettable(state, -2);
         };
-        PFun put = [this, index](Fun fun) {
-            lua_pushinteger(_state, index);
+        PFun put = [state, index](Fun fun) {
+            lua_pushinteger(state, index);
             fun();
-            lua_settable(_state, -3);
-            lua_pop(_state, 1);
+            lua_settable(state, -3);
+            lua_pop(state, 1);
         };
         return Selector{_state, _registry, name, traversal, get, put};
     }
