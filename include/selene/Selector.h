@@ -9,6 +9,32 @@
 
 #include "util.h"
 
+#ifdef HAS_REF_QUALIFIERS
+# undef HAS_REF_QUALIFIERS
+# undef REF_QUAL_LVALUE
+#endif
+
+#if defined(__clang__)
+# if __has_feature(cxx_reference_qualified_functions)
+#  define HAS_REF_QUALIFIERS
+# endif
+#elif defined(__GNUC__)
+# define GCC_VERSION (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
+# if GCC_VERSION >= 40801
+#  define HAS_REF_QUALIFIERS
+# endif
+#elif defined(_MSC_VER)
+# if _MSC_VER >= 1900 // since MSVS-14 CTP1
+#  define HAS_REF_QUALIFIERS
+# endif
+#endif
+
+#if defined(HAS_REF_QUALIFIERS)
+# define REF_QUAL_LVALUE &
+#else
+# define REF_QUAL_LVALUE
+#endif
+
 namespace sel {
 class State;
 class Selector {
@@ -354,6 +380,7 @@ public:
 
     // Chaining operators. If the selector is an rvalue, modify in
     // place. Otherwise, create a new Selector and return it.
+#ifdef HAS_REF_QUALIFIERS
     Selector&& operator[](const char *name) && {
         _name += std::string(".") + name;
         _check_create_table();
@@ -388,7 +415,8 @@ public:
         };
         return std::move(*this);
     }
-    Selector operator[](const char *name) const & {
+#endif // HAS_REF_QUALIFIERS
+    Selector operator[](const char *name) const REF_QUAL_LVALUE {
         auto n = _name + "." + name;
         _check_create_table();
         auto traversal = _traversal;
@@ -406,7 +434,7 @@ public:
         };
         return Selector{_state, _registry, n, traversal, get, put};
     }
-    Selector operator[](const int index) const & {
+    Selector operator[](const int index) const REF_QUAL_LVALUE {
         auto name = _name + "." + std::to_string(index);
         _check_create_table();
         auto traversal = _traversal;
