@@ -50,9 +50,12 @@ bool test_call_undefined_function(sel::State &state) {
 bool test_call_undefined_function2(sel::State &state) {
     state.Load("../test/test_error.lua");
     const char* expected = "attempt to call global 'err_func2'";
+    const char* expected_new = "attempt to call a nil value (global 'err_func2')";
     CapturedStdout capture;
     state["err_func1"](1, 2);
-    return capture.Content().find(expected) != std::string::npos;
+    const auto content = capture.Content();
+    return content.find(expected) != std::string::npos || \
+        content.find(expected_new) != std::string::npos;
 }
 
 bool test_call_stackoverflow(sel::State &state) {
