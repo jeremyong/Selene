@@ -49,7 +49,11 @@ bool test_call_undefined_function(sel::State &state) {
 
 bool test_call_undefined_function2(sel::State &state) {
     state.Load("../test/test_error.lua");
+#if LUA_VERSION_NUM < 503
     const char* expected = "attempt to call global 'err_func2'";
+#else
+    const char* expected = "attempt to call a nil value (global 'err_func2')";
+#endif
     CapturedStdout capture;
     state["err_func1"](1, 2);
     return capture.Content().find(expected) != std::string::npos;
