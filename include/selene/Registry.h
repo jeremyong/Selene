@@ -61,7 +61,7 @@ public:
     template <typename T, typename... Funs>
     void RegisterObj(T &t, Funs... funs) {
         auto tmp = std::unique_ptr<BaseObj>(
-            new Obj<T, Funs...>{_state, &t, funs...});
+            new Obj<T, Funs...>{_state, _metatables, &t, funs...});
         _objs.push_back(std::move(tmp));
     }
 

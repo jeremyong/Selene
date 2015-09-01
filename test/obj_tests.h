@@ -3,9 +3,14 @@
 #include <selene.h>
 #include <vector>
 
+struct Bla {
+    int y;
+};
+
 struct Foo {
     int x;
     const int y;
+    Bla bla;
     Foo(int x_) : x(x_), y(3) {}
     int GetX() { return x; }
     int DoubleAdd(int y) {
@@ -13,6 +18,12 @@ struct Foo {
     }
     void SetX(int x_) {
         x = x_;
+    }
+    Bla & GetBlaRef() {
+        return bla;
+    }
+    Bla * GetBlaPtr() {
+        return &bla;
     }
 };
 
@@ -84,4 +95,17 @@ bool test_bind_vector_push_back_string(sel::State &state) {
                         static_cast<void(std::vector<std::string>::*)(std::string&&)>(&std::vector<std::string>::push_back));
     state["vec"]["push_back"]("hi");
     return test_vector[0] == "hi";
+}
+
+bool test_obj_pointer_return(sel::State &state) {
+    Foo foo_instance(1);
+    state["foo_instance"].SetObj(foo_instance, "get_bla_ptr", &Foo::GetBlaPtr);
+    return state["foo_instance"]["get_bla_ptr"]() == &foo_instance.bla;
+}
+
+bool test_obj_reference_return(sel::State &state) {
+    Foo foo_instance(1);
+    state["foo_instance"].SetObj(foo_instance, "get_bla_ref", &Foo::GetBlaRef);
+    Bla &ref = state["foo_instance"]["get_bla_ref"]();
+    return &ref == &foo_instance.bla;
 }

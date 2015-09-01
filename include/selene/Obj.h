@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ObjFun.h"
+#include "MetatableRegistry.h"
 #include <functional>
 #include <memory>
 #include "State.h"
@@ -16,6 +17,7 @@ template <typename T, typename... Members>
 class Obj : public BaseObj {
 private:
     std::vector<std::unique_ptr<BaseFun>> _funs;
+    MetatableRegistry& _meta_registry;
 
     template <typename M>
     void _register_member(lua_State *state,
@@ -36,14 +38,14 @@ private:
             return t->*member;
         };
         _funs.emplace_back(
-            new ObjFun<1, M>{state, std::string{member_name}, lambda_get});
+            new ObjFun<1, M>{state, _meta_registry, std::string{member_name}, lambda_get});
 
         std::function<void(M)> lambda_set = [t, member](M value) {
             t->*member = value;
         };
         _funs.emplace_back(
             new ObjFun<0, void, M>
-            {state, std::string{"set_"} + member_name, lambda_set});
+            {state, _meta_registry, std::string{"set_"} + member_name, lambda_set});
     }
 
     template <typename M>
@@ -56,7 +58,7 @@ private:
             return t->*member;
         };
         _funs.emplace_back(
-            new ObjFun<1, M>{state, std::string{member_name}, lambda_get});
+            new ObjFun<1, M>{state, _meta_registry, std::string{member_name}, lambda_get});
     }
 
     template <typename Ret, typename... Args>
@@ -64,13 +66,13 @@ private:
                           T *t,
                           const char *fun_name,
                           Ret(T::*fun)(Args&&...)) {
-        std::function<Ret(Args&&...)> lambda = [t, fun](Args&&... args) {
+        std::function<Ret(Args&&...)> lambda = [t, fun](Args&&... args) -> Ret {
             return (t->*fun)(std::forward<Args>(args)...);
         };
         constexpr int arity = detail::_arity<Ret>::value;
         _funs.emplace_back(
             new ObjFun<arity, Ret, Args...>
-            {state, std::string(fun_name), lambda});
+            {state, _meta_registry, std::string(fun_name), lambda});
     }
 
     template <typename Ret, typename... Args>
@@ -78,13 +80,13 @@ private:
                           T *t,
                           const char *fun_name,
                           Ret(T::*fun)(Args...)) {
-        std::function<Ret(Args...)> lambda = [t, fun](Args... args) {
+        std::function<Ret(Args...)> lambda = [t, fun](Args... args) -> Ret {
             return (t->*fun)(args...);
         };
         constexpr int arity = detail::_arity<Ret>::value;
         _funs.emplace_back(
             new ObjFun<arity, Ret, Args...>
-            {state, std::string(fun_name), lambda});
+            {state, _meta_registry, std::string(fun_name), lambda});
     }
 
     void _register_members(lua_State *state, T *t) {}
@@ -98,7 +100,7 @@ private:
         _register_members(state, t, members...);
     }
 public:
-    Obj(lua_State *state, T *t, Members... members) {
+    Obj(lua_State *state, MetatableRegistry & meta_registry, T *t, Members... members) : _meta_registry(meta_registry) {
         lua_createtable(state, 0, sizeof...(Members));
         _register_members(state, t, members...);
     }
