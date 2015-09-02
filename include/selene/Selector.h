@@ -65,17 +65,16 @@ private:
         : _state(s), _registry(r), _name(name), _traversal(traversal),
           _get(get), _put(put) {}
 
-    Selector(lua_State *s, Registry &r, const char *name)
+    Selector(lua_State *s, Registry &r, const std::string& name)
         : _state(s), _registry(r), _name(name) {
-        // lambda's lifetime maybe longer than lifetime of `name'
-        const std::string nCopy{name};
         const auto state = _state; // gcc-5.1 doesn't support implicit member capturing
-        _get = [state, nCopy]() {
-            lua_getglobal(state, nCopy.c_str());
+        // `name' is passed by value because lambda's lifetime may be longer than lifetime of `name'
+        _get = [state, name]() {
+            lua_getglobal(state, name.c_str());
         };
-        _put = [state, nCopy](Fun fun) {
+        _put = [state, name](Fun fun) {
             fun();
-            lua_setglobal(state, nCopy.c_str());
+            lua_setglobal(state, name.c_str());
         };
     }
 
@@ -381,22 +380,24 @@ public:
     // Chaining operators. If the selector is an rvalue, modify in
     // place. Otherwise, create a new Selector and return it.
 #ifdef HAS_REF_QUALIFIERS
-    Selector&& operator[](const char *name) && {
+    Selector&& operator[](const std::string& name) && {
         _name += std::string(".") + name;
         _check_create_table();
         _traversal.push_back(_get);
-        // explicitly copy `name' because lambda lifetime may be longer
-        const std::string nCopy{name};
         const auto state = _state; // gcc-5.1 doesn't support implicit member capturing
-        _get = [state, nCopy]() {
-            lua_getfield(state, -1, nCopy.c_str());
+	// `name' is passed by value because lambda lifetime may be longer than `name'
+        _get = [state, name]() {
+            lua_getfield(state, -1, name.c_str());
         };
-        _put = [state, nCopy](Fun fun) {
+        _put = [state, name](Fun fun) {
             fun();
-            lua_setfield(state, -2, nCopy.c_str());
+            lua_setfield(state, -2, name.c_str());
             lua_pop(state, 1);
         };
         return std::move(*this);
+    }
+    Selector&& operator[](const char* name) && {
+        return std::move(*this)[std::string{name}];
     }
     Selector&& operator[](const int index) && {
         _name += std::string(".") + std::to_string(index);
@@ -416,23 +417,25 @@ public:
         return std::move(*this);
     }
 #endif // HAS_REF_QUALIFIERS
-    Selector operator[](const char *name) const REF_QUAL_LVALUE {
+    Selector operator[](const std::string& name) const REF_QUAL_LVALUE {
         auto n = _name + "." + name;
         _check_create_table();
         auto traversal = _traversal;
         traversal.push_back(_get);
-        // explicitly copy `name' because lambda lifetime may be longer
-        const std::string nCopy{name};
         const auto state = _state; // gcc-5.1 doesn't support implicit member capturing
-        Fun get = [state, nCopy]() {
-            lua_getfield(state, -1, nCopy.c_str());
+	// `name' is passed by value because lambda lifetime may be longer than `name'
+        Fun get = [state, name]() {
+            lua_getfield(state, -1, name.c_str());
         };
-        PFun put = [state, nCopy](Fun fun) {
+        PFun put = [state, name](Fun fun) {
             fun();
-            lua_setfield(state, -2, nCopy.c_str());
+            lua_setfield(state, -2, name.c_str());
             lua_pop(state, 1);
         };
         return Selector{_state, _registry, n, traversal, get, put};
+    }
+    Selector operator[](const char* name) const REF_QUAL_LVALUE {
+        return (*this)[std::string{name}];
     }
     Selector operator[](const int index) const REF_QUAL_LVALUE {
         auto name = _name + "." + std::to_string(index);
