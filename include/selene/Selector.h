@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Constants.h"
 #include "exotics.h"
 #include <functional>
 #include "Registry.h"
@@ -127,7 +128,7 @@ public:
             _get();
             _functor(0);
         }
-        lua_settop(_state, 0);
+        lua_settop(_state, ErrorHandlerIndex);
     }
 
     // Allow automatic casting when used in comparisons
@@ -140,25 +141,9 @@ public:
         Selector copy{*this};
         const auto state = _state; // gcc-5.1 doesn't support implicit member capturing
         copy._functor = [state, tuple_args, num_args](int num_ret) {
-            // install handler, and swap(handler, function) on lua stack
-            int handler_index = SetErrorHandler(state);
-            int func_index = handler_index - 1;
-#if LUA_VERSION_NUM >= 502
-            lua_pushvalue(state, func_index);
-            lua_copy(state, handler_index, func_index);
-            lua_replace(state, handler_index);
-#else
-            lua_pushvalue(state, func_index);
-            lua_push_value(state, handler_index);
-            lua_replace(state, func_index);
-            lua_replace(state, handler_index);
-#endif
             // call lua function with error handler
             detail::_push(state, tuple_args);
-            lua_pcall(state, num_args, num_ret, handler_index - 1);
-
-            // remove error handler
-            lua_remove(state, handler_index - 1);
+            lua_pcall(state, num_args, num_ret, ErrorHandlerIndex);
         };
         return copy;
     }
@@ -170,7 +155,7 @@ public:
             _registry.Register(lambda);
         };
         _put(push);
-        lua_settop(_state, 0);
+        lua_settop(_state, ErrorHandlerIndex);
     }
 
 
@@ -180,7 +165,7 @@ public:
             detail::_push(_state, b);
         };
         _put(push);
-        lua_settop(_state, 0);
+        lua_settop(_state, ErrorHandlerIndex);
     }
 
     void operator=(int i) const {
@@ -189,7 +174,7 @@ public:
             detail::_push(_state, i);
         };
         _put(push);
-        lua_settop(_state, 0);
+        lua_settop(_state, ErrorHandlerIndex);
     }
 
     void operator=(unsigned int i) const {
@@ -198,7 +183,7 @@ public:
             detail::_push(_state, i);
         };
         _put(push);
-        lua_settop(_state, 0);
+        lua_settop(_state, ErrorHandlerIndex);
     }
 
     void operator=(lua_Number n) const {
@@ -207,7 +192,7 @@ public:
             detail::_push(_state, n);
         };
         _put(push);
-        lua_settop(_state, 0);
+        lua_settop(_state, ErrorHandlerIndex);
     }
 
     void operator=(const std::string &s) const {
@@ -216,7 +201,7 @@ public:
             detail::_push(_state, s);
         };
         _put(push);
-        lua_settop(_state, 0);
+        lua_settop(_state, ErrorHandlerIndex);
     }
 
     template <typename Ret, typename... Args>
@@ -243,7 +228,7 @@ public:
             detail::_push(_state, std::string{s});
         };
         _put(push);
-        lua_settop(_state, 0);
+        lua_settop(_state, ErrorHandlerIndex);
     }
 
     template <typename T, typename... Funs>
@@ -254,7 +239,7 @@ public:
             _registry.Register(t, fun_tuple);
         };
         _put(push);
-        lua_settop(_state, 0);
+        lua_settop(_state, ErrorHandlerIndex);
     }
 
     template <typename T, typename... Args, typename... Funs>
@@ -266,7 +251,7 @@ public:
             _registry.RegisterClass<T, Args...>(_name, fun_tuple, d);
         };
         _put(push);
-        lua_settop(_state, 0);
+        lua_settop(_state, ErrorHandlerIndex);
     }
 
     template <typename... Ret>
@@ -286,7 +271,7 @@ public:
             _functor = nullptr;
         }
         auto ret = detail::_pop(detail::_id<T*>{}, _state);
-        lua_settop(_state, 0);
+        lua_settop(_state, ErrorHandlerIndex);
         return *ret;
     }
 
@@ -299,7 +284,7 @@ public:
             _functor = nullptr;
         }
         auto ret = detail::_pop(detail::_id<T*>{}, _state);
-        lua_settop(_state, 0);
+        lua_settop(_state, ErrorHandlerIndex);
         return ret;
     }
 
@@ -311,7 +296,7 @@ public:
             _functor = nullptr;
         }
         auto ret = detail::_pop(detail::_id<bool>{}, _state);
-        lua_settop(_state, 0);
+        lua_settop(_state, ErrorHandlerIndex);
         return ret;
     }
 
@@ -323,7 +308,7 @@ public:
             _functor = nullptr;
         }
         auto ret = detail::_pop(detail::_id<int>{}, _state);
-        lua_settop(_state, 0);
+        lua_settop(_state, ErrorHandlerIndex);
         return ret;
     }
 
@@ -335,7 +320,7 @@ public:
             _functor = nullptr;
         }
         auto ret = detail::_pop(detail::_id<unsigned int>{}, _state);
-        lua_settop(_state, 0);
+        lua_settop(_state, ErrorHandlerIndex);
         return ret;
     }
 
@@ -347,7 +332,7 @@ public:
             _functor = nullptr;
         }
         auto ret = detail::_pop(detail::_id<lua_Number>{}, _state);
-        lua_settop(_state, 0);
+        lua_settop(_state, ErrorHandlerIndex);
         return ret;
     }
 
@@ -359,7 +344,7 @@ public:
             _functor = nullptr;
         }
         auto ret =  detail::_pop(detail::_id<std::string>{}, _state);
-        lua_settop(_state, 0);
+        lua_settop(_state, ErrorHandlerIndex);
         return ret;
     }
 
@@ -373,7 +358,7 @@ public:
         }
         auto ret = detail::_pop(detail::_id<sel::function<R(Args...)>>{},
                                 _state);
-        lua_settop(_state, 0);
+        lua_settop(_state, ErrorHandlerIndex);
         return ret;
     }
 
@@ -469,7 +454,7 @@ private:
             _functor = nullptr;
         }
         auto ret =  detail::_pop(detail::_id<std::string>{}, _state);
-        lua_settop(_state, 0);
+        lua_settop(_state, ErrorHandlerIndex);
         return ret;
     }
 };

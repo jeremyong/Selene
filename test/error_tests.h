@@ -39,6 +39,19 @@ bool test_load_syntax_error(sel::State &state) {
         && capture.Content().find(expected) != std::string::npos;
 }
 
+bool test_alternate_error_handler(sel::State &) {
+    auto prefixingPrint = [](std::string const& msg)
+    {
+        std::cout << "Selene-Lib: " << msg << std::endl;
+    };
+    sel::State state{true, prefixingPrint};
+    state.Load("../test/test_error.lua");
+    const char* expected = "Selene-Lib: attempt to call a nil value";
+    CapturedStdout capture;
+    state["undefined_function"]();
+    return capture.Content().find(expected) != std::string::npos;
+}
+
 bool test_call_undefined_function(sel::State &state) {
     state.Load("../test/test_error.lua");
     const char* expected = "attempt to call a nil value";

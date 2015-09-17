@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Constants.h"
 #include <string>
 #include "traits.h"
 #include "MetatableRegistry.h"
@@ -175,12 +176,12 @@ struct _pop_n_reset_impl {
     template <std::size_t... N>
     static type worker(lua_State *l,
                        _indices<N...>) {
-        return std::make_tuple(_get(_id<Ts>{}, l, N + 1)...);
+        return std::make_tuple(_get(_id<Ts>{}, l, N + ErrorHandlerIndex + 1)...);
     }
 
     static type apply(lua_State *l) {
         auto ret = worker(l, typename _indices_builder<S>::type());
-        lua_settop(l, 0);
+        lua_settop(l, ErrorHandlerIndex);
         return ret;
     }
 };
@@ -190,7 +191,7 @@ template <typename... Ts>
 struct _pop_n_reset_impl<0, Ts...> {
     using type = void;
     static type apply(lua_State *l) {
-        lua_settop(l, 0);
+        lua_settop(l, ErrorHandlerIndex);
     }
 };
 
@@ -200,7 +201,7 @@ struct _pop_n_reset_impl<1, T> {
     using type = T;
     static type apply(lua_State *l) {
         T ret = _get(_id<T>{}, l, -1);
-        lua_settop(l, 0);
+        lua_settop(l, ErrorHandlerIndex);
         return ret;
     }
 };

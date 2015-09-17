@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Constants.h"
 #include <functional>
 #include "LuaRef.h"
 #include <memory>
@@ -22,14 +23,12 @@ public:
     function(int ref, lua_State *state) : _ref(state, ref), _state(state) {}
 
     R operator()(Args... args) {
-        int handler_index = SetErrorHandler(_state);
         _ref.Push(_state);
         detail::_push_n(_state, args...);
         constexpr int num_args = sizeof...(Args);
-        lua_pcall(_state, num_args, 1, handler_index);
-        lua_remove(_state, handler_index);
+        lua_pcall(_state, num_args, 1, ErrorHandlerIndex);
         R ret = detail::_pop(detail::_id<R>{}, _state);
-        lua_settop(_state, 0);
+        lua_settop(_state, ErrorHandlerIndex);
         return ret;
     }
 
@@ -47,13 +46,11 @@ public:
     function(int ref, lua_State *state) : _ref(state, ref), _state(state) {}
 
     void operator()(Args... args) {
-        int handler_index = SetErrorHandler(_state);
         _ref.Push(_state);
         detail::_push_n(_state, args...);
         constexpr int num_args = sizeof...(Args);
-        lua_pcall(_state, num_args, 1, handler_index);
-        lua_remove(_state, handler_index);
-        lua_settop(_state, 0);
+        lua_pcall(_state, num_args, 1, ErrorHandlerIndex);
+        lua_settop(_state, ErrorHandlerIndex);
     }
 
     void Push(lua_State *state) {
@@ -71,13 +68,11 @@ public:
     function(int ref, lua_State *state) : _ref(state, ref), _state(state) {}
 
     std::tuple<R...> operator()(Args... args) {
-        int handler_index = SetErrorHandler(_state);
         _ref.Push(_state);
         detail::_push_n(_state, args...);
         constexpr int num_args = sizeof...(Args);
         constexpr int num_ret = sizeof...(R);
-        lua_pcall(_state, num_args, num_ret, handler_index);
-        lua_remove(_state, handler_index);
+        lua_pcall(_state, num_args, num_ret, ErrorHandlerIndex);
         return detail::_pop_n_reset<R...>(_state);
     }
 

@@ -16,6 +16,7 @@ using TestMap = std::map<const char *, Test>;
 static TestMap tests = {
     {"test_load_error", test_load_error},
     {"test_load_syntax_error", test_load_syntax_error},
+    {"test_alternate_error_handler", test_alternate_error_handler},
     {"test_call_undefined_function", test_call_undefined_function},
     {"test_call_undefined_function2", test_call_undefined_function2},
     {"test_call_stackoverflow", test_call_stackoverflow},
@@ -111,9 +112,15 @@ int ExecuteAll() {
                                it->first + "\" failed.");
         }
         int size = state.Size();
-        if (size != 0) {
+        if (size > sel::ErrorHandlerIndex) {
             failures.push_back(std::string{"Test \""} + it->first
                                + "\" leaked " + std::to_string(size) + " values");
+            std::cout << state << std::endl;
+        }
+        else if(size < sel::ErrorHandlerIndex)
+        {
+            failures.push_back(std::string{"Test \""} + it->first
+                               + "\" corrupted stack");
             std::cout << state << std::endl;
         }
     }
@@ -142,7 +149,7 @@ bool ExecuteTest(const char *test) {
 int main() {
     // Executing all tests will run all test cases and check leftover
     // stack size afterwards. It is expected that the stack size
-    // post-test is 0.
+    // post-test is 1.
     return ExecuteAll();
 
     // For debugging anything in particular, you can run an individual
