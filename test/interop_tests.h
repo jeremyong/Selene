@@ -183,12 +183,18 @@ bool test_get_primitive_by_value(sel::State & state) {
 
 bool test_get_primitive_by_const_ref(sel::State & state) {
     state.Load("../test/test.lua");
+    // Crashes
     return static_cast<const int &>(state["global1"]) == 5;
+}
+
+bool test_get_primitive_by_rvalue_ref(sel::State & state) {
+    state.Load("../test/test.lua");
+    return static_cast<int &&>(state["global1"]) == 5;
 }
 
 bool test_get_primitive_by_ref(sel::State & state) {
     state.Load("../test/test.lua");
-    // This should not even compile, should it?
+    // This should not even compile.
     return static_cast<int &>(state["global1"]) == 5;
 }
 
@@ -205,6 +211,17 @@ bool test_call_with_primitive_by_const_ref(sel::State & state) {
     auto const accept_int_by_const_ref =
         [&success](const int & x) {success = x == 5;};
     state["test"] = accept_int_by_const_ref;
+    // Crashes
+    state["test"](5);
+    return success;
+}
+
+bool test_call_with_primitive_by_rvalue_ref(sel::State & state) {
+    bool success = false;
+    auto const accept_int_by_rvalue_ref =
+        [&success](int && x) {success = x == 5;};
+    // This should compile.
+    state["test"] = accept_int_by_rvalue_ref;
     state["test"](5);
     return success;
 }
