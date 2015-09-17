@@ -1,5 +1,7 @@
 #pragma once
 
+#include <assert.h>
+#include "Constants.h"
 #include <iostream>
 
 extern "C" {
@@ -32,14 +34,8 @@ inline std::ostream &operator<<(std::ostream &os, lua_State *l) {
     return os;
 }
 
-inline void _print() {
-    std::cout << std::endl;
-}
-
-template <typename T, typename... Ts>
-inline void _print(T arg, Ts... args) {
-    std::cout << arg << ", ";
-    _print(args...);
+inline void print(std::string const& msg) {
+    std::cout << msg << std::endl;
 }
 
 inline bool check(lua_State *L, int code) {
@@ -55,7 +51,18 @@ inline bool check(lua_State *L, int code) {
     }
 }
 
+using _err_handler_type = std::function<void(std::string const&)>;
 inline int ErrorHandler(lua_State *L) {
+    _err_handler_type *fun =
+      (_err_handler_type *)lua_touserdata(L, lua_upvalueindex(1));
+
+    const char* msg = "<not set>";
+    if (!lua_isnil(L, -1)) {
+        msg = lua_tostring(L, -1);
+        if (!msg)
+            msg = "<error object>";
+    }
+
     // call debug.traceback
     lua_getglobal(L, "debug");
     lua_getfield(L, -1, "traceback");
@@ -63,19 +70,27 @@ inline int ErrorHandler(lua_State *L) {
     lua_pushinteger(L, 2);
     lua_call(L, 2, 1);
 
-    // _print(<error-message> + call stack)
-    const char* msg = "<not set>";
+    const char* stack = "<not set>";
     if (!lua_isnil(L, -1)) {
-        msg = lua_tostring(L, -1);
-        if (!msg)
-            msg = "<error object>";
+        stack = lua_tostring(L, -1);
+        if (!stack)
+            stack = "<error object>";
     }
-    _print(msg);
+
+    std::string errMsg(msg);
+    errMsg.append(" : ");
+    errMsg.append(stack);
+    (*fun)(errMsg);
     return 1;
 }
 
-inline int SetErrorHandler(lua_State *L) {
-    lua_pushcfunction(L, &ErrorHandler);
-    return lua_gettop(L);
+inline void PrepareStackAndSetErrorHandler(lua_State *L, _err_handler_type *handler) {
+    assert(L != nullptr);
+    assert(handler != nullptr);
+    lua_settop(L, 0);
+
+    lua_pushlightuserdata(L, (void *)(handler));
+    lua_pushcclosure(L, &ErrorHandler, 1);
+    assert(ErrorHandlerIndex == lua_gettop(L));
 }
 }

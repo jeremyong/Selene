@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Constants.h"
 #include <iostream>
 #include <memory>
 #include <string>
@@ -14,17 +15,23 @@ class State {
 private:
     lua_State *_l;
     bool _l_owner;
+    std::unique_ptr<_err_handler_type> _err_handler;
     std::unique_ptr<Registry> _registry;
 
 public:
-    State() : State(false) {}
-    State(bool should_open_libs) : _l(nullptr), _l_owner(true) {
+    State(_err_handler_type err_handler = print)
+    : State(false, err_handler) {}
+    State(bool should_open_libs, _err_handler_type err_handler = print)
+    : _l(nullptr), _l_owner(true), _err_handler(new _err_handler_type(err_handler)) {
         _l = luaL_newstate();
         if (_l == nullptr) throw 0;
         if (should_open_libs) luaL_openlibs(_l);
+        PrepareStackAndSetErrorHandler(_l, _err_handler.get());
         _registry.reset(new Registry(_l));
     }
-    State(lua_State *l) : _l(l), _l_owner(false) {
+    State(lua_State *l, _err_handler_type err_handler = print)
+    : _l(l), _l_owner(false), _err_handler(new _err_handler_type(err_handler)) {
+        PrepareStackAndSetErrorHandler(_l, _err_handler.get());
         _registry.reset(new Registry(_l));
     }
     State(const State &other) = delete;
@@ -32,6 +39,7 @@ public:
     State(State &&other)
         : _l(other._l),
           _l_owner(other._l_owner),
+          _err_handler(std::move(other._err_handler)),
           _registry(std::move(other._registry)) {
         other._l = nullptr;
     }
@@ -39,14 +47,19 @@ public:
         if (&other == this) return *this;
         _l = other._l;
         _l_owner = other._l_owner;
+        _err_handler = std::move(other._err_handler);
         _registry = std::move(other._registry);
         other._l = nullptr;
         return *this;
     }
     ~State() {
-        if (_l != nullptr && _l_owner) {
-            ForceGC();
-            lua_close(_l);
+        if (_l != nullptr) {
+            lua_settop(_l, 0);
+            if(_l_owner)
+            {
+                ForceGC();
+                lua_close(_l);
+            }
         }
         _l = nullptr;
     }
@@ -64,10 +77,10 @@ public:
 #endif
             if (status == LUA_ERRSYNTAX) {
                 const char *msg = lua_tostring(_l, -1);
-                _print(msg ? msg : (file + ": syntax error").c_str());
+                (*_err_handler)(msg ? std::string{msg} : (file + ": syntax error"));
             } else if (status == LUA_ERRFILE) {
                 const char *msg = lua_tostring(_l, -1);
-                _print(msg ? msg : (file + ": file error").c_str());
+                (*_err_handler)(msg ? std::string{msg} : (file + ": file error"));
             }
             lua_remove(_l , -1);
             return false;
@@ -76,7 +89,7 @@ public:
             return true;
 
         const char *msg = lua_tostring(_l, -1);
-        _print(msg ? msg : (file + ": dofile failed").c_str());
+        (*_err_handler)(msg ? std::string{msg} : (file + ": dofile failed"));
         lua_remove(_l, -1);
         return false;
     }
@@ -119,7 +132,7 @@ public:
 
     bool operator()(const char *code) {
         bool result = !luaL_dostring(_l, code);
-        if(result) lua_settop(_l, 0);
+        if(result) lua_settop(_l, ErrorHandlerIndex);
         return result;
     }
     void ForceGC() {
