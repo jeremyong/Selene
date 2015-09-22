@@ -15,11 +15,6 @@ private:
 public:
     Fun(lua_State *&l,
         MetatableRegistry &meta_registry,
-        Ret(*fun)(Args...))
-        : Fun(l, meta_registry, _fun_type{fun}) {}
-
-    Fun(lua_State *&l,
-        MetatableRegistry &meta_registry,
         _fun_type fun) : _fun(fun), _meta_registry(meta_registry) {
         lua_pushlightuserdata(l, (void *)static_cast<BaseFun *>(this));
         lua_pushcclosure(l, &detail::_lua_dispatcher, 1);
@@ -43,11 +38,6 @@ private:
     _fun_type _fun;
 
 public:
-    Fun(lua_State *&l,
-        MetatableRegistry &dummy,
-        void(*fun)(Args...))
-        : Fun(l, dummy, _fun_type{fun}) {}
-
     Fun(lua_State *&l,
         MetatableRegistry &,
         _fun_type fun) : _fun(fun) {
