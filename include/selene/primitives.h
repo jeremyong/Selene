@@ -2,6 +2,7 @@
 
 #include <string>
 #include "traits.h"
+#include <type_traits>
 #include "MetatableRegistry.h"
 
 extern "C" {
@@ -41,6 +42,14 @@ template <>
 struct is_primitive<std::string> {
     static constexpr bool value = true;
 };
+
+template<typename T>
+using decay_primitive =
+    typename std::conditional<
+        is_primitive<typename std::decay<T>::type>::value,
+        typename std::decay<T>::type,
+        T
+    >::type;
 
 /* getters */
 template <typename T>

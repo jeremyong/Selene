@@ -211,7 +211,6 @@ bool test_call_with_primitive_by_const_ref(sel::State & state) {
     auto const accept_int_by_const_ref =
         [&success](const int & x) {success = x == 5;};
     state["test"] = accept_int_by_const_ref;
-    // Crashes
     state["test"](5);
     return success;
 }
@@ -220,7 +219,6 @@ bool test_call_with_primitive_by_rvalue_ref(sel::State & state) {
     bool success = false;
     auto const accept_int_by_rvalue_ref =
         [&success](int && x) {success = x == 5;};
-    // This should compile.
     state["test"] = accept_int_by_rvalue_ref;
     state["test"](5);
     return success;
