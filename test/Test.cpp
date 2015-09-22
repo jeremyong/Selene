@@ -43,7 +43,6 @@ static TestMap tests = {
     {"test_get_primitive_by_value", test_get_primitive_by_value},
     {"test_get_primitive_by_const_ref", test_get_primitive_by_const_ref},
     {"test_get_primitive_by_rvalue_ref", test_get_primitive_by_rvalue_ref},
-    {"test_get_primitive_by_ref", test_get_primitive_by_ref},
     {"test_call_with_primitive_by_value", test_call_with_primitive_by_value},
     {"test_call_with_primitive_by_const_ref", test_call_with_primitive_by_const_ref},
     {"test_call_with_primitive_by_rvalue_ref", test_call_with_primitive_by_rvalue_ref},
