@@ -1,6 +1,7 @@
 #pragma once
 
 #include "exotics.h"
+#include <exception>
 #include <functional>
 #include <tuple>
 
@@ -14,7 +15,14 @@ namespace detail {
 
 inline int _lua_dispatcher(lua_State *l) {
     BaseFun *fun = (BaseFun *)lua_touserdata(l, lua_upvalueindex(1));
-    return fun->Apply(l);
+    try {
+        return fun->Apply(l);
+    } catch (std::exception & e) {
+        lua_pushstring(l, e.what());
+    } catch (...) {
+        lua_pushliteral(l, "Caught unknown exception.");
+    }
+    lua_error(l);
 }
 
 template <typename Ret, typename... Args, std::size_t... N>
