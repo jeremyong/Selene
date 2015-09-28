@@ -23,9 +23,11 @@ public:
         if (_l == nullptr) throw 0;
         if (should_open_libs) luaL_openlibs(_l);
         _registry.reset(new Registry(_l));
+        HandleExceptionsPrintingToStdOut();
     }
     State(lua_State *l) : _l(l), _l_owner(false) {
         _registry.reset(new Registry(_l));
+        HandleExceptionsPrintingToStdOut();
     }
     State(const State &other) = delete;
     State &operator=(const State &other) = delete;
@@ -89,6 +91,14 @@ public:
         lua_pushstring(_l, modname.c_str());
         lua_call(_l, 1, 0);
 #endif
+    }
+
+    void HandleExceptionsPrintingToStdOut() {
+        _registry->SetExceptionHandler([](int, std::string msg){_print(msg);});
+    }
+
+    void HandleExceptionsWith(std::function<void(int,std::string)> exception_handler) {
+        _registry->SetExceptionHandler(std::move(exception_handler));
     }
 
     void Push() {} // Base case

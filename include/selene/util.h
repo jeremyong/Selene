@@ -70,7 +70,6 @@ inline int ErrorHandler(lua_State *L) {
         if (!msg)
             msg = "<error object>";
     }
-    _print(msg);
     return 1;
 }
 

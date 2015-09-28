@@ -139,7 +139,8 @@ public:
         constexpr int num_args = sizeof...(Args);
         Selector copy{*this};
         const auto state = _state; // gcc-5.1 doesn't support implicit member capturing
-        copy._functor = [state, tuple_args, num_args](int num_ret) {
+        const auto &registry = _registry;
+        copy._functor = [state, &registry, tuple_args, num_args](int num_ret) {
             // install handler, and swap(handler, function) on lua stack
             int handler_index = SetErrorHandler(state);
             int func_index = handler_index - 1;
@@ -155,10 +156,15 @@ public:
 #endif
             // call lua function with error handler
             detail::_push(state, tuple_args);
-            lua_pcall(state, num_args, num_ret, handler_index - 1);
+            auto const statusCode =
+                lua_pcall(state, num_args, num_ret, handler_index - 1);
 
             // remove error handler
             lua_remove(state, handler_index - 1);
+
+            if (statusCode != LUA_OK) {
+                registry.HandleException(statusCode, detail::_pop(detail::_id<std::string>(), state));
+            }
         };
         return copy;
     }

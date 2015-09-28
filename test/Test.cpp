@@ -23,6 +23,8 @@ static TestMap tests = {
 
     {"test_catch_exception_from_callback_within_lua", test_catch_exception_from_callback_within_lua},
     {"test_catch_unknwon_exception_from_callback_within_lua", test_catch_unknwon_exception_from_callback_within_lua},
+    {"test_call_exception_handler", test_call_exception_handler},
+    {"test_call_exception_handler_for_exception_from_callback", test_call_exception_handler_for_exception_from_callback},
 
     {"test_function_no_args", test_function_no_args},
     {"test_add", test_add},
