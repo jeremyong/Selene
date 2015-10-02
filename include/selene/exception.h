@@ -47,7 +47,8 @@ inline void store_current_exception(lua_State * l, char const * what) {
     void * user_data = lua_newuserdata(l, sizeof(stored_exception));
     new(user_data) stored_exception{what, std::current_exception()};
 
-    if(LUA_TNIL == luaL_getmetatable(l, _stored_exception_metatable_name()->c_str())) {
+    luaL_getmetatable(l, _stored_exception_metatable_name()->c_str());
+    if(lua_isnil(l, -1)) {
         lua_settop(l, -2);
         _register_stored_exception_metatable(l);
     }
