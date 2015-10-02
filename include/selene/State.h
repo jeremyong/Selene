@@ -1,5 +1,6 @@
 #pragma once
 
+#include "exception.h"
 #include <iostream>
 #include <memory>
 #include <string>
@@ -94,11 +95,11 @@ public:
     }
 
     void HandleExceptionsPrintingToStdOut() {
-        _registry->SetExceptionHandler([](int, std::string msg){_print(msg);});
+        _registry->SetExceptionHandler([](int, std::string msg, std::exception_ptr){_print(msg);});
     }
 
-    void HandleExceptionsWith(std::function<void(int,std::string)> exception_handler) {
-        _registry->SetExceptionHandler(std::move(exception_handler));
+    void HandleExceptionsWith(exception_handler handler) {
+        _registry->SetExceptionHandler(std::move(handler));
     }
 
     void Push() {} // Base case

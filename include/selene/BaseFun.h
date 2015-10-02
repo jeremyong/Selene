@@ -2,8 +2,10 @@
 
 #include "exotics.h"
 #include <exception>
+#include "exception.h"
 #include <functional>
 #include <tuple>
+#include "util.h"
 
 namespace sel {
 struct BaseFun {
@@ -19,10 +21,14 @@ inline int _lua_dispatcher(lua_State *l) {
         return fun->Apply(l);
     } catch (std::exception & e) {
         lua_pushstring(l, e.what());
+        Traceback(l);
+        store_current_exception(l, lua_tostring(l, -1));
     } catch (...) {
-        lua_pushliteral(l, "Caught unknown exception.");
+        lua_pushliteral(l, "<Unknown exception>");
+        Traceback(l);
+        store_current_exception(l, lua_tostring(l, -1));
     }
-    lua_error(l);
+    return lua_error(l);
 }
 
 template <typename Ret, typename... Args, std::size_t... N>

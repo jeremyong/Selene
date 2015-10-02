@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Class.h"
+#include "exception.h"
 #include "exotics.h"
 #include "Fun.h"
 #include "Obj.h"
@@ -22,7 +23,7 @@ private:
     std::vector<std::unique_ptr<BaseFun>> _funs;
     std::vector<std::unique_ptr<BaseObj>> _objs;
     std::vector<std::unique_ptr<BaseClass>> _classes;
-    std::function<void(int, std::string)> _exception_handler;
+    exception_handler _exception_handler;
     lua_State *_state;
 public:
     Registry(lua_State *state) : _state(state) {}
@@ -80,13 +81,13 @@ public:
         _classes.push_back(std::move(tmp));
     }
 
-    void SetExceptionHandler(std::function<void(int,std::string)> exception_handler) {
-        _exception_handler = std::move(exception_handler);
+    void SetExceptionHandler(exception_handler handler) {
+        _exception_handler = std::move(handler);
     }
 
-    void HandleException(int luaStatusCode, std::string message) const {
+    void HandleException(int luaStatusCode, std::string message, std::exception_ptr exception) const {
         if(_exception_handler) {
-            _exception_handler(luaStatusCode, std::move(message));
+            _exception_handler(luaStatusCode, std::move(message), std::move(exception));
         }
     }
 };

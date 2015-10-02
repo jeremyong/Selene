@@ -120,12 +120,22 @@ public:
         other._functor = nullptr;
     }
 
-    ~Selector() {
+    ~Selector() noexcept(false) {
         // If there is a functor is not empty, execute it and collect no args
         if (_functor) {
             _traverse();
             _get();
-            _functor(0);
+            if (std::uncaught_exception())
+            {
+                try {
+                    _functor(0);
+                } catch (...) {
+                    // We are already unwinding, ignore further exceptions.
+                    // As of C++17 consider std::uncaught_exceptions()
+                }
+            } else {
+                _functor(0);
+            }
         }
         lua_settop(_state, 0);
     }
@@ -163,7 +173,18 @@ public:
             lua_remove(state, handler_index - 1);
 
             if (statusCode != LUA_OK) {
-                registry.HandleException(statusCode, detail::_pop(detail::_id<std::string>(), state));
+                stored_exception * stored = test_stored_exception(state);
+                if(stored) {
+                    registry.HandleException(
+                        statusCode,
+                        stored->what,
+                        stored->exception);
+                } else {
+                    registry.HandleException(
+                        statusCode,
+                        detail::_pop(detail::_id<std::string>(), state),
+                        nullptr);
+                }
             }
         };
         return copy;
