@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Class.h"
-#include "exception.h"
 #include "exotics.h"
 #include "Fun.h"
 #include "Obj.h"
@@ -23,7 +22,6 @@ private:
     std::vector<std::unique_ptr<BaseFun>> _funs;
     std::vector<std::unique_ptr<BaseObj>> _objs;
     std::vector<std::unique_ptr<BaseClass>> _classes;
-    exception_handler _exception_handler;
     lua_State *_state;
 public:
     Registry(lua_State *state) : _state(state) {}
@@ -79,16 +77,6 @@ public:
             new Class<T, Ctor<T, CtorArgs...>, Funs...>
             {_state, _metatables, name, funs...});
         _classes.push_back(std::move(tmp));
-    }
-
-    void SetExceptionHandler(exception_handler && handler) {
-        _exception_handler = std::move(handler);
-    }
-
-    void HandleException(int luaStatusCode, std::string message, std::exception_ptr exception = nullptr) const {
-        if(_exception_handler) {
-            _exception_handler(luaStatusCode, std::move(message), std::move(exception));
-        }
     }
 };
 }

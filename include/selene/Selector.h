@@ -1,13 +1,13 @@
 #pragma once
 
+#include "exception.h"
 #include "exotics.h"
 #include <functional>
 #include "Registry.h"
 #include <string>
 #include <tuple>
-#include <vector>
-
 #include "util.h"
+#include <vector>
 
 #ifdef HAS_REF_QUALIFIERS
 # undef HAS_REF_QUALIFIERS
@@ -42,6 +42,7 @@ class Selector {
 private:
     lua_State *_state;
     Registry &_registry;
+    const ExceptionHandler &_exception_handler;
     std::string _name;
     using Fun = std::function<void()>;
     using PFun = std::function<void(Fun)>;
@@ -60,13 +61,13 @@ private:
     using Functor = std::function<void(int)>;
     mutable Functor _functor;
 
-    Selector(lua_State *s, Registry &r, const std::string &name,
+    Selector(lua_State *s, Registry &r, const ExceptionHandler &eh, const std::string &name,
              std::vector<Fun> traversal, Fun get, PFun put)
-        : _state(s), _registry(r), _name(name), _traversal(traversal),
+        : _state(s), _registry(r), _exception_handler(eh), _name(name), _traversal(traversal),
           _get(get), _put(put) {}
 
-    Selector(lua_State *s, Registry &r, const std::string& name)
-        : _state(s), _registry(r), _name(name) {
+    Selector(lua_State *s, Registry &r, const ExceptionHandler &eh, const std::string& name)
+        : _state(s), _registry(r), _exception_handler(eh), _name(name) {
         const auto state = _state; // gcc-5.1 doesn't support implicit member capturing
         // `name' is passed by value because lambda's lifetime may be longer than lifetime of `name'
         _get = [state, name]() {
@@ -102,6 +103,7 @@ public:
     Selector(const Selector &other)
         : _state(other._state),
           _registry(other._registry),
+          _exception_handler(other._exception_handler),
           _name(other._name),
           _traversal(other._traversal),
           _get(other._get),
@@ -112,6 +114,7 @@ public:
     Selector(Selector&& other)
         : _state(other._state),
           _registry(other._registry),
+          _exception_handler(other._exception_handler),
           _name(other._name),
           _traversal(other._traversal),
           _get(other._get),
@@ -149,8 +152,8 @@ public:
         constexpr int num_args = sizeof...(Args);
         Selector copy{*this};
         const auto state = _state; // gcc-5.1 doesn't support implicit member capturing
-        const auto &registry = _registry;
-        copy._functor = [state, &registry, tuple_args, num_args](int num_ret) {
+        const auto &eh = _exception_handler;
+        copy._functor = [state, &eh, tuple_args, num_args](int num_ret) {
             // install handler, and swap(handler, function) on lua stack
             int handler_index = SetErrorHandler(state);
             int func_index = handler_index - 1;
@@ -175,15 +178,14 @@ public:
             if (statusCode != LUA_OK) {
                 stored_exception * stored = test_stored_exception(state);
                 if(stored) {
-                    registry.HandleException(
+                    eh.Handle(
                         statusCode,
                         stored->what,
                         stored->exception);
                 } else {
-                    registry.HandleException(
+                    eh.Handle(
                         statusCode,
-                        detail::_pop(detail::_id<std::string>(), state),
-                        nullptr);
+                        detail::_pop(detail::_id<std::string>(), state));
                 }
             }
         };
@@ -459,7 +461,7 @@ public:
             lua_setfield(state, -2, name.c_str());
             lua_pop(state, 1);
         };
-        return Selector{_state, _registry, n, traversal, get, put};
+        return Selector{_state, _registry, _exception_handler, n, traversal, get, put};
     }
     Selector operator[](const char* name) const REF_QUAL_LVALUE {
         return (*this)[std::string{name}];
@@ -480,7 +482,7 @@ public:
             lua_settable(state, -3);
             lua_pop(state, 1);
         };
-        return Selector{_state, _registry, name, traversal, get, put};
+        return Selector{_state, _registry, _exception_handler, name, traversal, get, put};
     }
 
     friend bool operator==(const Selector &, const char *);

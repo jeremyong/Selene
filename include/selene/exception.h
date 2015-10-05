@@ -10,8 +10,6 @@ extern "C" {
 
 namespace sel {
 
-using exception_handler = std::function<void(int,std::string,std::exception_ptr)>;
-
 struct stored_exception {
     std::string what;
     std::exception_ptr exception;
@@ -82,5 +80,25 @@ inline std::exception_ptr extract_stored_exception(lua_State *l) {
     }
     return nullptr;
 }
+
+class ExceptionHandler {
+public:
+    using function = std::function<void(int,std::string,std::exception_ptr)>;
+
+private:
+    function _handler;
+
+public:
+    ExceptionHandler() = default;
+
+    explicit ExceptionHandler(function && handler) : _handler(handler) {}
+
+    void Handle(int luaStatusCode, std::string message, std::exception_ptr exception = nullptr) const {
+        if(_handler) {
+            _handler(luaStatusCode, std::move(message), std::move(exception));
+        }
+    }
+
+};
 
 }

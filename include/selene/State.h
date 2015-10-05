@@ -16,17 +16,18 @@ private:
     lua_State *_l;
     bool _l_owner;
     std::unique_ptr<Registry> _registry;
+    std::unique_ptr<ExceptionHandler> _exception_handler;
 
 public:
     State() : State(false) {}
-    State(bool should_open_libs) : _l(nullptr), _l_owner(true) {
+    State(bool should_open_libs) : _l(nullptr), _l_owner(true), _exception_handler(new ExceptionHandler) {
         _l = luaL_newstate();
         if (_l == nullptr) throw 0;
         if (should_open_libs) luaL_openlibs(_l);
         _registry.reset(new Registry(_l));
         HandleExceptionsPrintingToStdOut();
     }
-    State(lua_State *l) : _l(l), _l_owner(false) {
+    State(lua_State *l) : _l(l), _l_owner(false), _exception_handler(new ExceptionHandler) {
         _registry.reset(new Registry(_l));
         HandleExceptionsPrintingToStdOut();
     }
@@ -68,10 +69,10 @@ public:
         if (status != lua_ok) {
             if (status == LUA_ERRSYNTAX) {
                 const char *msg = lua_tostring(_l, -1);
-                _registry->HandleException(status, msg ? msg : file + ": syntax error");
+                _exception_handler->Handle(status, msg ? msg : file + ": syntax error");
             } else if (status == LUA_ERRFILE) {
                 const char *msg = lua_tostring(_l, -1);
-                _registry->HandleException(status, msg ? msg : file + ": file error");
+                _exception_handler->Handle(status, msg ? msg : file + ": file error");
             }
             lua_remove(_l , -1);
             return false;
@@ -83,7 +84,7 @@ public:
         }
 
         const char *msg = lua_tostring(_l, -1);
-        _registry->HandleException(status, msg ? msg : file + ": dofile failed");
+        _exception_handler->Handle(status, msg ? msg : file + ": dofile failed");
         lua_remove(_l, -1);
         return false;
     }
@@ -99,11 +100,11 @@ public:
     }
 
     void HandleExceptionsPrintingToStdOut() {
-        _registry->SetExceptionHandler([](int, std::string msg, std::exception_ptr){_print(msg);});
+        *_exception_handler = ExceptionHandler([](int, std::string msg, std::exception_ptr){_print(msg);});
     }
 
-    void HandleExceptionsWith(exception_handler handler) {
-        _registry->SetExceptionHandler(std::move(handler));
+    void HandleExceptionsWith(ExceptionHandler::function handler) {
+        *_exception_handler = ExceptionHandler(std::move(handler));
     }
 
     void Push() {} // Base case
@@ -129,7 +130,7 @@ public:
     }
 public:
     Selector operator[](const char *name) {
-        return Selector(_l, *_registry, name);
+        return Selector(_l, *_registry, *_exception_handler, name);
     }
 
     bool operator()(const char *code) {
