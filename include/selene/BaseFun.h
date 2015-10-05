@@ -1,8 +1,11 @@
 #pragma once
 
 #include "exotics.h"
+#include <exception>
+#include "exception.h"
 #include <functional>
 #include <tuple>
+#include "util.h"
 
 namespace sel {
 struct BaseFun {
@@ -14,7 +17,18 @@ namespace detail {
 
 inline int _lua_dispatcher(lua_State *l) {
     BaseFun *fun = (BaseFun *)lua_touserdata(l, lua_upvalueindex(1));
-    return fun->Apply(l);
+    try {
+        return fun->Apply(l);
+    } catch (std::exception & e) {
+        lua_pushstring(l, e.what());
+        Traceback(l);
+        store_current_exception(l, lua_tostring(l, -1));
+    } catch (...) {
+        lua_pushliteral(l, "<Unknown exception>");
+        Traceback(l);
+        store_current_exception(l, lua_tostring(l, -1));
+    }
+    return lua_error(l);
 }
 
 template <typename Ret, typename... Args, std::size_t... N>

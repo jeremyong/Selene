@@ -1,5 +1,6 @@
 #pragma once
 
+#include "exception.h"
 #include <functional>
 #include "LuaRef.h"
 #include <memory>
@@ -7,6 +8,37 @@
 #include "util.h"
 
 namespace sel {
+
+class Selector;
+
+namespace detail {
+struct function_base {
+    LuaRef _ref;
+    lua_State *_state;
+    ExceptionHandler *_exception_handler;
+
+    function_base(int ref, lua_State *state)
+        : _ref(state, ref), _state(state), _exception_handler(nullptr) {}
+
+    void _enable_exception_handler(ExceptionHandler *exception_handler) {
+        _exception_handler = exception_handler;
+    }
+
+    void protected_call(int const num_args, int const num_ret,
+                        int const handler_index) {
+        const auto status = lua_pcall(_state, num_args, num_ret, handler_index);
+
+        if (status != LUA_OK && _exception_handler) {
+            _exception_handler->Handle_top_of_stack(status, _state);
+        }
+    }
+
+    void Push(lua_State *state) {
+        _ref.Push(state);
+    }
+};
+}
+
 /*
  * Similar to an std::function but refers to a lua function
  */
@@ -14,61 +46,55 @@ template <class>
 class function {};
 
 template <typename R, typename... Args>
-class function<R(Args...)> {
-private:
-    LuaRef _ref;
-    lua_State *_state;
+class function<R(Args...)> : detail::function_base {
+    friend class Selector;
 public:
-    function(int ref, lua_State *state) : _ref(state, ref), _state(state) {}
+    using function_base::function_base;
 
     R operator()(Args... args) {
         int handler_index = SetErrorHandler(_state);
         _ref.Push(_state);
         detail::_push_n(_state, args...);
         constexpr int num_args = sizeof...(Args);
-        lua_pcall(_state, num_args, 1, handler_index);
+
+        protected_call(num_args, 1, handler_index);
+
         lua_remove(_state, handler_index);
         R ret = detail::_pop(detail::_id<R>{}, _state);
         lua_settop(_state, 0);
         return ret;
     }
 
-    void Push(lua_State *state) {
-        _ref.Push(state);
-    }
+    using function_base::Push;
 };
 
 template <typename... Args>
-class function<void(Args...)> {
-private:
-    LuaRef _ref;
-    lua_State *_state;
+class function<void(Args...)> : detail::function_base{
+    friend class Selector;
 public:
-    function(int ref, lua_State *state) : _ref(state, ref), _state(state) {}
+    using function_base::function_base;
 
     void operator()(Args... args) {
         int handler_index = SetErrorHandler(_state);
         _ref.Push(_state);
         detail::_push_n(_state, args...);
         constexpr int num_args = sizeof...(Args);
-        lua_pcall(_state, num_args, 1, handler_index);
+
+        protected_call(num_args, 1, handler_index);
+
         lua_remove(_state, handler_index);
         lua_settop(_state, 0);
     }
 
-    void Push(lua_State *state) {
-        _ref.Push(state);
-    }
+    using function_base::Push;
 };
 
 // Specialization for multireturn types
 template <typename... R, typename... Args>
-class function<std::tuple<R...>(Args...)> {
-private:
-    LuaRef _ref;
-    lua_State *_state;
+class function<std::tuple<R...>(Args...)> : detail::function_base{
+    friend class Selector;
 public:
-    function(int ref, lua_State *state) : _ref(state, ref), _state(state) {}
+    using function_base::function_base;
 
     std::tuple<R...> operator()(Args... args) {
         int handler_index = SetErrorHandler(_state);
@@ -76,13 +102,13 @@ public:
         detail::_push_n(_state, args...);
         constexpr int num_args = sizeof...(Args);
         constexpr int num_ret = sizeof...(R);
-        lua_pcall(_state, num_args, num_ret, handler_index);
+
+        protected_call(num_args, num_ret, handler_index);
+
         lua_remove(_state, handler_index);
         return detail::_pop_n_reset<R...>(_state);
     }
 
-    void Push(lua_State *state) {
-        _ref.Push(state);
-    }
+    using function_base::Push;
 };
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "exception.h"
 #include <iostream>
 
 extern "C" {
@@ -55,23 +56,32 @@ inline bool check(lua_State *L, int code) {
     }
 }
 
-inline int ErrorHandler(lua_State *L) {
-    // call debug.traceback
-    lua_getglobal(L, "debug");
-    lua_getfield(L, -1, "traceback");
-    lua_pushvalue(L, 1);
-    lua_pushinteger(L, 2);
-    lua_call(L, 2, 1);
-
-    // _print(<error-message> + call stack)
+inline int Traceback(lua_State *L) {
+    // Make nil and values not convertible to string human readable.
     const char* msg = "<not set>";
     if (!lua_isnil(L, -1)) {
         msg = lua_tostring(L, -1);
         if (!msg)
             msg = "<error object>";
     }
-    _print(msg);
+    lua_pushstring(L, msg);
+
+    // call debug.traceback
+    lua_getglobal(L, "debug");
+    lua_getfield(L, -1, "traceback");
+    lua_pushvalue(L, -3);
+    lua_pushinteger(L, 2);
+    lua_call(L, 2, 1);
+
     return 1;
+}
+
+inline int ErrorHandler(lua_State *L) {
+    if(test_stored_exception(L) != nullptr) {
+        return 1;
+    }
+
+    return Traceback(L);
 }
 
 inline int SetErrorHandler(lua_State *L) {

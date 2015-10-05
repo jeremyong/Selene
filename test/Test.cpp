@@ -6,6 +6,7 @@
 #include "reference_tests.h"
 #include "selector_tests.h"
 #include "error_tests.h"
+#include "exception_tests.h"
 #include <map>
 
 // A very simple testing framework
@@ -19,6 +20,13 @@ static TestMap tests = {
     {"test_call_undefined_function", test_call_undefined_function},
     {"test_call_undefined_function2", test_call_undefined_function2},
     {"test_call_stackoverflow", test_call_stackoverflow},
+
+    {"test_catch_exception_from_callback_within_lua", test_catch_exception_from_callback_within_lua},
+    {"test_catch_unknwon_exception_from_callback_within_lua", test_catch_unknwon_exception_from_callback_within_lua},
+    {"test_call_exception_handler_for_exception_from_lua", test_call_exception_handler_for_exception_from_lua},
+    {"test_call_exception_handler_for_exception_from_callback", test_call_exception_handler_for_exception_from_callback},
+    {"test_call_exception_handler_while_using_sel_function", test_call_exception_handler_while_using_sel_function},
+    {"test_rethrow_exception_for_exception_from_callback", test_rethrow_exception_for_exception_from_callback},
 
     {"test_function_no_args", test_function_no_args},
     {"test_add", test_add},
