@@ -81,11 +81,11 @@ public:
         _classes.push_back(std::move(tmp));
     }
 
-    void SetExceptionHandler(exception_handler handler) {
+    void SetExceptionHandler(exception_handler && handler) {
         _exception_handler = std::move(handler);
     }
 
-    void HandleException(int luaStatusCode, std::string message, std::exception_ptr exception) const {
+    void HandleException(int luaStatusCode, std::string message, std::exception_ptr exception = nullptr) const {
         if(_exception_handler) {
             _exception_handler(luaStatusCode, std::move(message), std::move(exception));
         }

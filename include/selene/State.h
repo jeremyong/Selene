@@ -61,25 +61,29 @@ public:
     bool Load(const std::string &file) {
         int status = luaL_loadfile(_l, file.c_str());
 #if LUA_VERSION_NUM >= 502
-        if (status != LUA_OK) {
+        auto const lua_ok = LUA_OK;
 #else
-        if (status != 0) {
+        auto const lua_ok = 0;
 #endif
+        if (status != lua_ok) {
             if (status == LUA_ERRSYNTAX) {
                 const char *msg = lua_tostring(_l, -1);
-                _print(msg ? msg : (file + ": syntax error").c_str());
+                _registry->HandleException(status, msg ? msg : file + ": syntax error");
             } else if (status == LUA_ERRFILE) {
                 const char *msg = lua_tostring(_l, -1);
-                _print(msg ? msg : (file + ": file error").c_str());
+                _registry->HandleException(status, msg ? msg : file + ": file error");
             }
             lua_remove(_l , -1);
             return false;
         }
-        if (!lua_pcall(_l, 0, LUA_MULTRET, 0))
+
+        status = lua_pcall(_l, 0, LUA_MULTRET, 0);
+        if(status == lua_ok) {
             return true;
+        }
 
         const char *msg = lua_tostring(_l, -1);
-        _print(msg ? msg : (file + ": dofile failed").c_str());
+        _registry->HandleException(status, msg ? msg : file + ": dofile failed");
         lua_remove(_l, -1);
         return false;
     }
