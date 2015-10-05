@@ -176,17 +176,7 @@ public:
             lua_remove(state, handler_index - 1);
 
             if (statusCode != LUA_OK) {
-                stored_exception * stored = test_stored_exception(state);
-                if(stored) {
-                    eh.Handle(
-                        statusCode,
-                        stored->what,
-                        stored->exception);
-                } else {
-                    eh.Handle(
-                        statusCode,
-                        detail::_pop(detail::_id<std::string>(), state));
-                }
+                eh.Handle_top_of_stack(statusCode, state);
             }
         };
         return copy;

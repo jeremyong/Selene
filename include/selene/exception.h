@@ -99,6 +99,20 @@ public:
         }
     }
 
+    void Handle_top_of_stack(int luaStatusCode, lua_State *L) const {
+        stored_exception * stored = test_stored_exception(L);
+        if(stored) {
+            Handle(
+                luaStatusCode,
+                stored->what,
+                stored->exception);
+        } else {
+            Handle(
+                luaStatusCode,
+                detail::_pop(detail::_id<std::string>(), L));
+        }
+    }
+
 };
 
 }
