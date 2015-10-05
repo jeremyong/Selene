@@ -42,7 +42,7 @@ class Selector {
 private:
     lua_State *_state;
     Registry &_registry;
-    const ExceptionHandler &_exception_handler;
+    ExceptionHandler *_exception_handler;
     std::string _name;
     using Fun = std::function<void()>;
     using PFun = std::function<void(Fun)>;
@@ -61,13 +61,13 @@ private:
     using Functor = std::function<void(int)>;
     mutable Functor _functor;
 
-    Selector(lua_State *s, Registry &r, const ExceptionHandler &eh, const std::string &name,
+    Selector(lua_State *s, Registry &r, ExceptionHandler &eh, const std::string &name,
              std::vector<Fun> traversal, Fun get, PFun put)
-        : _state(s), _registry(r), _exception_handler(eh), _name(name), _traversal(traversal),
+        : _state(s), _registry(r), _exception_handler(&eh), _name(name), _traversal(traversal),
           _get(get), _put(put) {}
 
-    Selector(lua_State *s, Registry &r, const ExceptionHandler &eh, const std::string& name)
-        : _state(s), _registry(r), _exception_handler(eh), _name(name) {
+    Selector(lua_State *s, Registry &r, ExceptionHandler &eh, const std::string& name)
+        : _state(s), _registry(r), _exception_handler(&eh), _name(name) {
         const auto state = _state; // gcc-5.1 doesn't support implicit member capturing
         // `name' is passed by value because lambda's lifetime may be longer than lifetime of `name'
         _get = [state, name]() {
@@ -152,8 +152,8 @@ public:
         constexpr int num_args = sizeof...(Args);
         Selector copy{*this};
         const auto state = _state; // gcc-5.1 doesn't support implicit member capturing
-        const auto &eh = _exception_handler;
-        copy._functor = [state, &eh, tuple_args, num_args](int num_ret) {
+        const auto eh = _exception_handler;
+        copy._functor = [state, eh, tuple_args, num_args](int num_ret) {
             // install handler, and swap(handler, function) on lua stack
             int handler_index = SetErrorHandler(state);
             int func_index = handler_index - 1;
@@ -176,7 +176,7 @@ public:
             lua_remove(state, handler_index - 1);
 
             if (statusCode != LUA_OK) {
-                eh.Handle_top_of_stack(statusCode, state);
+                eh->Handle_top_of_stack(statusCode, state);
             }
         };
         return copy;
@@ -392,6 +392,7 @@ public:
         }
         auto ret = detail::_pop(detail::_id<sel::function<R(Args...)>>{},
                                 _state);
+        ret._enable_exception_handler(_exception_handler);
         lua_settop(_state, 0);
         return ret;
     }
@@ -451,7 +452,7 @@ public:
             lua_setfield(state, -2, name.c_str());
             lua_pop(state, 1);
         };
-        return Selector{_state, _registry, _exception_handler, n, traversal, get, put};
+        return Selector{_state, _registry, *_exception_handler, n, traversal, get, put};
     }
     Selector operator[](const char* name) const REF_QUAL_LVALUE {
         return (*this)[std::string{name}];
@@ -472,7 +473,7 @@ public:
             lua_settable(state, -3);
             lua_pop(state, 1);
         };
-        return Selector{_state, _registry, _exception_handler, name, traversal, get, put};
+        return Selector{_state, _registry, *_exception_handler, name, traversal, get, put};
     }
 
     friend bool operator==(const Selector &, const char *);

@@ -49,6 +49,19 @@ bool test_call_exception_handler_for_exception_from_callback(sel::State &state) 
         && message.find("Message from C++.") != std::string::npos;
 }
 
+bool test_call_exception_handler_while_using_sel_function(sel::State &state) {
+    state.Load("../test/test_exceptions.lua");
+    int luaStatusCode = LUA_OK;
+    std::string message;
+    state.HandleExceptionsWith([&luaStatusCode, &message](int s, std::string msg, std::exception_ptr exception) {
+        luaStatusCode = s, message = std::move(msg);
+    });
+    sel::function<void(std::string)> raiseFromLua = state["raise"];
+    raiseFromLua("Message from Lua.");
+    return luaStatusCode == LUA_ERRRUN
+        && message.find("Message from Lua.") != std::string::npos;
+}
+
 bool test_rethrow_exception_for_exception_from_callback(sel::State &state) {
     state.HandleExceptionsWith([](int s, std::string msg, std::exception_ptr exception) {
         if(exception) {

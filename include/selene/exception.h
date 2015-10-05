@@ -93,13 +93,13 @@ public:
 
     explicit ExceptionHandler(function && handler) : _handler(handler) {}
 
-    void Handle(int luaStatusCode, std::string message, std::exception_ptr exception = nullptr) const {
+    void Handle(int luaStatusCode, std::string message, std::exception_ptr exception = nullptr) {
         if(_handler) {
             _handler(luaStatusCode, std::move(message), std::move(exception));
         }
     }
 
-    void Handle_top_of_stack(int luaStatusCode, lua_State *L) const {
+    void Handle_top_of_stack(int luaStatusCode, lua_State *L) {
         stored_exception * stored = test_stored_exception(L);
         if(stored) {
             Handle(
