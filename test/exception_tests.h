@@ -77,3 +77,20 @@ bool test_rethrow_exception_for_exception_from_callback(sel::State &state) {
     }
     return false;
 }
+
+bool test_rethrow_using_sel_function(sel::State & state) {
+    state.HandleExceptionsWith([](int s, std::string msg, std::exception_ptr exception) {
+        if(exception) {
+            std::rethrow_exception(exception);
+        }
+    });
+    state["throw_logic_error"] =
+        []() {throw std::logic_error("Arbitrary message.");};
+    sel::function<void(void)> cause_exception = state["throw_logic_error"];
+    try {
+        cause_exception();
+    } catch(std::logic_error & e) {
+        return std::string(e.what()).find("Arbitrary message.") != std::string::npos;
+    }
+    return false;
+}
