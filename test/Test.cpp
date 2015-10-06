@@ -31,6 +31,7 @@ static TestMap tests = {
     {"test_function_no_args", test_function_no_args},
     {"test_add", test_add},
     {"test_multi_return", test_multi_return},
+    {"test_multi_return_invoked_once", test_multi_return_invoked_once},
     {"test_heterogeneous_return", test_heterogeneous_return},
     {"test_call_field", test_call_field},
     {"test_call_c_function", test_call_c_function},
