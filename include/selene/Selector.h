@@ -4,6 +4,7 @@
 #include "exotics.h"
 #include <functional>
 #include "Registry.h"
+#include "ResourceHandler.h"
 #include <string>
 #include <tuple>
 #include "util.h"
@@ -58,8 +59,7 @@ private:
 
     // Functor is stored when the () operator is invoked. The argument
     // is used to indicate how many return values are expected
-    using Functor = std::function<void(int)>;
-    mutable Functor _functor;
+    mutable CallOnce<void(int)> _functor;
 
     Selector(lua_State *s, Registry &r, ExceptionHandler &eh, const std::string &name,
              std::vector<Fun> traversal, Fun get, PFun put)
@@ -119,9 +119,8 @@ public:
           _traversal(other._traversal),
           _get(other._get),
           _put(other._put),
-          _functor(other._functor) {
-        other._functor = nullptr;
-    }
+          _functor(std::move(other._functor))
+        {}
 
     ~Selector() noexcept(false) {
         // If there is a functor is not empty, execute it and collect no args
@@ -153,7 +152,7 @@ public:
         Selector copy{*this};
         const auto state = _state; // gcc-5.1 doesn't support implicit member capturing
         const auto eh = _exception_handler;
-        copy._functor = [state, eh, tuple_args, num_args](int num_ret) {
+        copy._functor = CallOnce<void(int)>{[state, eh, tuple_args, num_args](int num_ret) {
             // install handler, and swap(handler, function) on lua stack
             int handler_index = SetErrorHandler(state);
             int func_index = handler_index - 1;
@@ -178,7 +177,7 @@ public:
             if (statusCode != LUA_OK) {
                 eh->Handle_top_of_stack(statusCode, state);
             }
-        };
+        }};
         return copy;
     }
 
@@ -300,10 +299,7 @@ public:
     operator T&() const {
         _traverse();
         _get();
-        if (_functor) {
-            _functor(1);
-            _functor = nullptr;
-        }
+        _functor(1);
         auto ret = detail::_pop(detail::_id<T*>{}, _state);
         lua_settop(_state, 0);
         return *ret;
@@ -313,10 +309,7 @@ public:
     operator T*() const {
         _traverse();
         _get();
-        if (_functor) {
-            _functor(1);
-            _functor = nullptr;
-        }
+        _functor(1);
         auto ret = detail::_pop(detail::_id<T*>{}, _state);
         lua_settop(_state, 0);
         return ret;
@@ -325,10 +318,7 @@ public:
     operator bool() const {
         _traverse();
         _get();
-        if (_functor) {
-            _functor(1);
-            _functor = nullptr;
-        }
+        _functor(1);
         auto ret = detail::_pop(detail::_id<bool>{}, _state);
         lua_settop(_state, 0);
         return ret;
@@ -337,10 +327,7 @@ public:
     operator int() const {
         _traverse();
         _get();
-        if (_functor) {
-            _functor(1);
-            _functor = nullptr;
-        }
+        _functor(1);
         auto ret = detail::_pop(detail::_id<int>{}, _state);
         lua_settop(_state, 0);
         return ret;
@@ -349,10 +336,7 @@ public:
     operator unsigned int() const {
         _traverse();
         _get();
-        if (_functor) {
-            _functor(1);
-            _functor = nullptr;
-        }
+        _functor(1);
         auto ret = detail::_pop(detail::_id<unsigned int>{}, _state);
         lua_settop(_state, 0);
         return ret;
@@ -361,10 +345,7 @@ public:
     operator lua_Number() const {
         _traverse();
         _get();
-        if (_functor) {
-            _functor(1);
-            _functor = nullptr;
-        }
+        _functor(1);
         auto ret = detail::_pop(detail::_id<lua_Number>{}, _state);
         lua_settop(_state, 0);
         return ret;
@@ -373,10 +354,7 @@ public:
     operator std::string() const {
         _traverse();
         _get();
-        if (_functor) {
-            _functor(1);
-            _functor = nullptr;
-        }
+        _functor(1);
         auto ret =  detail::_pop(detail::_id<std::string>{}, _state);
         lua_settop(_state, 0);
         return ret;
@@ -386,10 +364,7 @@ public:
     operator sel::function<R(Args...)>() {
         _traverse();
         _get();
-        if (_functor) {
-            _functor(1);
-            _functor = nullptr;
-        }
+        _functor(1);
         auto ret = detail::_pop(detail::_id<sel::function<R(Args...)>>{},
                                 _state);
         ret._enable_exception_handler(_exception_handler);
@@ -484,10 +459,7 @@ private:
     std::string ToString() const {
         _traverse();
         _get();
-        if (_functor) {
-            _functor(1);
-            _functor = nullptr;
-        }
+        _functor(1);
         auto ret =  detail::_pop(detail::_id<std::string>{}, _state);
         lua_settop(_state, 0);
         return ret;
