@@ -62,9 +62,7 @@ public:
 
         protected_call(num_args, 1, handler_index);
 
-        lua_remove(_state, handler_index);
-        R ret = detail::_pop(detail::_id<R>{}, _state);
-        return ret;
+        return detail::_get(detail::_id<R>{}, _state, -1);
     }
 
     using function_base::Push;
@@ -85,8 +83,6 @@ public:
         constexpr int num_args = sizeof...(Args);
 
         protected_call(num_args, 1, handler_index);
-
-        lua_remove(_state, handler_index);
     }
 
     using function_base::Push;
@@ -111,7 +107,7 @@ public:
         protected_call(num_args, num_ret, handler_index);
 
         lua_remove(_state, handler_index);
-        return detail::_pop_n_reset<R...>(_state);
+        return detail::_get_n<R...>(_state);
     }
 
     using function_base::Push;
