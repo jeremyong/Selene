@@ -5,6 +5,7 @@
 #include "LuaRef.h"
 #include <memory>
 #include "primitives.h"
+#include "ResourceHandler.h"
 #include "util.h"
 
 namespace sel {
@@ -52,6 +53,8 @@ public:
     using function_base::function_base;
 
     R operator()(Args... args) {
+        ResetStackOnScopeExit save(_state);
+
         int handler_index = SetErrorHandler(_state);
         _ref.Push(_state);
         detail::_push_n(_state, args...);
@@ -61,7 +64,6 @@ public:
 
         lua_remove(_state, handler_index);
         R ret = detail::_pop(detail::_id<R>{}, _state);
-        lua_settop(_state, 0);
         return ret;
     }
 
@@ -75,6 +77,8 @@ public:
     using function_base::function_base;
 
     void operator()(Args... args) {
+        ResetStackOnScopeExit save(_state);
+
         int handler_index = SetErrorHandler(_state);
         _ref.Push(_state);
         detail::_push_n(_state, args...);
@@ -83,7 +87,6 @@ public:
         protected_call(num_args, 1, handler_index);
 
         lua_remove(_state, handler_index);
-        lua_settop(_state, 0);
     }
 
     using function_base::Push;
@@ -97,6 +100,8 @@ public:
     using function_base::function_base;
 
     std::tuple<R...> operator()(Args... args) {
+        ResetStackOnScopeExit save(_state);
+
         int handler_index = SetErrorHandler(_state);
         _ref.Push(_state);
         detail::_push_n(_state, args...);
