@@ -136,8 +136,7 @@ inline std::string _check_get(_id<std::string>, lua_State *l, const int index) {
 
 // Worker type-trait struct to _get_n
 // Getting multiple elements returns a tuple
-template <std::size_t S, typename... Ts> // First template argument denotes
-                                         // the sizeof(Ts...)
+template <typename... Ts>
 struct _get_n_impl {
     using type =  std::tuple<Ts...>;
 
@@ -148,20 +147,20 @@ struct _get_n_impl {
     }
 
     static type apply(lua_State *l) {
-        return worker(l, typename _indices_builder<S>::type());
+        return worker(l, typename _indices_builder<sizeof...(Ts)>::type());
     }
 };
 
 // Getting nothing returns void
-template <typename... Ts>
-struct _get_n_impl<0, Ts...> {
+template <>
+struct _get_n_impl<> {
     using type = void;
     static type apply(lua_State *) {}
 };
 
 // Getting one element returns an unboxed value
 template <typename T>
-struct _get_n_impl<1, T> {
+struct _get_n_impl<T> {
     using type = T;
     static type apply(lua_State *l) {
         return _get(_id<T>{}, l, -1);
@@ -169,19 +168,19 @@ struct _get_n_impl<1, T> {
 };
 
 template <typename... T>
-typename _get_n_impl<sizeof...(T), T...>::type _get_n(lua_State *l) {
-    return _get_n_impl<sizeof...(T), T...>::apply(l);
+typename _get_n_impl<T...>::type _get_n(lua_State *l) {
+    return _get_n_impl<T...>::apply(l);
 }
 
 template <typename... T>
-typename _get_n_impl<sizeof...(T), T...>::type _pop_n(lua_State *l) {
+typename _get_n_impl<T...>::type _pop_n(lua_State *l) {
     auto ret = _get_n<T...>(l);
     lua_pop(l, sizeof...(T));
     return ret;
 }
 
 template <typename... T>
-typename _get_n_impl<sizeof...(T), T...>::type
+typename _get_n_impl<T...>::type
 _pop_n_reset(lua_State *l) {
     auto ret = _get_n<T...>(l);
     lua_settop(l, 0);
