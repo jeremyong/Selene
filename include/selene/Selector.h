@@ -103,6 +103,12 @@ private:
         _traverse();
         _put(std::move(push));
     }
+
+    void _evaluate_retrieve(int num_results) const {
+        _traverse();
+        _get();
+        _functor(num_results);
+    }
 public:
 
     Selector(const Selector &other)
@@ -263,9 +269,7 @@ public:
     template <typename... Ret>
     std::tuple<Ret...> GetTuple() const {
         ResetStackOnScopeExit save(_state);
-        _traverse();
-        _get();
-        _functor(sizeof...(Ret));
+        _evaluate_retrieve(sizeof...(Ret));
         return detail::_get_n<Ret...>(_state);
     }
 
@@ -277,67 +281,51 @@ public:
     >
     operator T&() const {
         ResetStackOnScopeExit save(_state);
-        _traverse();
-        _get();
-        _functor(1);
+        _evaluate_retrieve(1);
         return *detail::_pop(detail::_id<T*>{}, _state);
     }
 
     template <typename T>
     operator T*() const {
         ResetStackOnScopeExit save(_state);
-        _traverse();
-        _get();
-        _functor(1);
+        _evaluate_retrieve(1);
         return detail::_pop(detail::_id<T*>{}, _state);
     }
 
     operator bool() const {
         ResetStackOnScopeExit save(_state);
-        _traverse();
-        _get();
-        _functor(1);
+        _evaluate_retrieve(1);
         return detail::_pop(detail::_id<bool>{}, _state);
     }
 
     operator int() const {
         ResetStackOnScopeExit save(_state);
-        _traverse();
-        _get();
-        _functor(1);
+        _evaluate_retrieve(1);
         return detail::_pop(detail::_id<int>{}, _state);
     }
 
     operator unsigned int() const {
         ResetStackOnScopeExit save(_state);
-        _traverse();
-        _get();
-        _functor(1);
+        _evaluate_retrieve(1);
         return detail::_pop(detail::_id<unsigned int>{}, _state);
     }
 
     operator lua_Number() const {
         ResetStackOnScopeExit save(_state);
-        _traverse();
-        _get();
-        _functor(1);
+        _evaluate_retrieve(1);
         return detail::_pop(detail::_id<lua_Number>{}, _state);
     }
 
     operator std::string() const {
         ResetStackOnScopeExit save(_state);
-        _traverse();
-        _get();
-        _functor(1);
+        _evaluate_retrieve(1);
         return detail::_pop(detail::_id<std::string>{}, _state);
     }
 
     template <typename R, typename... Args>
     operator sel::function<R(Args...)>() {
         ResetStackOnScopeExit save(_state);
-        _traverse();
-        _get();
-        _functor(1);
+        _evaluate_retrieve(1);
         auto ret = detail::_pop(detail::_id<sel::function<R(Args...)>>{},
                                 _state);
         ret._enable_exception_handler(_exception_handler);
@@ -430,9 +418,7 @@ public:
 private:
     std::string ToString() const {
         ResetStackOnScopeExit save(_state);
-        _traverse();
-        _get();
-        _functor(1);
+        _evaluate_retrieve(1);
         return detail::_pop(detail::_id<std::string>{}, _state);
     }
 };
