@@ -50,6 +50,12 @@ static TestMap tests = {
     {"test_pointer_return", test_pointer_return},
     {"test_reference_return", test_reference_return},
     {"test_nullptr_to_nil", test_nullptr_to_nil},
+    {"test_get_primitive_by_value", test_get_primitive_by_value},
+    {"test_get_primitive_by_const_ref", test_get_primitive_by_const_ref},
+    {"test_get_primitive_by_rvalue_ref", test_get_primitive_by_rvalue_ref},
+    {"test_call_with_primitive_by_value", test_call_with_primitive_by_value},
+    {"test_call_with_primitive_by_const_ref", test_call_with_primitive_by_const_ref},
+    {"test_call_with_primitive_by_rvalue_ref", test_call_with_primitive_by_rvalue_ref},
 
     {"test_metatable_registry_ptr", test_metatable_registry_ptr},
     {"test_metatable_registry_ref", test_metatable_registry_ref},
@@ -112,18 +118,25 @@ int ExecuteAll() {
     for (auto it = tests.begin(); it != tests.end(); ++it) {
         sel::State state{true};
         const bool result = it->second(state);
+        int const leak_count = state.Size();
+        const bool leaked = leak_count != 0;
+        char progress_marker = 'E';
         if (result) {
-            passing += 1;
-            std::cout << "." << std::flush;
+            if (!leaked) {
+                passing += 1;
+                progress_marker = '.';
+            } else {
+                failures.push_back(std::string{"Test \""} + it->first
+                                   + "\" leaked " + std::to_string(leak_count) + " values");
+                progress_marker = 'l';
+            }
         } else {
-            std::cout << "x" << std::flush;
+            progress_marker = 'x';
             failures.push_back(std::string{"Test \""} +
                                it->first + "\" failed.");
         }
-        int size = state.Size();
-        if (size != 0) {
-            failures.push_back(std::string{"Test \""} + it->first
-                               + "\" leaked " + std::to_string(size) + " values");
+        std::cout << progress_marker << std::flush;
+        if (leaked) {
             std::cout << state << std::endl;
         }
     }
