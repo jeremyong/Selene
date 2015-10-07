@@ -80,6 +80,7 @@ private:
     }
 
     void _check_create_table() const {
+        ResetStackOnScopeExit save(_state);
         _traverse();
         _get();
         if (lua_istable(_state, -1) == 0 ) { // not table
@@ -88,8 +89,6 @@ private:
                 lua_newtable(_state);
             };
             _put(put);
-        } else {
-            lua_pop(_state, 1);
         }
     }
 
@@ -125,6 +124,7 @@ public:
     ~Selector() noexcept(false) {
         // If there is a functor is not empty, execute it and collect no args
         if (_functor) {
+            ResetStackOnScopeExit save(_state);
             _traverse();
             _get();
             if (std::uncaught_exception())
@@ -139,7 +139,6 @@ public:
                 _functor(0);
             }
         }
-        lua_settop(_state, 0);
     }
 
     // Allow automatic casting when used in comparisons
@@ -183,62 +182,63 @@ public:
 
     template <typename L>
     void operator=(L lambda) const {
+        ResetStackOnScopeExit save(_state);
         _traverse();
         auto push = [this, lambda]() {
             _registry.Register(lambda);
         };
         _put(push);
-        lua_settop(_state, 0);
     }
 
 
     void operator=(bool b) const {
+        ResetStackOnScopeExit save(_state);
         _traverse();
         auto push = [this, b]() {
             detail::_push(_state, b);
         };
         _put(push);
-        lua_settop(_state, 0);
     }
 
     void operator=(int i) const {
+        ResetStackOnScopeExit save(_state);
         _traverse();
         auto push = [this, i]() {
             detail::_push(_state, i);
         };
         _put(push);
-        lua_settop(_state, 0);
     }
 
     void operator=(unsigned int i) const {
+        ResetStackOnScopeExit save(_state);
         _traverse();
         auto push = [this, i]() {
             detail::_push(_state, i);
         };
         _put(push);
-        lua_settop(_state, 0);
     }
 
     void operator=(lua_Number n) const {
+        ResetStackOnScopeExit save(_state);
         _traverse();
         auto push = [this, n]() {
             detail::_push(_state, n);
         };
         _put(push);
-        lua_settop(_state, 0);
     }
 
     void operator=(const std::string &s) const {
+        ResetStackOnScopeExit save(_state);
         _traverse();
         auto push = [this, s]() {
             detail::_push(_state, s);
         };
         _put(push);
-        lua_settop(_state, 0);
     }
 
     template <typename Ret, typename... Args>
     void operator=(std::function<Ret(Args...)> fun) {
+        ResetStackOnScopeExit save(_state);
         _traverse();
         auto push = [this, fun]() {
             _registry.Register(fun);
@@ -248,6 +248,7 @@ public:
 
     template <typename Ret, typename... Args>
     void operator=(Ret (*fun)(Args...)) {
+        ResetStackOnScopeExit save(_state);
         _traverse();
         auto push = [this, fun]() {
             _registry.Register(fun);
@@ -256,27 +257,28 @@ public:
     }
 
     void operator=(const char *s) const {
+        ResetStackOnScopeExit save(_state);
         _traverse();
         auto push = [this, s]() {
             detail::_push(_state, std::string{s});
         };
         _put(push);
-        lua_settop(_state, 0);
     }
 
     template <typename T, typename... Funs>
     void SetObj(T &t, Funs... funs) {
+        ResetStackOnScopeExit save(_state);
         _traverse();
         auto fun_tuple = std::make_tuple(funs...);
         auto push = [this, &t, &fun_tuple]() {
             _registry.Register(t, fun_tuple);
         };
         _put(push);
-        lua_settop(_state, 0);
     }
 
     template <typename T, typename... Args, typename... Funs>
     void SetClass(Funs... funs) {
+        ResetStackOnScopeExit save(_state);
         _traverse();
         auto fun_tuple = std::make_tuple(funs...);
         auto push = [this, &fun_tuple]() {
@@ -284,15 +286,15 @@ public:
             _registry.RegisterClass<T, Args...>(_name, fun_tuple, d);
         };
         _put(push);
-        lua_settop(_state, 0);
     }
 
     template <typename... Ret>
     std::tuple<Ret...> GetTuple() const {
+        ResetStackOnScopeExit save(_state);
         _traverse();
         _get();
         _functor(sizeof...(Ret));
-        return detail::_pop_n_reset<Ret...>(_state);
+        return detail::_get_n<Ret...>(_state);
     }
 
     template<
@@ -302,78 +304,71 @@ public:
         >::type
     >
     operator T&() const {
+        ResetStackOnScopeExit save(_state);
         _traverse();
         _get();
         _functor(1);
-        auto ret = detail::_pop(detail::_id<T*>{}, _state);
-        lua_settop(_state, 0);
-        return *ret;
+        return *detail::_pop(detail::_id<T*>{}, _state);
     }
 
     template <typename T>
     operator T*() const {
+        ResetStackOnScopeExit save(_state);
         _traverse();
         _get();
         _functor(1);
-        auto ret = detail::_pop(detail::_id<T*>{}, _state);
-        lua_settop(_state, 0);
-        return ret;
+        return detail::_pop(detail::_id<T*>{}, _state);
     }
 
     operator bool() const {
+        ResetStackOnScopeExit save(_state);
         _traverse();
         _get();
         _functor(1);
-        auto ret = detail::_pop(detail::_id<bool>{}, _state);
-        lua_settop(_state, 0);
-        return ret;
+        return detail::_pop(detail::_id<bool>{}, _state);
     }
 
     operator int() const {
+        ResetStackOnScopeExit save(_state);
         _traverse();
         _get();
         _functor(1);
-        auto ret = detail::_pop(detail::_id<int>{}, _state);
-        lua_settop(_state, 0);
-        return ret;
+        return detail::_pop(detail::_id<int>{}, _state);
     }
 
     operator unsigned int() const {
+        ResetStackOnScopeExit save(_state);
         _traverse();
         _get();
         _functor(1);
-        auto ret = detail::_pop(detail::_id<unsigned int>{}, _state);
-        lua_settop(_state, 0);
-        return ret;
+        return detail::_pop(detail::_id<unsigned int>{}, _state);
     }
 
     operator lua_Number() const {
+        ResetStackOnScopeExit save(_state);
         _traverse();
         _get();
         _functor(1);
-        auto ret = detail::_pop(detail::_id<lua_Number>{}, _state);
-        lua_settop(_state, 0);
-        return ret;
+        return detail::_pop(detail::_id<lua_Number>{}, _state);
     }
 
     operator std::string() const {
+        ResetStackOnScopeExit save(_state);
         _traverse();
         _get();
         _functor(1);
-        auto ret =  detail::_pop(detail::_id<std::string>{}, _state);
-        lua_settop(_state, 0);
-        return ret;
+        return detail::_pop(detail::_id<std::string>{}, _state);
     }
 
     template <typename R, typename... Args>
     operator sel::function<R(Args...)>() {
+        ResetStackOnScopeExit save(_state);
         _traverse();
         _get();
         _functor(1);
         auto ret = detail::_pop(detail::_id<sel::function<R(Args...)>>{},
                                 _state);
         ret._enable_exception_handler(_exception_handler);
-        lua_settop(_state, 0);
         return ret;
     }
 
@@ -462,12 +457,11 @@ public:
 
 private:
     std::string ToString() const {
+        ResetStackOnScopeExit save(_state);
         _traverse();
         _get();
         _functor(1);
-        auto ret =  detail::_pop(detail::_id<std::string>{}, _state);
-        lua_settop(_state, 0);
-        return ret;
+        return detail::_pop(detail::_id<std::string>{}, _state);
     }
 };
 
