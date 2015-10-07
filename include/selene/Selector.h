@@ -97,6 +97,12 @@ private:
             fun();
         }
     }
+
+    void _evaluate_store(Fun push) const {
+        ResetStackOnScopeExit save(_state);
+        _traverse();
+        _put(std::move(push));
+    }
 public:
 
     Selector(const Selector &other)
@@ -182,110 +188,76 @@ public:
 
     template <typename L>
     void operator=(L lambda) const {
-        ResetStackOnScopeExit save(_state);
-        _traverse();
-        auto push = [this, lambda]() {
+        _evaluate_store([this, lambda]() {
             _registry.Register(lambda);
-        };
-        _put(push);
+        });
     }
 
-
     void operator=(bool b) const {
-        ResetStackOnScopeExit save(_state);
-        _traverse();
-        auto push = [this, b]() {
+        _evaluate_store([this, b]() {
             detail::_push(_state, b);
-        };
-        _put(push);
+        });
     }
 
     void operator=(int i) const {
-        ResetStackOnScopeExit save(_state);
-        _traverse();
-        auto push = [this, i]() {
+        _evaluate_store([this, i]() {
             detail::_push(_state, i);
-        };
-        _put(push);
+        });
     }
 
     void operator=(unsigned int i) const {
-        ResetStackOnScopeExit save(_state);
-        _traverse();
-        auto push = [this, i]() {
+        _evaluate_store([this, i]() {
             detail::_push(_state, i);
-        };
-        _put(push);
+        });
     }
 
     void operator=(lua_Number n) const {
-        ResetStackOnScopeExit save(_state);
-        _traverse();
-        auto push = [this, n]() {
+        _evaluate_store([this, n]() {
             detail::_push(_state, n);
-        };
-        _put(push);
+        });
     }
 
     void operator=(const std::string &s) const {
-        ResetStackOnScopeExit save(_state);
-        _traverse();
-        auto push = [this, s]() {
+        _evaluate_store([this, s]() {
             detail::_push(_state, s);
-        };
-        _put(push);
+        });
     }
 
     template <typename Ret, typename... Args>
     void operator=(std::function<Ret(Args...)> fun) {
-        ResetStackOnScopeExit save(_state);
-        _traverse();
-        auto push = [this, fun]() {
+        _evaluate_store([this, fun]() {
             _registry.Register(fun);
-        };
-        _put(push);
+        });
     }
 
     template <typename Ret, typename... Args>
     void operator=(Ret (*fun)(Args...)) {
-        ResetStackOnScopeExit save(_state);
-        _traverse();
-        auto push = [this, fun]() {
+        _evaluate_store([this, fun]() {
             _registry.Register(fun);
-        };
-        _put(push);
+        });
     }
 
     void operator=(const char *s) const {
-        ResetStackOnScopeExit save(_state);
-        _traverse();
-        auto push = [this, s]() {
-            detail::_push(_state, std::string{s});
-        };
-        _put(push);
+        _evaluate_store([this, s]() {
+            detail::_push(_state, s);
+        });
     }
 
     template <typename T, typename... Funs>
     void SetObj(T &t, Funs... funs) {
-        ResetStackOnScopeExit save(_state);
-        _traverse();
-        auto fun_tuple = std::make_tuple(funs...);
-        auto push = [this, &t, &fun_tuple]() {
+        auto fun_tuple = std::make_tuple(std::forward<Funs>(funs)...);
+        _evaluate_store([this, &t, &fun_tuple]() {
             _registry.Register(t, fun_tuple);
-        };
-        _put(push);
+        });
     }
 
     template <typename T, typename... Args, typename... Funs>
     void SetClass(Funs... funs) {
-        ResetStackOnScopeExit save(_state);
-        _traverse();
-        auto fun_tuple = std::make_tuple(funs...);
-        auto push = [this, &fun_tuple]() {
+        auto fun_tuple = std::make_tuple(std::forward<Funs>(funs)...);
+        _evaluate_store([this, &fun_tuple]() {
             typename detail::_indices_builder<sizeof...(Funs)>::type d;
             _registry.RegisterClass<T, Args...>(_name, fun_tuple, d);
-        };
-        _put(push);
+        });
     }
 
     template <typename... Ret>
