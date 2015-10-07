@@ -48,6 +48,12 @@ static TestMap tests = {
     {"test_pointer_return", test_pointer_return},
     {"test_reference_return", test_reference_return},
     {"test_nullptr_to_nil", test_nullptr_to_nil},
+    {"test_get_primitive_by_value", test_get_primitive_by_value},
+    {"test_get_primitive_by_const_ref", test_get_primitive_by_const_ref},
+    {"test_get_primitive_by_rvalue_ref", test_get_primitive_by_rvalue_ref},
+    {"test_call_with_primitive_by_value", test_call_with_primitive_by_value},
+    {"test_call_with_primitive_by_const_ref", test_call_with_primitive_by_const_ref},
+    {"test_call_with_primitive_by_rvalue_ref", test_call_with_primitive_by_rvalue_ref},
 
     {"test_metatable_registry_ptr", test_metatable_registry_ptr},
     {"test_metatable_registry_ref", test_metatable_registry_ref},

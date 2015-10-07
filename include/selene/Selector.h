@@ -296,7 +296,12 @@ public:
         return detail::_pop_n_reset<Ret...>(_state);
     }
 
-    template <typename T>
+    template<
+        typename T,
+        typename = typename std::enable_if<
+            !detail::is_primitive<typename std::decay<T>::type>::value
+        >::type
+    >
     operator T&() const {
         _traverse();
         _get();

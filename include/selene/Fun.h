@@ -2,22 +2,18 @@
 
 #include "BaseFun.h"
 #include "MetatableRegistry.h"
+#include "primitives.h"
 #include <string>
 
 namespace sel {
 template <int N, typename Ret, typename... Args>
 class Fun : public BaseFun {
 private:
-    using _fun_type = std::function<Ret(Args...)>;
+    using _fun_type = std::function<Ret(detail::decay_primitive<Args>...)>;
     _fun_type _fun;
     MetatableRegistry &_meta_registry;
 
 public:
-    Fun(lua_State *&l,
-        MetatableRegistry &meta_registry,
-        Ret(*fun)(Args...))
-        : Fun(l, meta_registry, _fun_type{fun}) {}
-
     Fun(lua_State *&l,
         MetatableRegistry &meta_registry,
         _fun_type fun) : _fun(fun), _meta_registry(meta_registry) {
@@ -28,7 +24,8 @@ public:
     // Each application of a function receives a new Lua context so
     // this argument is necessary.
     int Apply(lua_State *l) override {
-        std::tuple<Args...> args = detail::_get_args<Args...>(l);
+        std::tuple<detail::decay_primitive<Args>...> args =
+            detail::_get_args<detail::decay_primitive<Args>...>(l);
         Ret value = detail::_lift(_fun, args);
         detail::_push(l, _meta_registry, std::forward<Ret>(value));
         return N;
@@ -39,15 +36,10 @@ public:
 template <typename... Args>
 class Fun<0, void, Args...> : public BaseFun {
 private:
-    using _fun_type = std::function<void(Args...)>;
+    using _fun_type = std::function<void(detail::decay_primitive<Args>...)>;
     _fun_type _fun;
 
 public:
-    Fun(lua_State *&l,
-        MetatableRegistry &dummy,
-        void(*fun)(Args...))
-        : Fun(l, dummy, _fun_type{fun}) {}
-
     Fun(lua_State *&l,
         MetatableRegistry &,
         _fun_type fun) : _fun(fun) {
@@ -58,7 +50,8 @@ public:
     // Each application of a function receives a new Lua context so
     // this argument is necessary.
     int Apply(lua_State *l) {
-        std::tuple<Args...> args = detail::_get_args<Args...>(l);
+        std::tuple<detail::decay_primitive<Args>...> args =
+            detail::_get_args<detail::decay_primitive<Args>...>(l);
         detail::_lift(_fun, args);
         return 0;
     }
