@@ -110,18 +110,25 @@ int ExecuteAll() {
     for (auto it = tests.begin(); it != tests.end(); ++it) {
         sel::State state{true};
         const bool result = it->second(state);
+        int const leak_count = state.Size();
+        const bool leaked = leak_count != 0;
+        char progress_marker = 'E';
         if (result) {
-            passing += 1;
-            std::cout << "." << std::flush;
+            if (!leaked) {
+                passing += 1;
+                progress_marker = '.';
+            } else {
+                failures.push_back(std::string{"Test \""} + it->first
+                                   + "\" leaked " + std::to_string(leak_count) + " values");
+                progress_marker = 'l';
+            }
         } else {
-            std::cout << "x" << std::flush;
+            progress_marker = 'x';
             failures.push_back(std::string{"Test \""} +
                                it->first + "\" failed.");
         }
-        int size = state.Size();
-        if (size != 0) {
-            failures.push_back(std::string{"Test \""} + it->first
-                               + "\" leaked " + std::to_string(size) + " values");
+        std::cout << progress_marker << std::flush;
+        if (leaked) {
             std::cout << state << std::endl;
         }
     }
