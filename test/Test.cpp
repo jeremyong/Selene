@@ -17,6 +17,7 @@ using TestMap = std::map<const char *, Test>;
 static TestMap tests = {
     {"test_load_error", test_load_error},
     {"test_load_syntax_error", test_load_syntax_error},
+    {"test_do_syntax_error", test_do_syntax_error},
     {"test_call_undefined_function", test_call_undefined_function},
     {"test_call_undefined_function2", test_call_undefined_function2},
     {"test_call_stackoverflow", test_call_stackoverflow},
