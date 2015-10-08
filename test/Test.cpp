@@ -29,6 +29,7 @@ static TestMap tests = {
     {"test_call_exception_handler_while_using_sel_function", test_call_exception_handler_while_using_sel_function},
     {"test_rethrow_exception_for_exception_from_callback", test_rethrow_exception_for_exception_from_callback},
     {"test_rethrow_using_sel_function", test_rethrow_using_sel_function},
+    {"test_throw_on_exception_using_Load", test_throw_on_exception_using_Load},
 
     {"test_function_no_args", test_function_no_args},
     {"test_add", test_add},

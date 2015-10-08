@@ -94,3 +94,15 @@ bool test_rethrow_using_sel_function(sel::State & state) {
     }
     return false;
 }
+
+bool test_throw_on_exception_using_Load(sel::State &state) {
+    state.HandleExceptionsWith([](int s, std::string msg, std::exception_ptr exception) {
+        throw std::logic_error(msg);
+    });
+    try {
+        state.Load("non_existing_file");
+    } catch (std::logic_error & e) {
+        return std::string(e.what()).find("non_existing_file") != std::string::npos;
+    }
+    return false;
+}
