@@ -134,9 +134,14 @@ public:
     }
 
     bool operator()(const char *code) {
-        bool result = !luaL_dostring(_l, code);
-        if(result) lua_settop(_l, 0);
-        return result;
+        ResetStackOnScopeExit savedStack(_l);
+        int status = luaL_dostring(_l, code);
+        if(status) {
+            _exception_handler->Handle_top_of_stack(status, _l);
+            return false;
+        }
+        savedStack.KeepChanges();
+        return true;
     }
     void ForceGC() {
         lua_gc(_l, LUA_GCCOLLECT, 0);

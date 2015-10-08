@@ -35,6 +35,10 @@ public:
     , _saved_top_index(lua_gettop(_stack))
     {}
 
+    void KeepChanges() {
+        _stack = nullptr;
+    }
+
     ~ResetStackOnScopeExit() {
         if(_stack) {
             lua_settop(_stack, _saved_top_index);

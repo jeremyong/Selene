@@ -109,7 +109,7 @@ public:
         } else {
             Handle(
                 luaStatusCode,
-                detail::_pop(detail::_id<std::string>(), L));
+                detail::_get(detail::_id<std::string>(), L, -1));
         }
     }
 
