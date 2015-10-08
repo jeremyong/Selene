@@ -60,6 +60,7 @@ public:
     }
 
     bool Load(const std::string &file) {
+        ResetStackOnScopeExit savedStack(_l);
         int status = luaL_loadfile(_l, file.c_str());
 #if LUA_VERSION_NUM >= 502
         auto const lua_ok = LUA_OK;
@@ -74,18 +75,17 @@ public:
                 const char *msg = lua_tostring(_l, -1);
                 _exception_handler->Handle(status, msg ? msg : file + ": file error");
             }
-            lua_remove(_l , -1);
             return false;
         }
 
         status = lua_pcall(_l, 0, LUA_MULTRET, 0);
         if(status == lua_ok) {
+            savedStack.KeepChanges();
             return true;
         }
 
         const char *msg = lua_tostring(_l, -1);
         _exception_handler->Handle(status, msg ? msg : file + ": dofile failed");
-        lua_remove(_l, -1);
         return false;
     }
 
