@@ -80,7 +80,6 @@ public:
 
         status = lua_pcall(_l, 0, LUA_MULTRET, 0);
         if(status == lua_ok) {
-            savedStack.KeepChanges();
             return true;
         }
 
@@ -90,6 +89,7 @@ public:
     }
 
     void OpenLib(const std::string& modname, lua_CFunction openf) {
+        ResetStackOnScopeExit savedStack(_l);
 #if LUA_VERSION_NUM >= 502
         luaL_requiref(_l, modname.c_str(), openf, 1);
 #else
@@ -107,27 +107,6 @@ public:
         *_exception_handler = ExceptionHandler(std::move(handler));
     }
 
-    void Push() {} // Base case
-
-    template <typename T, typename... Ts>
-    void Push(T &&value, Ts&&... values) {
-        detail::_push(_l, std::forward<T>(value));
-        Push(std::forward<Ts>(values)...);
-    }
-
-    // Lua stacks are 1 indexed from the bottom and -1 indexed from
-    // the top
-    template <typename T>
-    T Read(const int index) const {
-        return detail::_get(detail::_id<T>{}, _l, index);
-    }
-
-    bool CheckNil(const std::string &global) {
-        lua_getglobal(_l, global.c_str());
-        const bool result = lua_isnil(_l, -1);
-        lua_pop(_l, 1);
-        return result;
-    }
 public:
     Selector operator[](const char *name) {
         return Selector(_l, *_registry, *_exception_handler, name);
@@ -140,7 +119,6 @@ public:
             _exception_handler->Handle_top_of_stack(status, _l);
             return false;
         }
-        savedStack.KeepChanges();
         return true;
     }
     void ForceGC() {
