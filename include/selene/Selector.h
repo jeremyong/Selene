@@ -71,12 +71,14 @@ private:
         const auto state = _state; // gcc-5.1 doesn't support implicit member capturing
         // `name' is passed by value because lambda's lifetime may be longer than lifetime of `name'
         _get = [state, name]() {
-            lua_getfield(state, -1, name.c_str());
+            lua_pushstring(state, name.c_str());
+            lua_gettable(state, -2);
             lua_remove(state, lua_absindex(state, -2));
         };
         _put = [state, name](Fun fun) {
+            lua_pushstring(state, name.c_str());
             fun();
-            lua_setfield(state, -2, name.c_str());
+            lua_settable(state, -3);
             lua_pop(state, 1);
         };
     }
@@ -418,12 +420,14 @@ public:
         const auto state = _state; // gcc-5.1 doesn't support implicit member capturing
 	// `name' is passed by value because lambda lifetime may be longer than `name'
         _get = [state, name]() {
-            lua_getfield(state, -1, name.c_str());
+            lua_pushstring(state, name.c_str());
+            lua_gettable(state, -2);
             lua_remove(state, lua_absindex(state, -2));
         };
         _put = [state, name](Fun fun) {
+            lua_pushstring(state, name.c_str());
             fun();
-            lua_setfield(state, -2, name.c_str());
+            lua_settable(state, -3);
             lua_pop(state, 1);
         };
         return std::move(*this);
@@ -458,12 +462,14 @@ public:
         const auto state = _state; // gcc-5.1 doesn't support implicit member capturing
 	// `name' is passed by value because lambda lifetime may be longer than `name'
         Fun get = [state, name]() {
-            lua_getfield(state, -1, name.c_str());
+            lua_pushstring(state, name.c_str());
+            lua_gettable(state, -2);
             lua_remove(state, lua_absindex(state, -2));
         };
         PFun put = [state, name](Fun fun) {
+            lua_pushstring(state, name.c_str());
             fun();
-            lua_setfield(state, -2, name.c_str());
+            lua_settable(state, -3);
             lua_pop(state, 1);
         };
         return Selector{_state, _registry, *_exception_handler, n, traversal, get, put};
