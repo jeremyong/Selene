@@ -28,8 +28,18 @@ public:
     LuaRef(lua_State *state, int ref)
         : _ref(new int{ref}, detail::LuaRefDeleter{state}) {}
 
-    void Push(lua_State *state) {
+    void Push(lua_State *state) const {
         lua_rawgeti(state, LUA_REGISTRYINDEX, *_ref);
     }
 };
+
+LuaRef make_Ref(lua_State *state, const std::string & name) {
+    lua_pushstring(state, name.c_str());
+    return LuaRef(state, luaL_ref(state, LUA_REGISTRYINDEX));
+}
+
+LuaRef make_Ref(lua_State *state, int index) {
+    lua_pushinteger(state, index);
+    return LuaRef(state, luaL_ref(state, LUA_REGISTRYINDEX));
+}
 }

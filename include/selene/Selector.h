@@ -3,6 +3,7 @@
 #include "exception.h"
 #include "exotics.h"
 #include <functional>
+#include "LuaRef.h"
 #include "Registry.h"
 #include <string>
 #include <tuple>
@@ -44,17 +45,12 @@ private:
     Registry &_registry;
     ExceptionHandler *_exception_handler;
     std::string _name;
-    using Fun = std::function<void()>;
-    using PFun = std::function<void(Fun)>;
 
     // Traverses the structure up to this element
-    std::vector<Fun> _traversal;
+    std::vector<LuaRef> _traversal;
 
-    // Pushes this element to the stack
-    Fun _get;
-    // Sets this element from a function that pushes a value to the
-    // stack.
-    PFun _put;
+    // Key of the value to act upon.
+    LuaRef _key;
 
     // Functor is stored when the () operator is invoked. The argument
     // is used to indicate how many return values are expected
@@ -62,25 +58,33 @@ private:
     mutable Functor _functor;
 
     Selector(lua_State *s, Registry &r, ExceptionHandler &eh, const std::string &name,
-             std::vector<Fun> traversal, Fun get, PFun put)
+             std::vector<LuaRef> traversal, LuaRef key)
         : _state(s), _registry(r), _exception_handler(&eh), _name(name), _traversal(traversal),
-          _get(get), _put(put) {}
+          _key(key) {}
 
     Selector(lua_State *s, Registry &r, ExceptionHandler &eh, const std::string& name)
-        : _state(s), _registry(r), _exception_handler(&eh), _name(name) {
-        const auto state = _state; // gcc-5.1 doesn't support implicit member capturing
-        // `name' is passed by value because lambda's lifetime may be longer than lifetime of `name'
-        _get = [state, name]() {
-            lua_pushstring(state, name.c_str());
-            lua_gettable(state, -2);
-            lua_remove(state, lua_absindex(state, -2));
-        };
-        _put = [state, name](Fun fun) {
-            lua_pushstring(state, name.c_str());
-            fun();
-            lua_settable(state, -3);
-            lua_pop(state, 1);
-        };
+        : _state(s), _registry(r), _exception_handler(&eh), _name(name),
+          _key(make_Ref(s, name)) {}
+
+    void _get(LuaRef r) const {
+        r.Push(_state);
+        lua_gettable(_state, -2);
+        lua_remove(_state, lua_absindex(_state, -2));
+    }
+
+    // Pushes this element to the stack
+    void _get() const {
+        _get(_key);
+    }
+
+    // Sets this element from a function that pushes a value to the
+    // stack.
+    template<typename PushFunction>
+    void _put(PushFunction fun) const {
+        _key.Push(_state);
+        fun();
+        lua_settable(_state, -3);
+        lua_pop(_state, 1);
     }
 
     void _check_create_table() const {
@@ -102,8 +106,8 @@ private:
 
     void _traverse() const {
         lua_pushglobaltable(_state);
-        for (auto &fun : _traversal) {
-            fun();
+        for (auto &key : _traversal) {
+            _get(key);
         }
     }
 public:
@@ -114,8 +118,7 @@ public:
           _exception_handler(other._exception_handler),
           _name(other._name),
           _traversal(other._traversal),
-          _get(other._get),
-          _put(other._put),
+          _key(other._key),
           _functor(other._functor)
         {}
 
@@ -125,8 +128,7 @@ public:
           _exception_handler(other._exception_handler),
           _name(other._name),
           _traversal(other._traversal),
-          _get(other._get),
-          _put(other._put),
+          _key(other._key),
           _functor(other._functor) {
         other._functor = nullptr;
     }
@@ -416,20 +418,8 @@ public:
     Selector&& operator[](const std::string& name) && {
         _name += std::string(".") + name;
         _check_create_table();
-        _traversal.push_back(_get);
-        const auto state = _state; // gcc-5.1 doesn't support implicit member capturing
-	// `name' is passed by value because lambda lifetime may be longer than `name'
-        _get = [state, name]() {
-            lua_pushstring(state, name.c_str());
-            lua_gettable(state, -2);
-            lua_remove(state, lua_absindex(state, -2));
-        };
-        _put = [state, name](Fun fun) {
-            lua_pushstring(state, name.c_str());
-            fun();
-            lua_settable(state, -3);
-            lua_pop(state, 1);
-        };
+        _traversal.push_back(_key);
+        _key = make_Ref(_state, name);
         return std::move(*this);
     }
     Selector&& operator[](const char* name) && {
@@ -438,19 +428,8 @@ public:
     Selector&& operator[](const int index) && {
         _name += std::string(".") + std::to_string(index);
         _check_create_table();
-        _traversal.push_back(_get);
-        const auto state = _state; // gcc-5.1 doesn't support implicit member capturing
-        _get = [state, index]() {
-            lua_pushinteger(state, index);
-            lua_gettable(state, -2);
-            lua_remove(state, lua_absindex(state, -2));
-        };
-        _put = [state, index](Fun fun) {
-            lua_pushinteger(state, index);
-            fun();
-            lua_settable(state, -3);
-            lua_pop(state, 1);
-        };
+        _traversal.push_back(_key);
+        _key = make_Ref(_state, index);
         return std::move(*this);
     }
 #endif // HAS_REF_QUALIFIERS
@@ -458,21 +437,8 @@ public:
         auto n = _name + "." + name;
         _check_create_table();
         auto traversal = _traversal;
-        traversal.push_back(_get);
-        const auto state = _state; // gcc-5.1 doesn't support implicit member capturing
-	// `name' is passed by value because lambda lifetime may be longer than `name'
-        Fun get = [state, name]() {
-            lua_pushstring(state, name.c_str());
-            lua_gettable(state, -2);
-            lua_remove(state, lua_absindex(state, -2));
-        };
-        PFun put = [state, name](Fun fun) {
-            lua_pushstring(state, name.c_str());
-            fun();
-            lua_settable(state, -3);
-            lua_pop(state, 1);
-        };
-        return Selector{_state, _registry, *_exception_handler, n, traversal, get, put};
+        traversal.push_back(_key);
+        return Selector{_state, _registry, *_exception_handler, n, traversal, make_Ref(_state, name)};
     }
     Selector operator[](const char* name) const REF_QUAL_LVALUE {
         return (*this)[std::string{name}];
@@ -481,20 +447,8 @@ public:
         auto name = _name + "." + std::to_string(index);
         _check_create_table();
         auto traversal = _traversal;
-        traversal.push_back(_get);
-        const auto state = _state; // gcc-5.1 doesn't support implicit member capturing
-        Fun get = [state, index]() {
-            lua_pushinteger(state, index);
-            lua_gettable(state, -2);
-            lua_remove(state, lua_absindex(state, -2));
-        };
-        PFun put = [state, index](Fun fun) {
-            lua_pushinteger(state, index);
-            fun();
-            lua_settable(state, -3);
-            lua_pop(state, 1);
-        };
-        return Selector{_state, _registry, *_exception_handler, name, traversal, get, put};
+        traversal.push_back(_key);
+        return Selector{_state, _registry, *_exception_handler, name, traversal, make_Ref(_state, index)};
     }
 
     friend bool operator==(const Selector &, const char *);
