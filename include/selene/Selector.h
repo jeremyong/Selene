@@ -71,15 +71,18 @@ private:
         const auto state = _state; // gcc-5.1 doesn't support implicit member capturing
         // `name' is passed by value because lambda's lifetime may be longer than lifetime of `name'
         _get = [state, name]() {
-            lua_getglobal(state, name.c_str());
+            lua_getfield(state, -1, name.c_str());
+            lua_remove(state, lua_absindex(state, -2));
         };
         _put = [state, name](Fun fun) {
             fun();
-            lua_setglobal(state, name.c_str());
+            lua_setfield(state, -2, name.c_str());
+            lua_pop(state, 1);
         };
     }
 
     void _check_create_table() const {
+        auto const old_top = lua_gettop(_state);
         _traverse();
         _get();
         if (lua_istable(_state, -1) == 0 ) { // not table
@@ -87,13 +90,16 @@ private:
             auto put = [this]() {
                 lua_newtable(_state);
             };
+            _traverse();
             _put(put);
         } else {
             lua_pop(_state, 1);
         }
+        lua_settop(_state, old_top);
     }
 
     void _traverse() const {
+        lua_pushglobaltable(_state);
         for (auto &fun : _traversal) {
             fun();
         }
@@ -413,6 +419,7 @@ public:
 	// `name' is passed by value because lambda lifetime may be longer than `name'
         _get = [state, name]() {
             lua_getfield(state, -1, name.c_str());
+            lua_remove(state, lua_absindex(state, -2));
         };
         _put = [state, name](Fun fun) {
             fun();
@@ -432,6 +439,7 @@ public:
         _get = [state, index]() {
             lua_pushinteger(state, index);
             lua_gettable(state, -2);
+            lua_remove(state, lua_absindex(state, -2));
         };
         _put = [state, index](Fun fun) {
             lua_pushinteger(state, index);
@@ -451,6 +459,7 @@ public:
 	// `name' is passed by value because lambda lifetime may be longer than `name'
         Fun get = [state, name]() {
             lua_getfield(state, -1, name.c_str());
+            lua_remove(state, lua_absindex(state, -2));
         };
         PFun put = [state, name](Fun fun) {
             fun();
@@ -471,6 +480,7 @@ public:
         Fun get = [state, index]() {
             lua_pushinteger(state, index);
             lua_gettable(state, -2);
+            lua_remove(state, lua_absindex(state, -2));
         };
         PFun put = [state, index](Fun fun) {
             lua_pushinteger(state, index);
