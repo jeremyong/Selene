@@ -42,7 +42,7 @@ class Selector {
     friend class State;
 private:
     lua_State *_state;
-    Registry &_registry;
+    Registry *_registry;
     ExceptionHandler *_exception_handler;
     std::string _name;
     using Fun = std::function<void()>;
@@ -63,11 +63,11 @@ private:
 
     Selector(lua_State *s, Registry &r, ExceptionHandler &eh, const std::string &name,
              std::vector<Fun> traversal, Fun get, PFun put)
-        : _state(s), _registry(r), _exception_handler(&eh), _name(name), _traversal(traversal),
+        : _state(s), _registry(&r), _exception_handler(&eh), _name(name), _traversal(traversal),
           _get(get), _put(put) {}
 
     Selector(lua_State *s, Registry &r, ExceptionHandler &eh, const std::string& name)
-        : _state(s), _registry(r), _exception_handler(&eh), _name(name) {
+        : _state(s), _registry(&r), _exception_handler(&eh), _name(name) {
         const auto state = _state; // gcc-5.1 doesn't support implicit member capturing
         // `name' is passed by value because lambda's lifetime may be longer than lifetime of `name'
         _get = [state, name]() {
@@ -111,27 +111,10 @@ private:
     }
 public:
 
-    Selector(const Selector &other)
-        : _state(other._state),
-          _registry(other._registry),
-          _exception_handler(other._exception_handler),
-          _name(other._name),
-          _traversal(other._traversal),
-          _get(other._get),
-          _put(other._put),
-          _functor(other._functor)
-        {}
-
-    Selector(Selector&& other)
-        : _state(other._state),
-          _registry(other._registry),
-          _exception_handler(other._exception_handler),
-          _name(other._name),
-          _traversal(other._traversal),
-          _get(other._get),
-          _put(other._put),
-          _functor(std::move(other._functor))
-        {}
+    Selector(const Selector &) = default;
+    Selector(Selector &&) = default;
+    Selector & operator=(const Selector &) = default;
+    Selector & operator=(Selector &&) = default;
 
     ~Selector() noexcept(false) {
         // If there is a functor is not empty, execute it and collect no args
@@ -195,7 +178,7 @@ public:
     template <typename L>
     void operator=(L lambda) const {
         _evaluate_store([this, lambda]() {
-            _registry.Register(lambda);
+            _registry->Register(lambda);
         });
     }
 
@@ -232,14 +215,14 @@ public:
     template <typename Ret, typename... Args>
     void operator=(std::function<Ret(Args...)> fun) {
         _evaluate_store([this, fun]() {
-            _registry.Register(fun);
+            _registry->Register(fun);
         });
     }
 
     template <typename Ret, typename... Args>
     void operator=(Ret (*fun)(Args...)) {
         _evaluate_store([this, fun]() {
-            _registry.Register(fun);
+            _registry->Register(fun);
         });
     }
 
@@ -253,7 +236,7 @@ public:
     void SetObj(T &t, Funs... funs) {
         auto fun_tuple = std::make_tuple(std::forward<Funs>(funs)...);
         _evaluate_store([this, &t, &fun_tuple]() {
-            _registry.Register(t, fun_tuple);
+            _registry->Register(t, fun_tuple);
         });
     }
 
@@ -262,7 +245,7 @@ public:
         auto fun_tuple = std::make_tuple(std::forward<Funs>(funs)...);
         _evaluate_store([this, &fun_tuple]() {
             typename detail::_indices_builder<sizeof...(Funs)>::type d;
-            _registry.RegisterClass<T, Args...>(_name, fun_tuple, d);
+            _registry->RegisterClass<T, Args...>(_name, fun_tuple, d);
         });
     }
 
@@ -387,7 +370,7 @@ public:
             lua_setfield(state, -2, name.c_str());
             lua_pop(state, 1);
         };
-        return Selector{_state, _registry, *_exception_handler, n, traversal, get, put};
+        return Selector{_state, *_registry, *_exception_handler, n, traversal, get, put};
     }
     Selector operator[](const char* name) const REF_QUAL_LVALUE {
         return (*this)[std::string{name}];
@@ -408,7 +391,7 @@ public:
             lua_settable(state, -3);
             lua_pop(state, 1);
         };
-        return Selector{_state, _registry, *_exception_handler, name, traversal, get, put};
+        return Selector{_state, *_registry, *_exception_handler, name, traversal, get, put};
     }
 
     friend bool operator==(const Selector &, const char *);
