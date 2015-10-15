@@ -172,21 +172,6 @@ typename _get_n_impl<T...>::type _get_n(lua_State *l) {
     return _get_n_impl<T...>::apply(l);
 }
 
-template <typename... T>
-typename _get_n_impl<T...>::type _pop_n(lua_State *l) {
-    auto ret = _get_n<T...>(l);
-    lua_pop(l, sizeof...(T));
-    return ret;
-}
-
-template <typename... T>
-typename _get_n_impl<T...>::type
-_pop_n_reset(lua_State *l) {
-    auto ret = _get_n<T...>(l);
-    lua_settop(l, 0);
-    return ret;
-}
-
 template <typename T>
 T _pop(_id<T> t, lua_State *l) {
     T ret =  _get(t, l, -1);
