@@ -4,6 +4,7 @@
 #include "exotics.h"
 #include "Fun.h"
 #include "Obj.h"
+#include "util.h"
 #include <vector>
 
 namespace sel {
@@ -34,17 +35,17 @@ public:
     template <typename Ret, typename... Args>
     void Register(std::function<Ret(Args...)> fun) {
         constexpr int arity = detail::_arity<Ret>::value;
-        auto tmp = std::unique_ptr<BaseFun>(
-            new Fun<arity, Ret, Args...>{_state, _metatables, fun});
-        _funs.push_back(std::move(tmp));
+        _funs.emplace_back(
+            make_unique<Fun<arity, Ret, Args...>>(
+                _state, _metatables, fun));
     }
 
     template <typename Ret, typename... Args>
     void Register(Ret (*fun)(Args...)) {
         constexpr int arity = detail::_arity<Ret>::value;
-        auto tmp = std::unique_ptr<BaseFun>(
-            new Fun<arity, Ret, Args...>{_state, _metatables, fun});
-        _funs.push_back(std::move(tmp));
+        _funs.emplace_back(
+            make_unique<Fun<arity, Ret, Args...>>(
+                _state, _metatables, fun));
     }
 
     template <typename T, typename... Funs>
@@ -60,9 +61,7 @@ public:
 
     template <typename T, typename... Funs>
     void RegisterObj(T &t, Funs... funs) {
-        auto tmp = std::unique_ptr<BaseObj>(
-            new Obj<T, Funs...>{_state, &t, funs...});
-        _objs.push_back(std::move(tmp));
+        _objs.emplace_back(make_unique<Obj<T, Funs...>>(_state, &t, funs...));
     }
 
     template <typename T, typename... CtorArgs, typename... Funs, size_t... N>
@@ -73,10 +72,9 @@ public:
 
     template <typename T, typename... CtorArgs, typename... Funs>
     void RegisterClassWorker(const std::string &name, Funs... funs) {
-        auto tmp = std::unique_ptr<BaseClass>(
-            new Class<T, Ctor<T, CtorArgs...>, Funs...>
-            {_state, _metatables, name, funs...});
-        _classes.push_back(std::move(tmp));
+        _classes.emplace_back(
+            make_unique<Class<T, Ctor<T, CtorArgs...>, Funs...>>(
+                _state, _metatables, name, funs...));
     }
 };
 }
