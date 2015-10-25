@@ -2,6 +2,7 @@
 
 #include "exception.h"
 #include <iostream>
+#include <utility>
 
 extern "C" {
 #include <lua.h>
@@ -87,5 +88,10 @@ inline int ErrorHandler(lua_State *L) {
 inline int SetErrorHandler(lua_State *L) {
     lua_pushcfunction(L, &ErrorHandler);
     return lua_gettop(L);
+}
+
+template<typename T, typename... Args>
+std::unique_ptr<T> make_unique(Args&&... args) {
+    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
 }
