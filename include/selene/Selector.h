@@ -4,6 +4,7 @@
 #include "exotics.h"
 #include <functional>
 #include "Registry.h"
+#include "ResourceHandler.h"
 #include <string>
 #include <tuple>
 #include "util.h"
@@ -41,7 +42,7 @@ class Selector {
     friend class State;
 private:
     lua_State *_state;
-    Registry &_registry;
+    Registry *_registry;
     ExceptionHandler *_exception_handler;
     std::string _name;
     using Fun = std::function<void()>;
@@ -58,16 +59,15 @@ private:
 
     // Functor is stored when the () operator is invoked. The argument
     // is used to indicate how many return values are expected
-    using Functor = std::function<void(int)>;
-    mutable Functor _functor;
+    mutable CallOnce<void(int)> _functor;
 
     Selector(lua_State *s, Registry &r, ExceptionHandler &eh, const std::string &name,
              std::vector<Fun> traversal, Fun get, PFun put)
-        : _state(s), _registry(r), _exception_handler(&eh), _name(name), _traversal(traversal),
+        : _state(s), _registry(&r), _exception_handler(&eh), _name(name), _traversal(traversal),
           _get(get), _put(put) {}
 
     Selector(lua_State *s, Registry &r, ExceptionHandler &eh, const std::string& name)
-        : _state(s), _registry(r), _exception_handler(&eh), _name(name) {
+        : _state(s), _registry(&r), _exception_handler(&eh), _name(name) {
         const auto state = _state; // gcc-5.1 doesn't support implicit member capturing
         // `name' is passed by value because lambda's lifetime may be longer than lifetime of `name'
         _get = [state, name]() {
@@ -80,6 +80,7 @@ private:
     }
 
     void _check_create_table() const {
+        ResetStackOnScopeExit save(_state);
         _traverse();
         _get();
         if (lua_istable(_state, -1) == 0 ) { // not table
@@ -88,8 +89,6 @@ private:
                 lua_newtable(_state);
             };
             _put(put);
-        } else {
-            lua_pop(_state, 1);
         }
     }
 
@@ -98,34 +97,29 @@ private:
             fun();
         }
     }
+
+    void _evaluate_store(Fun push) const {
+        ResetStackOnScopeExit save(_state);
+        _traverse();
+        _put(std::move(push));
+    }
+
+    void _evaluate_retrieve(int num_results) const {
+        _traverse();
+        _get();
+        _functor(num_results);
+    }
 public:
 
-    Selector(const Selector &other)
-        : _state(other._state),
-          _registry(other._registry),
-          _exception_handler(other._exception_handler),
-          _name(other._name),
-          _traversal(other._traversal),
-          _get(other._get),
-          _put(other._put),
-          _functor(other._functor)
-        {}
-
-    Selector(Selector&& other)
-        : _state(other._state),
-          _registry(other._registry),
-          _exception_handler(other._exception_handler),
-          _name(other._name),
-          _traversal(other._traversal),
-          _get(other._get),
-          _put(other._put),
-          _functor(other._functor) {
-        other._functor = nullptr;
-    }
+    Selector(const Selector &) = default;
+    Selector(Selector &&) = default;
+    Selector & operator=(const Selector &) = default;
+    Selector & operator=(Selector &&) = default;
 
     ~Selector() noexcept(false) {
         // If there is a functor is not empty, execute it and collect no args
         if (_functor) {
+            ResetStackOnScopeExit save(_state);
             _traverse();
             _get();
             if (std::uncaught_exception())
@@ -140,7 +134,6 @@ public:
                 _functor(0);
             }
         }
-        lua_settop(_state, 0);
     }
 
     // Allow automatic casting when used in comparisons
@@ -153,7 +146,7 @@ public:
         Selector copy{*this};
         const auto state = _state; // gcc-5.1 doesn't support implicit member capturing
         const auto eh = _exception_handler;
-        copy._functor = [state, eh, tuple_args, num_args](int num_ret) {
+        copy._functor = CallOnce<void(int)>{[state, eh, tuple_args, num_args](int num_ret) {
             // install handler, and swap(handler, function) on lua stack
             int handler_index = SetErrorHandler(state);
             int func_index = handler_index - 1;
@@ -178,122 +171,89 @@ public:
             if (statusCode != LUA_OK) {
                 eh->Handle_top_of_stack(statusCode, state);
             }
-        };
+        }};
         return copy;
     }
 
     template <typename L>
     void operator=(L lambda) const {
-        _traverse();
-        auto push = [this, lambda]() {
-            _registry.Register(lambda);
-        };
-        _put(push);
-        lua_settop(_state, 0);
+        _evaluate_store([this, lambda]() {
+            _registry->Register(lambda);
+        });
     }
 
-
     void operator=(bool b) const {
-        _traverse();
-        auto push = [this, b]() {
+        _evaluate_store([this, b]() {
             detail::_push(_state, b);
-        };
-        _put(push);
-        lua_settop(_state, 0);
+        });
     }
 
     void operator=(int i) const {
-        _traverse();
-        auto push = [this, i]() {
+        _evaluate_store([this, i]() {
             detail::_push(_state, i);
-        };
-        _put(push);
-        lua_settop(_state, 0);
+        });
     }
 
     void operator=(unsigned int i) const {
-        _traverse();
-        auto push = [this, i]() {
+        _evaluate_store([this, i]() {
             detail::_push(_state, i);
-        };
-        _put(push);
-        lua_settop(_state, 0);
+        });
     }
 
     void operator=(lua_Number n) const {
-        _traverse();
-        auto push = [this, n]() {
+        _evaluate_store([this, n]() {
             detail::_push(_state, n);
-        };
-        _put(push);
-        lua_settop(_state, 0);
+        });
     }
 
     void operator=(const std::string &s) const {
-        _traverse();
-        auto push = [this, s]() {
+        _evaluate_store([this, s]() {
             detail::_push(_state, s);
-        };
-        _put(push);
-        lua_settop(_state, 0);
+        });
     }
 
     template <typename Ret, typename... Args>
     void operator=(std::function<Ret(Args...)> fun) {
-        _traverse();
-        auto push = [this, fun]() {
-            _registry.Register(fun);
-        };
-        _put(push);
+        _evaluate_store([this, fun]() {
+            _registry->Register(fun);
+        });
     }
 
     template <typename Ret, typename... Args>
     void operator=(Ret (*fun)(Args...)) {
-        _traverse();
-        auto push = [this, fun]() {
-            _registry.Register(fun);
-        };
-        _put(push);
+        _evaluate_store([this, fun]() {
+            _registry->Register(fun);
+        });
     }
 
     void operator=(const char *s) const {
-        _traverse();
-        auto push = [this, s]() {
-            detail::_push(_state, std::string{s});
-        };
-        _put(push);
-        lua_settop(_state, 0);
+        _evaluate_store([this, s]() {
+            detail::_push(_state, s);
+        });
     }
 
     template <typename T, typename... Funs>
     void SetObj(T &t, Funs... funs) {
-        _traverse();
-        auto fun_tuple = std::make_tuple(funs...);
-        auto push = [this, &t, &fun_tuple]() {
-            _registry.Register(t, fun_tuple);
-        };
-        _put(push);
-        lua_settop(_state, 0);
+        auto fun_tuple = std::make_tuple(std::forward<Funs>(funs)...);
+        _evaluate_store([this, &t, &fun_tuple]() {
+            _registry->Register(t, fun_tuple);
+        });
     }
 
     template <typename T, typename... Args, typename... Funs>
     void SetClass(Funs... funs) {
-        _traverse();
-        auto fun_tuple = std::make_tuple(funs...);
-        auto push = [this, &fun_tuple]() {
+        auto fun_tuple = std::make_tuple(std::forward<Funs>(funs)...);
+        _evaluate_store([this, &fun_tuple]() {
             typename detail::_indices_builder<sizeof...(Funs)>::type d;
-            _registry.RegisterClass<T, Args...>(_name, fun_tuple, d);
-        };
-        _put(push);
-        lua_settop(_state, 0);
+            _registry->RegisterClass<T, Args...>(_name, fun_tuple, d);
+        });
     }
 
     template <typename... Ret>
     std::tuple<Ret...> GetTuple() const {
-        _traverse();
-        _get();
-        _functor(sizeof...(Ret));
-        return detail::_pop_n_reset<Ret...>(_state);
+        ResetStackOnScopeExit save(_state);
+        _evaluate_retrieve(sizeof...(Ret));
+        return detail::_get_n<Ret...>(_state);
     }
 
     template<
@@ -303,102 +263,55 @@ public:
         >::type
     >
     operator T&() const {
-        _traverse();
-        _get();
-        if (_functor) {
-            _functor(1);
-            _functor = nullptr;
-        }
-        auto ret = detail::_pop(detail::_id<T*>{}, _state);
-        lua_settop(_state, 0);
-        return *ret;
+        ResetStackOnScopeExit save(_state);
+        _evaluate_retrieve(1);
+        return *detail::_pop(detail::_id<T*>{}, _state);
     }
 
     template <typename T>
     operator T*() const {
-        _traverse();
-        _get();
-        if (_functor) {
-            _functor(1);
-            _functor = nullptr;
-        }
-        auto ret = detail::_pop(detail::_id<T*>{}, _state);
-        lua_settop(_state, 0);
-        return ret;
+        ResetStackOnScopeExit save(_state);
+        _evaluate_retrieve(1);
+        return detail::_pop(detail::_id<T*>{}, _state);
     }
 
     operator bool() const {
-        _traverse();
-        _get();
-        if (_functor) {
-            _functor(1);
-            _functor = nullptr;
-        }
-        auto ret = detail::_pop(detail::_id<bool>{}, _state);
-        lua_settop(_state, 0);
-        return ret;
+        ResetStackOnScopeExit save(_state);
+        _evaluate_retrieve(1);
+        return detail::_pop(detail::_id<bool>{}, _state);
     }
 
     operator int() const {
-        _traverse();
-        _get();
-        if (_functor) {
-            _functor(1);
-            _functor = nullptr;
-        }
-        auto ret = detail::_pop(detail::_id<int>{}, _state);
-        lua_settop(_state, 0);
-        return ret;
+        ResetStackOnScopeExit save(_state);
+        _evaluate_retrieve(1);
+        return detail::_pop(detail::_id<int>{}, _state);
     }
 
     operator unsigned int() const {
-        _traverse();
-        _get();
-        if (_functor) {
-            _functor(1);
-            _functor = nullptr;
-        }
-        auto ret = detail::_pop(detail::_id<unsigned int>{}, _state);
-        lua_settop(_state, 0);
-        return ret;
+        ResetStackOnScopeExit save(_state);
+        _evaluate_retrieve(1);
+        return detail::_pop(detail::_id<unsigned int>{}, _state);
     }
 
     operator lua_Number() const {
-        _traverse();
-        _get();
-        if (_functor) {
-            _functor(1);
-            _functor = nullptr;
-        }
-        auto ret = detail::_pop(detail::_id<lua_Number>{}, _state);
-        lua_settop(_state, 0);
-        return ret;
+        ResetStackOnScopeExit save(_state);
+        _evaluate_retrieve(1);
+        return detail::_pop(detail::_id<lua_Number>{}, _state);
     }
 
     operator std::string() const {
-        _traverse();
-        _get();
-        if (_functor) {
-            _functor(1);
-            _functor = nullptr;
-        }
-        auto ret =  detail::_pop(detail::_id<std::string>{}, _state);
-        lua_settop(_state, 0);
-        return ret;
+        ResetStackOnScopeExit save(_state);
+        _evaluate_retrieve(1);
+        return detail::_pop(detail::_id<std::string>{}, _state);
     }
 
     template <typename R, typename... Args>
     operator sel::function<R(Args...)>() {
-        _traverse();
-        _get();
-        if (_functor) {
-            _functor(1);
-            _functor = nullptr;
-        }
+        ResetStackOnScopeExit save(_state);
+        _evaluate_retrieve(1);
         auto ret = detail::_pop(detail::_id<sel::function<R(Args...)>>{},
                                 _state);
         ret._enable_exception_handler(_exception_handler);
-        lua_settop(_state, 0);
         return ret;
     }
 
@@ -457,7 +370,7 @@ public:
             lua_setfield(state, -2, name.c_str());
             lua_pop(state, 1);
         };
-        return Selector{_state, _registry, *_exception_handler, n, traversal, get, put};
+        return Selector{_state, *_registry, *_exception_handler, n, traversal, get, put};
     }
     Selector operator[](const char* name) const REF_QUAL_LVALUE {
         return (*this)[std::string{name}];
@@ -478,7 +391,7 @@ public:
             lua_settable(state, -3);
             lua_pop(state, 1);
         };
-        return Selector{_state, _registry, *_exception_handler, name, traversal, get, put};
+        return Selector{_state, *_registry, *_exception_handler, name, traversal, get, put};
     }
 
     friend bool operator==(const Selector &, const char *);
@@ -487,15 +400,9 @@ public:
 
 private:
     std::string ToString() const {
-        _traverse();
-        _get();
-        if (_functor) {
-            _functor(1);
-            _functor = nullptr;
-        }
-        auto ret =  detail::_pop(detail::_id<std::string>{}, _state);
-        lua_settop(_state, 0);
-        return ret;
+        ResetStackOnScopeExit save(_state);
+        _evaluate_retrieve(1);
+        return detail::_pop(detail::_id<std::string>{}, _state);
     }
 };
 

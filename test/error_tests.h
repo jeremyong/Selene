@@ -39,6 +39,13 @@ bool test_load_syntax_error(sel::State &state) {
         && capture.Content().find(expected) != std::string::npos;
 }
 
+bool test_do_syntax_error(sel::State &state) {
+    const char* expected = "unexpected symbol";
+    CapturedStdout capture;
+    return !state("function syntax_error() 1 2 3 4 end")
+        && capture.Content().find(expected) != std::string::npos;
+}
+
 bool test_call_undefined_function(sel::State &state) {
     state.Load("../test/test_error.lua");
     const char* expected = "attempt to call a nil value";
