@@ -6,6 +6,7 @@
 #include "MetatableRegistry.h"
 #include <map>
 #include <memory>
+#include "util.h"
 #include <vector>
 #include <stack>
 
@@ -55,16 +56,17 @@ private:
             return t->*member;
         };
         _funs.emplace_back(
-            new ClassFun<1, T, M>
-            {state, std::string{member_name}, _metatable_name.c_str(), lambda_get});
+            make_unique<ClassFun<1, T, M>>(
+                state, std::string{member_name},
+                _metatable_name.c_str(), lambda_get));
 
         std::function<void(T*, M)> lambda_set = [member](T *t, M value) {
             (t->*member) = value;
         };
         _funs.emplace_back(
-            new ClassFun<0, T, void, M>
-            {state, std::string("set_") + member_name,
-                    _metatable_name.c_str(), lambda_set});
+            make_unique<ClassFun<0, T, void, M>>(
+                state, std::string("set_") + member_name,
+                _metatable_name.c_str(), lambda_set));
     }
 
     template <typename M>
@@ -76,9 +78,9 @@ private:
             return t->*member;
         };
         _funs.emplace_back(
-            new ClassFun<1, T, M>
-            {state, std::string{member_name},
-                    _metatable_name.c_str(), lambda_get});
+            make_unique<ClassFun<1, T, M>>(
+                state, std::string{member_name},
+                _metatable_name.c_str(), lambda_get));
     }
 
     template <typename Ret, typename... Args>
@@ -90,8 +92,9 @@ private:
         };
         constexpr int arity = detail::_arity<Ret>::value;
         _funs.emplace_back(
-            new ClassFun<arity, T, Ret, Args...>
-            {state, std::string(fun_name), _metatable_name.c_str(), lambda});
+            make_unique<ClassFun<arity, T, Ret, Args...>>(
+                state, std::string(fun_name),
+                _metatable_name.c_str(), lambda));
     }
 
     template <typename Ret, typename... Args>
@@ -103,8 +106,9 @@ private:
         };
         constexpr int arity = detail::_arity<Ret>::value;
         _funs.emplace_back(
-            new ClassFun<arity, T, Ret, Args...>
-            {state, std::string(fun_name), _metatable_name.c_str(), lambda});
+            make_unique<ClassFun<arity, T, Ret, Args...>>(
+                state, std::string(fun_name),
+                _metatable_name.c_str(), lambda));
     }
 
     template <typename Ret, typename... Args>
@@ -117,8 +121,9 @@ private:
             };
         constexpr int arity = detail::_arity<Ret>::value;
         _funs.emplace_back(
-            new ClassFun<arity, const T, Ret, Args...>
-            {state, std::string(fun_name), _metatable_name.c_str(), lambda});
+            make_unique<ClassFun<arity, const T, Ret, Args...>>(
+                state, std::string(fun_name),
+                _metatable_name.c_str(), lambda));
     }
 
     void _register_members(lua_State *state) {}

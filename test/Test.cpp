@@ -17,6 +17,7 @@ using TestMap = std::map<const char *, Test>;
 static TestMap tests = {
     {"test_load_error", test_load_error},
     {"test_load_syntax_error", test_load_syntax_error},
+    {"test_do_syntax_error", test_do_syntax_error},
     {"test_call_undefined_function", test_call_undefined_function},
     {"test_call_undefined_function2", test_call_undefined_function2},
     {"test_call_stackoverflow", test_call_stackoverflow},
@@ -27,10 +28,13 @@ static TestMap tests = {
     {"test_call_exception_handler_for_exception_from_callback", test_call_exception_handler_for_exception_from_callback},
     {"test_call_exception_handler_while_using_sel_function", test_call_exception_handler_while_using_sel_function},
     {"test_rethrow_exception_for_exception_from_callback", test_rethrow_exception_for_exception_from_callback},
+    {"test_rethrow_using_sel_function", test_rethrow_using_sel_function},
+    {"test_throw_on_exception_using_Load", test_throw_on_exception_using_Load},
 
     {"test_function_no_args", test_function_no_args},
     {"test_add", test_add},
     {"test_multi_return", test_multi_return},
+    {"test_multi_return_invoked_once", test_multi_return_invoked_once},
     {"test_heterogeneous_return", test_heterogeneous_return},
     {"test_call_field", test_call_field},
     {"test_call_c_function", test_call_c_function},

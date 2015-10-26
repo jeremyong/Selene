@@ -28,6 +28,17 @@ bool test_multi_return(sel::State &state) {
     return (sum == 4 && difference == 2);
 }
 
+bool test_multi_return_invoked_once(sel::State &state) {
+    int invocation_count = 0;
+    state["two_ints"] = [&invocation_count](){
+        ++invocation_count;
+        return std::tuple<int, int>{1, 2};
+    };
+    int res_a = 0, res_b = 0;
+    sel::tie(res_a, res_b) = state["two_ints"]();
+    return invocation_count == 1;
+}
+
 bool test_heterogeneous_return(sel::State &state) {
     state.Load("../test/test.lua");
     int x;
