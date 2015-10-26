@@ -53,9 +53,10 @@ private:
     // Key of the value to act upon.
     LuaRef _key;
 
+    std::vector<LuaRef> _functor_arguments;
     // Functor is stored when the () operator is invoked. The argument
     // is used to indicate how many return values are expected
-    mutable CallOnce<void(int)> _functor;
+    mutable CallOnce<void(int, std::vector<LuaRef> const &)> _functor;
 
     Selector(lua_State *s, Registry &r, ExceptionHandler &eh, const std::string &name,
              std::vector<LuaRef> traversal, LuaRef key)
@@ -118,7 +119,7 @@ private:
     void _evaluate_retrieve(int num_results) const {
         _traverse();
         _get();
-        _functor(num_results);
+        _functor(num_results, _functor_arguments);
     }
 public:
 
@@ -136,13 +137,13 @@ public:
             if (std::uncaught_exception())
             {
                 try {
-                    _functor(0);
+                    _functor(0, _functor_arguments);
                 } catch (...) {
                     // We are already unwinding, ignore further exceptions.
                     // As of C++17 consider std::uncaught_exceptions()
                 }
             } else {
-                _functor(0);
+                _functor(0, _functor_arguments);
             }
         }
     }
@@ -151,13 +152,11 @@ public:
     bool operator==(Selector &other) = delete;
 
     template <typename... Args>
-    const Selector operator()(Args... args) const {
-        auto tuple_args = std::make_tuple(std::forward<Args>(args)...);
-        constexpr int num_args = sizeof...(Args);
+    const Selector operator()(Args&&... args) const {
         Selector copy{*this};
         const auto state = _state; // gcc-5.1 doesn't support implicit member capturing
         const auto eh = _exception_handler;
-        copy._functor = CallOnce<void(int)>{[state, eh, tuple_args, num_args](int num_ret) {
+        copy._functor = CallOnce<void(int, std::vector<LuaRef> const &)>{[state, eh](int num_ret, std::vector<LuaRef> const & parameters) {
             // install handler, and swap(handler, function) on lua stack
             int handler_index = SetErrorHandler(state);
             int func_index = handler_index - 1;
@@ -172,9 +171,11 @@ public:
             lua_replace(state, handler_index);
 #endif
             // call lua function with error handler
-            detail::_push(state, tuple_args);
+            for(auto const & param : parameters) {
+                param.Push(state);
+            }
             auto const statusCode =
-                lua_pcall(state, num_args, num_ret, handler_index - 1);
+                lua_pcall(state, parameters.size(), num_ret, handler_index - 1);
 
             // remove error handler
             lua_remove(state, handler_index - 1);
@@ -183,6 +184,7 @@ public:
                 eh->Handle_top_of_stack(statusCode, state);
             }
         }};
+        copy._functor_arguments = make_Refs(_state, std::forward<Args>(args)...);
         return copy;
     }
 

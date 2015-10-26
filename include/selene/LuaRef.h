@@ -1,6 +1,8 @@
 #pragma once
 
 #include <memory>
+#include "primitives.h"
+#include "ResourceHandler.h"
 
 extern "C" {
 #include <lua.h>
@@ -33,13 +35,29 @@ public:
     }
 };
 
-LuaRef make_Ref(lua_State *state, const std::string & name) {
-    lua_pushstring(state, name.c_str());
+template <typename T>
+LuaRef make_Ref(lua_State * state, T&& t) {
+    detail::_push(state, std::forward<T>(t));
     return LuaRef(state, luaL_ref(state, LUA_REGISTRYINDEX));
 }
 
-LuaRef make_Ref(lua_State *state, int index) {
-    lua_pushinteger(state, index);
-    return LuaRef(state, luaL_ref(state, LUA_REGISTRYINDEX));
+namespace detail {
+    void append_ref_recursive(lua_State *, std::vector<LuaRef> &) {}
+
+    template <typename Head, typename... Tail>
+    void append_ref_recursive(lua_State * state, std::vector<LuaRef> & refs, Head&& head, Tail&&... tail) {
+        refs.push_back(make_Ref(state, std::forward<Head>(head)));
+
+        append_ref_recursive(state, refs, std::forward<Tail>(tail)...);
+    }
+}
+
+template <typename... Args>
+std::vector<LuaRef> make_Refs(lua_State * state, Args&&... args) {
+    std::vector<LuaRef> refs;
+    refs.reserve(sizeof...(Args));
+
+    detail::append_ref_recursive(state, refs, std::forward<Args>(args)...);
+    return refs;
 }
 }
