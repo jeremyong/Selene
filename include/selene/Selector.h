@@ -56,7 +56,7 @@ private:
     std::vector<LuaRef> _functor_arguments;
     // Functor is stored when the () operator is invoked. The argument
     // is used to indicate how many return values are expected
-    mutable CallOnce<void(Selector const &, int)> _functor;
+    mutable CallOnceMemFun<Selector, int> _functor;
 
     Selector(lua_State *s, Registry &r, ExceptionHandler &eh, const std::string &name,
              std::vector<LuaRef> traversal, LuaRef key)
@@ -122,32 +122,32 @@ private:
         _functor(*this, num_results);
     }
 
-    static void _evaluate_function_call(Selector const & self, int num_ret) {
+    void _evaluate_function_call(int num_ret) const {
         // install handler, and swap(handler, function) on lua stack
-        int handler_index = SetErrorHandler(self._state);
+        int handler_index = SetErrorHandler(_state);
         int func_index = handler_index - 1;
 #if LUA_VERSION_NUM >= 502
-        lua_pushvalue(self._state, func_index);
-        lua_copy(self._state, handler_index, func_index);
-        lua_replace(self._state, handler_index);
+        lua_pushvalue(_state, func_index);
+        lua_copy(_state, handler_index, func_index);
+        lua_replace(_state, handler_index);
 #else
-        lua_pushvalue(self._state, func_index);
-        lua_push_value(self._state, handler_index);
-        lua_replace(self._state, func_index);
-        lua_replace(self._state, handler_index);
+        lua_pushvalue(_state, func_index);
+        lua_push_value(_state, handler_index);
+        lua_replace(_state, func_index);
+        lua_replace(_state, handler_index);
 #endif
         // call lua function with error handler
-        for(auto const & arg : self._functor_arguments) {
-            arg.Push(self._state);
+        for(auto const & arg : _functor_arguments) {
+            arg.Push(_state);
         }
         auto const statusCode =
-            lua_pcall(self._state, self._functor_arguments.size(), num_ret, handler_index - 1);
+            lua_pcall(_state, _functor_arguments.size(), num_ret, handler_index - 1);
 
         // remove error handler
-        lua_remove(self._state, handler_index - 1);
+        lua_remove(_state, handler_index - 1);
 
         if (statusCode != LUA_OK) {
-            self._exception_handler->Handle_top_of_stack(statusCode, self._state);
+            _exception_handler->Handle_top_of_stack(statusCode, _state);
         }
     }
 public:
@@ -185,7 +185,7 @@ public:
         Selector copy{*this};
         const auto state = _state; // gcc-5.1 doesn't support implicit member capturing
         const auto eh = _exception_handler;
-        copy._functor = CallOnce<void(Selector const &, int)>{_evaluate_function_call};
+        copy._functor = CallOnceMemFun<Selector, int>{&Selector::_evaluate_function_call};
         copy._functor_arguments = make_Refs(_state, std::forward<Args>(args)...);
         return copy;
     }

@@ -2,21 +2,19 @@
 
 namespace sel {
 
-template<typename Signature>
-class CallOnce;
-
-template<typename... Args>
-class CallOnce<void(Args...)> {
-    std::function<void(Args...)> _f;
+template<typename Class, typename... Args>
+class CallOnceMemFun {
+    void (Class::*_f)(Args...) const = nullptr;
 public:
-    CallOnce() = default;
+    CallOnceMemFun() = default;
 
-    CallOnce(std::function<void(Args...)> f) : _f(std::move(f)) {}
+    CallOnceMemFun(void (Class::*f)(Args...) const) : _f(f) {}
 
-    void operator()(Args... args) {
+    void operator()(Class const & obj, Args... args) {
         if (_f) {
-            auto consume_f = std::move(_f);
-            consume_f(std::forward<Args>(args)...);
+            auto consume_f = _f;
+            _f = nullptr;
+            (obj.*consume_f)(std::forward<Args>(args)...);
         }
     }
 
