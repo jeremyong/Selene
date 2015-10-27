@@ -54,9 +54,9 @@ private:
     LuaRef _key;
 
     std::vector<LuaRef> _functor_arguments;
-    // Functor is stored when the () operator is invoked. The argument
-    // is used to indicate how many return values are expected
-    mutable CallOnceMemFun<Selector, int> _functor;
+
+    // Functor is activated when the () operator is invoked.
+    mutable  MovingFlag _functor_active;
 
     Selector(lua_State *s, Registry &r, ExceptionHandler &eh, const std::string &name,
              std::vector<LuaRef> traversal, LuaRef key)
@@ -119,10 +119,12 @@ private:
     void _evaluate_retrieve(int num_results) const {
         _traverse();
         _get();
-        _functor(*this, num_results);
+        _evaluate_function_call(num_results);
     }
 
     void _evaluate_function_call(int num_ret) const {
+        if(!_functor_active) return;
+        _functor_active = false;
         // install handler, and swap(handler, function) on lua stack
         int handler_index = SetErrorHandler(_state);
         int func_index = handler_index - 1;
@@ -159,20 +161,20 @@ public:
 
     ~Selector() noexcept(false) {
         // If there is a functor is not empty, execute it and collect no args
-        if (_functor) {
+        if (_functor_active) {
             ResetStackOnScopeExit save(_state);
             _traverse();
             _get();
             if (std::uncaught_exception())
             {
                 try {
-                    _functor(*this, 0);
+                    _evaluate_function_call(0);
                 } catch (...) {
                     // We are already unwinding, ignore further exceptions.
                     // As of C++17 consider std::uncaught_exceptions()
                 }
             } else {
-                _functor(*this, 0);
+                _evaluate_function_call(0);
             }
         }
     }
@@ -185,8 +187,8 @@ public:
         Selector copy{*this};
         const auto state = _state; // gcc-5.1 doesn't support implicit member capturing
         const auto eh = _exception_handler;
-        copy._functor = CallOnceMemFun<Selector, int>{&Selector::_evaluate_function_call};
         copy._functor_arguments = make_Refs(_state, std::forward<Args>(args)...);
+        copy._functor_active = true;
         return copy;
     }
 

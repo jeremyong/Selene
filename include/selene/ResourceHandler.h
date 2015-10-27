@@ -2,24 +2,34 @@
 
 namespace sel {
 
-template<typename Class, typename... Args>
-class CallOnceMemFun {
-    void (Class::*_f)(Args...) const = nullptr;
+class MovingFlag {
+    bool flag = false;
+
 public:
-    CallOnceMemFun() = default;
+    MovingFlag() = default;
 
-    CallOnceMemFun(void (Class::*f)(Args...) const) : _f(f) {}
+    MovingFlag(MovingFlag const &) = default;
 
-    void operator()(Class const & obj, Args... args) {
-        if (_f) {
-            auto consume_f = _f;
-            _f = nullptr;
-            (obj.*consume_f)(std::forward<Args>(args)...);
-        }
+    MovingFlag & operator=(MovingFlag const &) = default;
+
+    MovingFlag(MovingFlag && that) noexcept
+        : flag(that.flag) {
+        that = false;
+    }
+
+    MovingFlag & operator=(MovingFlag && that) noexcept {
+        this->flag = that.flag;
+        that = false;
+        return *this;
     }
 
     operator bool() const {
-        return static_cast<bool>(_f);
+        return flag;
+    }
+
+    MovingFlag & operator=(bool x) {
+        flag = x;
+        return *this;
     }
 };
 
