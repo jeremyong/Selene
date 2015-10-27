@@ -73,3 +73,17 @@ bool test_call_stackoverflow(sel::State &state) {
     state["do_overflow"]();
     return capture.Content().find(expected) != std::string::npos;
 }
+
+bool test_parameter_conversion_error(sel::State &state) {
+    const char * expected =
+        "bad argument #2 to 'accept_string_int_string' (number expected, got string)";
+    std::string largeStringToPreventSSO(50, 'x');
+    state["accept_string_int_string"] = [](std::string, int, std::string){};
+
+    CapturedStdout capture;
+    state["accept_string_int_string"](
+        largeStringToPreventSSO,
+        "not a number",
+        largeStringToPreventSSO);
+    return capture.Content().find(expected) != std::string::npos;
+}

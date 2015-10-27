@@ -16,7 +16,7 @@ install:
 
 env:
   - BUILD_TYPE=Release
-  - BUILD_TYPE=RelWithDebInfo VALGRIND='valgrind --leak-check=full --error-exitcode=1'
+  - BUILD_TYPE=Debug VALGRIND='valgrind --leak-check=full --error-exitcode=1'
 
 script:
   - mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DLUA_INCLUDE_DIR=/usr/include/lua5.2 && make && ${VALGRIND} ./test_runner

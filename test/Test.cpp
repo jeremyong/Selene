@@ -21,6 +21,7 @@ static TestMap tests = {
     {"test_call_undefined_function", test_call_undefined_function},
     {"test_call_undefined_function2", test_call_undefined_function2},
     {"test_call_stackoverflow", test_call_stackoverflow},
+    {"test_parameter_conversion_error", test_parameter_conversion_error},
 
     {"test_catch_exception_from_callback_within_lua", test_catch_exception_from_callback_within_lua},
     {"test_catch_unknwon_exception_from_callback_within_lua", test_catch_unknwon_exception_from_callback_within_lua},
