@@ -2,26 +2,34 @@
 
 namespace sel {
 
-template<typename Signature>
-class CallOnce;
+class MovingFlag {
+    bool flag = false;
 
-template<typename... Args>
-class CallOnce<void(Args...)> {
-    std::function<void(Args...)> _f;
 public:
-    CallOnce() = default;
+    MovingFlag() = default;
 
-    CallOnce(std::function<void(Args...)> f) : _f(std::move(f)) {}
+    MovingFlag(MovingFlag const &) = default;
 
-    void operator()(Args... args) {
-        if (_f) {
-            auto consume_f = std::move(_f);
-            consume_f(std::forward<Args>(args)...);
-        }
+    MovingFlag & operator=(MovingFlag const &) = default;
+
+    MovingFlag(MovingFlag && that) noexcept
+        : flag(that.flag) {
+        that = false;
+    }
+
+    MovingFlag & operator=(MovingFlag && that) noexcept {
+        this->flag = that.flag;
+        that = false;
+        return *this;
     }
 
     operator bool() const {
-        return static_cast<bool>(_f);
+        return flag;
+    }
+
+    MovingFlag & operator=(bool x) {
+        flag = x;
+        return *this;
     }
 };
 
