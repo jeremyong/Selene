@@ -36,7 +36,7 @@ struct is_primitive<bool> {
 };
 template <>
 struct is_primitive<lua_Number> {
-    static constexpr bool result = true;
+    static constexpr bool value = true;
 };
 template <>
 struct is_primitive<std::string> {
