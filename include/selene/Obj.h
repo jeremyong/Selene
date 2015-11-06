@@ -36,14 +36,14 @@ private:
             return t->*member;
         };
         _funs.emplace_back(
-            make_unique<ObjFun<1, M>>(
+            sel::make_unique<ObjFun<1, M>>(
                 state, std::string{member_name}, lambda_get));
 
         std::function<void(M)> lambda_set = [t, member](M value) {
             t->*member = value;
         };
         _funs.emplace_back(
-            make_unique<ObjFun<0, void, M>>(
+            sel::make_unique<ObjFun<0, void, M>>(
                 state, std::string{"set_"} + member_name, lambda_set));
     }
 
@@ -57,7 +57,7 @@ private:
             return t->*member;
         };
         _funs.emplace_back(
-            make_unique<ObjFun<1, M>>(
+            sel::make_unique<ObjFun<1, M>>(
                 state, std::string{member_name}, lambda_get));
     }
 
@@ -71,7 +71,7 @@ private:
         };
         constexpr int arity = detail::_arity<Ret>::value;
         _funs.emplace_back(
-            make_unique<ObjFun<arity, Ret, Args...>>(
+            sel::make_unique<ObjFun<arity, Ret, Args...>>(
                 state, std::string(fun_name), lambda));
     }
 
@@ -85,7 +85,7 @@ private:
         };
         constexpr int arity = detail::_arity<Ret>::value;
         _funs.emplace_back(
-            make_unique<ObjFun<arity, Ret, Args...>>(
+            sel::make_unique<ObjFun<arity, Ret, Args...>>(
                 state, std::string(fun_name), lambda));
     }
 

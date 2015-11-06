@@ -36,7 +36,7 @@ public:
     void Register(std::function<Ret(Args...)> fun) {
         constexpr int arity = detail::_arity<Ret>::value;
         _funs.emplace_back(
-            make_unique<Fun<arity, Ret, Args...>>(
+            sel::make_unique<Fun<arity, Ret, Args...>>(
                 _state, _metatables, fun));
     }
 
@@ -44,7 +44,7 @@ public:
     void Register(Ret (*fun)(Args...)) {
         constexpr int arity = detail::_arity<Ret>::value;
         _funs.emplace_back(
-            make_unique<Fun<arity, Ret, Args...>>(
+            sel::make_unique<Fun<arity, Ret, Args...>>(
                 _state, _metatables, fun));
     }
 
@@ -61,7 +61,7 @@ public:
 
     template <typename T, typename... Funs>
     void RegisterObj(T &t, Funs... funs) {
-        _objs.emplace_back(make_unique<Obj<T, Funs...>>(_state, &t, funs...));
+        _objs.emplace_back(sel::make_unique<Obj<T, Funs...>>(_state, &t, funs...));
     }
 
     template <typename T, typename... CtorArgs, typename... Funs, size_t... N>
@@ -73,7 +73,7 @@ public:
     template <typename T, typename... CtorArgs, typename... Funs>
     void RegisterClassWorker(const std::string &name, Funs... funs) {
         _classes.emplace_back(
-            make_unique<Class<T, Ctor<T, CtorArgs...>, Funs...>>(
+            sel::make_unique<Class<T, Ctor<T, CtorArgs...>, Funs...>>(
                 _state, _metatables, name, funs...));
     }
 };

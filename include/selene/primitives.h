@@ -16,6 +16,10 @@ extern "C" {
  */
 
 namespace sel {
+
+template<typename T>
+class function;
+
 namespace detail {
 
 template <typename T>
@@ -36,10 +40,15 @@ struct is_primitive<bool> {
 };
 template <>
 struct is_primitive<lua_Number> {
-    static constexpr bool result = true;
+    static constexpr bool value = true;
 };
 template <>
 struct is_primitive<std::string> {
+    static constexpr bool value = true;
+};
+
+template<typename T>
+struct is_primitive<sel::function<T>> {
     static constexpr bool value = true;
 };
 
