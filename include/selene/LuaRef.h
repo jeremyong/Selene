@@ -43,7 +43,7 @@ LuaRef make_Ref(lua_State * state, T&& t) {
 }
 
 namespace detail {
-    void append_ref_recursive(lua_State *, std::vector<LuaRef> &) {}
+    inline void append_ref_recursive(lua_State *, std::vector<LuaRef> &) {}
 
     template <typename Head, typename... Tail>
     void append_ref_recursive(lua_State * state, std::vector<LuaRef> & refs, Head&& head, Tail&&... tail) {
