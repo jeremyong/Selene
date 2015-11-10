@@ -93,6 +93,17 @@ inline std::string _get(_id<std::string>, lua_State *l, const int index) {
     return std::string{buff, size};
 }
 
+using _lua_check_get = void (*)(lua_State *l, int index);
+// Throw this on conversion errors to prevent long jumps caused in Lua from
+// bypassing destructors. The outermost function can then call checkd_get(index)
+// in a context where a long jump is safe.
+// This way we let Lua generate the error message and use proper stack
+// unwinding.
+struct GetParameterFromLuaTypeError {
+    _lua_check_get checked_get;
+    int index;
+};
+
 template <typename T>
 inline T* _check_get(_id<T*>, lua_State *l, const int index) {
     return (T *)lua_topointer(l, index);
@@ -112,25 +123,59 @@ inline T _check_get(_id<T&&>, lua_State *l, const int index) {
 
 
 inline int _check_get(_id<int>, lua_State *l, const int index) {
+#if LUA_VERSION_NUM >= 502
+    int isNum = 0;
+    auto res = static_cast<int>(lua_tointegerx(l, index, &isNum));
+    if(!isNum){
+        throw GetParameterFromLuaTypeError{
 #if LUA_VERSION_NUM >= 503
-    return static_cast<int>(luaL_checkinteger(l, index));
+            [](lua_State *l, int index){luaL_checkinteger(l, index);},
 #else
-    return luaL_checkint(l, index);
+            [](lua_State *l, int index){luaL_checkint(l, index);},
+#endif
+            index
+        };
+    }
+    return res;
+#else
+#error "Not supported for Lua versions <5.2"
 #endif
 };
 
 inline unsigned int _check_get(_id<unsigned int>, lua_State *l, const int index) {
+    int isNum = 0;
 #if LUA_VERSION_NUM >= 503
-    return static_cast<unsigned>(luaL_checkinteger(l, index));
+    auto res = static_cast<unsigned>(lua_tointegerx(l, index, &isNum));
+    if(!isNum) {
+        throw GetParameterFromLuaTypeError{
+            [](lua_State *l, int index){luaL_checkinteger(l, index);},
+            index
+        };
+    }
 #elif LUA_VERSION_NUM >= 502
-    return luaL_checkunsigned(l, index);
+    auto res = static_cast<unsigned>(lua_tounsignedx(l, index, &isNum));
+    if(!isNum) {
+        throw GetParameterFromLuaTypeError{
+            [](lua_State *l, int index){luaL_checkunsigned(l, index);},
+            index
+        };
+    }
 #else
-    return static_cast<unsigned>(luaL_checkint(l, index));
+#error "Not supported for Lua versions <5.2"
 #endif
+    return res;
 }
 
 inline lua_Number _check_get(_id<lua_Number>, lua_State *l, const int index) {
-    return luaL_checknumber(l, index);
+    int isNum = 0;
+    auto res = lua_tonumberx(l, index, &isNum);
+    if(!isNum){
+        throw GetParameterFromLuaTypeError{
+            [](lua_State *l, int index){luaL_checknumber(l, index);},
+            index
+        };
+    }
+    return res;
 }
 
 inline bool _check_get(_id<bool>, lua_State *l, const int index) {
@@ -138,8 +183,14 @@ inline bool _check_get(_id<bool>, lua_State *l, const int index) {
 }
 
 inline std::string _check_get(_id<std::string>, lua_State *l, const int index) {
-    size_t size;
-    const char *buff = luaL_checklstring(l, index, &size);
+    size_t size = 0;
+    char const * buff = lua_tolstring(l, index, &size);
+    if(buff == nullptr) {
+        throw GetParameterFromLuaTypeError{
+            [](lua_State *l, int index){luaL_checkstring(l, index);},
+            index
+        };
+    }
     return std::string{buff, size};
 }
 
@@ -254,7 +305,10 @@ inline void _push(lua_State *l, T* t) {
 }
 
 template <typename T>
-inline void _push(lua_State *l, T& t) {
+inline typename std::enable_if<
+    !is_primitive<typename std::decay<T>::type>::value
+>::type
+_push(lua_State *l, T& t) {
     lua_pushlightuserdata(l, &t);
 }
 
