@@ -4,6 +4,7 @@
 #include <exception>
 #include "exception.h"
 #include <functional>
+#include "primitives.h"
 #include <tuple>
 #include "util.h"
 
@@ -17,8 +18,13 @@ namespace detail {
 
 inline int _lua_dispatcher(lua_State *l) {
     BaseFun *fun = (BaseFun *)lua_touserdata(l, lua_upvalueindex(1));
+    _lua_check_get raiseParameterConversionError = nullptr;
+    int erroneousParameterIndex = 0;
     try {
         return fun->Apply(l);
+    } catch (GetParameterFromLuaTypeError & e) {
+        raiseParameterConversionError = e.checked_get;
+        erroneousParameterIndex = e.index;
     } catch (std::exception & e) {
         lua_pushstring(l, e.what());
         Traceback(l);
@@ -28,6 +34,11 @@ inline int _lua_dispatcher(lua_State *l) {
         Traceback(l);
         store_current_exception(l, lua_tostring(l, -1));
     }
+
+    if(raiseParameterConversionError) {
+        raiseParameterConversionError(l, erroneousParameterIndex);
+    }
+
     return lua_error(l);
 }
 

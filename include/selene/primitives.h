@@ -16,6 +16,10 @@ extern "C" {
  */
 
 namespace sel {
+
+template<typename T>
+class function;
+
 namespace detail {
 
 template <typename T>
@@ -36,10 +40,15 @@ struct is_primitive<bool> {
 };
 template <>
 struct is_primitive<lua_Number> {
-    static constexpr bool result = true;
+    static constexpr bool value = true;
 };
 template <>
 struct is_primitive<std::string> {
+    static constexpr bool value = true;
+};
+
+template<typename T>
+struct is_primitive<sel::function<T>> {
     static constexpr bool value = true;
 };
 
@@ -84,6 +93,17 @@ inline std::string _get(_id<std::string>, lua_State *l, const int index) {
     return std::string{buff, size};
 }
 
+using _lua_check_get = void (*)(lua_State *l, int index);
+// Throw this on conversion errors to prevent long jumps caused in Lua from
+// bypassing destructors. The outermost function can then call checkd_get(index)
+// in a context where a long jump is safe.
+// This way we let Lua generate the error message and use proper stack
+// unwinding.
+struct GetParameterFromLuaTypeError {
+    _lua_check_get checked_get;
+    int index;
+};
+
 template <typename T>
 inline T* _check_get(_id<T*>, lua_State *l, const int index) {
     return (T *)lua_topointer(l, index);
@@ -103,25 +123,59 @@ inline T _check_get(_id<T&&>, lua_State *l, const int index) {
 
 
 inline int _check_get(_id<int>, lua_State *l, const int index) {
+#if LUA_VERSION_NUM >= 502
+    int isNum = 0;
+    auto res = static_cast<int>(lua_tointegerx(l, index, &isNum));
+    if(!isNum){
+        throw GetParameterFromLuaTypeError{
 #if LUA_VERSION_NUM >= 503
-    return static_cast<int>(luaL_checkinteger(l, index));
+            [](lua_State *l, int index){luaL_checkinteger(l, index);},
 #else
-    return luaL_checkint(l, index);
+            [](lua_State *l, int index){luaL_checkint(l, index);},
+#endif
+            index
+        };
+    }
+    return res;
+#else
+#error "Not supported for Lua versions <5.2"
 #endif
 };
 
 inline unsigned int _check_get(_id<unsigned int>, lua_State *l, const int index) {
+    int isNum = 0;
 #if LUA_VERSION_NUM >= 503
-    return static_cast<unsigned>(luaL_checkinteger(l, index));
+    auto res = static_cast<unsigned>(lua_tointegerx(l, index, &isNum));
+    if(!isNum) {
+        throw GetParameterFromLuaTypeError{
+            [](lua_State *l, int index){luaL_checkinteger(l, index);},
+            index
+        };
+    }
 #elif LUA_VERSION_NUM >= 502
-    return luaL_checkunsigned(l, index);
+    auto res = static_cast<unsigned>(lua_tounsignedx(l, index, &isNum));
+    if(!isNum) {
+        throw GetParameterFromLuaTypeError{
+            [](lua_State *l, int index){luaL_checkunsigned(l, index);},
+            index
+        };
+    }
 #else
-    return static_cast<unsigned>(luaL_checkint(l, index));
+#error "Not supported for Lua versions <5.2"
 #endif
+    return res;
 }
 
 inline lua_Number _check_get(_id<lua_Number>, lua_State *l, const int index) {
-    return luaL_checknumber(l, index);
+    int isNum = 0;
+    auto res = lua_tonumberx(l, index, &isNum);
+    if(!isNum){
+        throw GetParameterFromLuaTypeError{
+            [](lua_State *l, int index){luaL_checknumber(l, index);},
+            index
+        };
+    }
+    return res;
 }
 
 inline bool _check_get(_id<bool>, lua_State *l, const int index) {
@@ -129,16 +183,21 @@ inline bool _check_get(_id<bool>, lua_State *l, const int index) {
 }
 
 inline std::string _check_get(_id<std::string>, lua_State *l, const int index) {
-    size_t size;
-    const char *buff = luaL_checklstring(l, index, &size);
+    size_t size = 0;
+    char const * buff = lua_tolstring(l, index, &size);
+    if(buff == nullptr) {
+        throw GetParameterFromLuaTypeError{
+            [](lua_State *l, int index){luaL_checkstring(l, index);},
+            index
+        };
+    }
     return std::string{buff, size};
 }
 
-// Worker type-trait struct to _pop_n
-// Popping multiple elements returns a tuple
-template <std::size_t S, typename... Ts> // First template argument denotes
-                                         // the sizeof(Ts...)
-struct _pop_n_impl {
+// Worker type-trait struct to _get_n
+// Getting multiple elements returns a tuple
+template <typename... Ts>
+struct _get_n_impl {
     using type =  std::tuple<Ts...>;
 
     template <std::size_t... N>
@@ -148,76 +207,29 @@ struct _pop_n_impl {
     }
 
     static type apply(lua_State *l) {
-        auto ret = worker(l, typename _indices_builder<S>::type());
-        lua_pop(l, S);
-        return ret;
+        return worker(l, typename _indices_builder<sizeof...(Ts)>::type());
     }
 };
 
-// Popping nothing returns void
-template <typename... Ts>
-struct _pop_n_impl<0, Ts...> {
+// Getting nothing returns void
+template <>
+struct _get_n_impl<> {
     using type = void;
     static type apply(lua_State *) {}
 };
 
-// Popping one element returns an unboxed value
+// Getting one element returns an unboxed value
 template <typename T>
-struct _pop_n_impl<1, T> {
+struct _get_n_impl<T> {
     using type = T;
     static type apply(lua_State *l) {
-        T ret = _get(_id<T>{}, l, -1);
-        lua_pop(l, 1);
-        return ret;
+        return _get(_id<T>{}, l, -1);
     }
 };
 
 template <typename... T>
-typename _pop_n_impl<sizeof...(T), T...>::type _pop_n(lua_State *l) {
-    return _pop_n_impl<sizeof...(T), T...>::apply(l);
-}
-
-template <std::size_t S, typename... Ts>
-struct _pop_n_reset_impl {
-    using type =  std::tuple<Ts...>;
-
-    template <std::size_t... N>
-    static type worker(lua_State *l,
-                       _indices<N...>) {
-        return std::make_tuple(_get(_id<Ts>{}, l, N + 1)...);
-    }
-
-    static type apply(lua_State *l) {
-        auto ret = worker(l, typename _indices_builder<S>::type());
-        lua_settop(l, 0);
-        return ret;
-    }
-};
-
-// Popping nothing returns void
-template <typename... Ts>
-struct _pop_n_reset_impl<0, Ts...> {
-    using type = void;
-    static type apply(lua_State *l) {
-        lua_settop(l, 0);
-    }
-};
-
-// Popping one element returns an unboxed value
-template <typename T>
-struct _pop_n_reset_impl<1, T> {
-    using type = T;
-    static type apply(lua_State *l) {
-        T ret = _get(_id<T>{}, l, -1);
-        lua_settop(l, 0);
-        return ret;
-    }
-};
-
-template <typename... T>
-typename _pop_n_reset_impl<sizeof...(T), T...>::type
-_pop_n_reset(lua_State *l) {
-    return _pop_n_reset_impl<sizeof...(T), T...>::apply(l);
+typename _get_n_impl<T...>::type _get_n(lua_State *l) {
+    return _get_n_impl<T...>::apply(l);
 }
 
 template <typename T>
@@ -293,7 +305,10 @@ inline void _push(lua_State *l, T* t) {
 }
 
 template <typename T>
-inline void _push(lua_State *l, T& t) {
+inline typename std::enable_if<
+    !is_primitive<typename std::decay<T>::type>::value
+>::type
+_push(lua_State *l, T& t) {
     lua_pushlightuserdata(l, &t);
 }
 

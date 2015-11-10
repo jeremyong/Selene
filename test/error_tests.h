@@ -39,6 +39,13 @@ bool test_load_syntax_error(sel::State &state) {
         && capture.Content().find(expected) != std::string::npos;
 }
 
+bool test_do_syntax_error(sel::State &state) {
+    const char* expected = "unexpected symbol";
+    CapturedStdout capture;
+    return !state("function syntax_error() 1 2 3 4 end")
+        && capture.Content().find(expected) != std::string::npos;
+}
+
 bool test_call_undefined_function(sel::State &state) {
     state.Load("../test/test_error.lua");
     const char* expected = "attempt to call a nil value";
@@ -64,5 +71,19 @@ bool test_call_stackoverflow(sel::State &state) {
     const char* expected = "test_error.lua:10: stack overflow";
     CapturedStdout capture;
     state["do_overflow"]();
+    return capture.Content().find(expected) != std::string::npos;
+}
+
+bool test_parameter_conversion_error(sel::State &state) {
+    const char * expected =
+        "bad argument #2 to 'accept_string_int_string' (number expected, got string)";
+    std::string largeStringToPreventSSO(50, 'x');
+    state["accept_string_int_string"] = [](std::string, int, std::string){};
+
+    CapturedStdout capture;
+    state["accept_string_int_string"](
+        largeStringToPreventSSO,
+        "not a number",
+        largeStringToPreventSSO);
     return capture.Content().find(expected) != std::string::npos;
 }

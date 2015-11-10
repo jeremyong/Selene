@@ -7,14 +7,16 @@ before_install:
   - sudo apt-get update -qq
 
 install:
-  - if [ "$CXX" = "g++" ]; then sudo apt-get install -qq g++-4.8; fi
+  - if [ "$CXX" = "g++" ]; then export PACKAGES_TO_INSTALL="g++-4.8"; fi
   - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8"; fi
-  - sudo apt-get install lua5.2 liblua5.2-dev
+  - export PACKAGES_TO_INSTALL="${PACKAGES_TO_INSTALL} lua5.2 liblua5.2-dev"
+  - export PACKAGES_TO_INSTALL="${PACKAGES_TO_INSTALL} valgrind"
+  - sudo apt-get install -qq ${PACKAGES_TO_INSTALL}
   - sudo ln -s /usr/lib/x86_64-linux-gnu/liblua5.2.so /usr/lib/liblua.so
 
-before_script:
-  - mkdir build
-  - cd build
-  - cmake .. -DLUA_INCLUDE_DIR=/usr/include/lua5.2
+env:
+  - BUILD_TYPE=Release
+  - BUILD_TYPE=Debug VALGRIND='valgrind --leak-check=full --error-exitcode=1'
 
-script: make && ./test_runner
+script:
+  - mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DLUA_INCLUDE_DIR=/usr/include/lua5.2 && make && ${VALGRIND} ./test_runner
