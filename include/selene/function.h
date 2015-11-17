@@ -1,6 +1,6 @@
 #pragma once
 
-#include "exception.h"
+#include "ExceptionHandler.h"
 #include <functional>
 #include "LuaRef.h"
 #include <memory>
@@ -34,7 +34,7 @@ struct function_base {
         }
     }
 
-    void Push(lua_State *state) {
+    void Push(lua_State *state) const {
         _ref.Push(state);
     }
 };

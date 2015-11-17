@@ -58,3 +58,67 @@ bool test_call_multivalue_lua_function(sel::State &state) {
     sel::function<std::tuple<int, int>()> lua_add = state["return_two"];
     return lua_add() == std::make_tuple(1, 2);
 }
+
+struct FunctionFoo {
+    int x;
+    FunctionFoo(int num) : x(num) {}
+    int getX() {
+        return x;
+    }
+};
+struct FunctionBar {};
+
+bool test_function_call_with_registered_class(sel::State &state) {
+    state["Foo"].SetClass<FunctionFoo, int>("get", &FunctionFoo::getX);
+    state("function getX(foo) return foo:get() end");
+    sel::function<int(FunctionFoo &)> getX = state["getX"];
+    FunctionFoo foo{4};
+    return getX(foo) == 4;
+}
+
+bool test_function_call_with_registered_class_ptr(sel::State &state) {
+    state["Foo"].SetClass<FunctionFoo, int>("get", &FunctionFoo::getX);
+    state("function getX(foo) return foo:get() end");
+    sel::function<int(FunctionFoo *)> getX = state["getX"];
+    FunctionFoo foo{4};
+    return getX(&foo) == 4;
+}
+
+bool test_function_call_with_nullptr_ref(sel::State &state) {
+    state["Foo"].SetClass<FunctionFoo, int>();
+    state("function makeNil() return nil end");
+    sel::function<FunctionFoo &()> getFoo = state["makeNil"];
+    bool error_encounted = false;
+
+    try {
+        FunctionFoo & foo = getFoo();
+    } catch(sel::TypeError &) {
+        error_encounted = true;
+    }
+
+    return error_encounted;
+}
+
+bool test_function_call_with_wrong_ref(sel::State &state) {
+    state["Foo"].SetClass<FunctionFoo, int>();
+    state["Bar"].SetClass<FunctionBar>();
+    state("function makeBar() return Bar.new() end");
+    sel::function<FunctionFoo &()> getFoo = state["makeBar"];
+    bool error_encounted = false;
+
+    try {
+        FunctionFoo & foo = getFoo();
+    } catch(sel::TypeError &) {
+        error_encounted = true;
+    }
+
+    return error_encounted;
+}
+
+bool test_function_call_with_wrong_ptr(sel::State &state) {
+    state["Foo"].SetClass<FunctionFoo, int>();
+    state["Bar"].SetClass<FunctionBar>();
+    state("function makeBar() return Bar.new() end");
+    sel::function<FunctionFoo *()> getFoo = state["makeBar"];
+    return nullptr == getFoo();
+}

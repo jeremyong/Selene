@@ -3,6 +3,7 @@
 #include "Class.h"
 #include "exotics.h"
 #include "Fun.h"
+#include "MetatableRegistry.h"
 #include "Obj.h"
 #include "util.h"
 #include <vector>
@@ -19,13 +20,14 @@ struct lambda_traits<Ret(T::*)(Args...) const> {
 }
 class Registry {
 private:
-    MetatableRegistry _metatables;
     std::vector<std::unique_ptr<BaseFun>> _funs;
     std::vector<std::unique_ptr<BaseObj>> _objs;
     std::vector<std::unique_ptr<BaseClass>> _classes;
     lua_State *_state;
 public:
-    Registry(lua_State *state) : _state(state) {}
+    Registry(lua_State *state) : _state(state) {
+        MetatableRegistry::Create(_state);
+    }
 
     template <typename L>
     void Register(L lambda) {
@@ -37,7 +39,7 @@ public:
         constexpr int arity = detail::_arity<Ret>::value;
         _funs.emplace_back(
             sel::make_unique<Fun<arity, Ret, Args...>>(
-                _state, _metatables, fun));
+                _state, fun));
     }
 
     template <typename Ret, typename... Args>
@@ -45,7 +47,7 @@ public:
         constexpr int arity = detail::_arity<Ret>::value;
         _funs.emplace_back(
             sel::make_unique<Fun<arity, Ret, Args...>>(
-                _state, _metatables, fun));
+                _state, fun));
     }
 
     template <typename T, typename... Funs>
@@ -74,7 +76,7 @@ public:
     void RegisterClassWorker(const std::string &name, Funs... funs) {
         _classes.emplace_back(
             sel::make_unique<Class<T, Ctor<T, CtorArgs...>, Funs...>>(
-                _state, _metatables, name, funs...));
+                _state, name, funs...));
     }
 };
 }

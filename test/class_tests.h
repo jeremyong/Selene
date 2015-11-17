@@ -32,6 +32,24 @@ struct Zoo {
     }
 };
 
+struct BarHolder {
+    Bar bar;
+    BarHolder(int num) : bar(num) {}
+
+    Bar & getRef() {
+        return bar;
+    }
+
+    Bar * getPtr() {
+        return &bar;
+    }
+};
+
+struct ZooAcceptor {
+    ZooAcceptor(Zoo *) {}
+    void acceptZoo(Zoo *) {}
+};
+
 static int gc_counter;
 struct GCTest {
     GCTest() {
@@ -100,6 +118,37 @@ bool test_class_gc(sel::State &state) {
     return check1 && check2;
 }
 
+bool test_ctor_wrong_type(sel::State &state) {
+    state["Bar"].SetClass<Bar, int>();
+    state["Zoo"].SetClass<Zoo, Bar*>();
+    state["ZooAcceptor"].SetClass<ZooAcceptor, Zoo*>();
+    state("bar = Bar.new(4)");
+
+    bool error_encounted = false;
+    state.HandleExceptionsWith([&error_encounted](int, std::string, std::exception_ptr) {
+        error_encounted = true;
+    });
+
+    state("zooAcceptor = ZooAcceptor.new(bar)");
+    return error_encounted;
+}
+
+bool test_pass_wrong_type(sel::State &state) {
+    state["Bar"].SetClass<Bar, int>();
+    state["Zoo"].SetClass<Zoo, Bar*>();
+    state["ZooAcceptor"].SetClass<ZooAcceptor, Zoo*>("acceptZoo", &ZooAcceptor::acceptZoo);
+    state("bar = Bar.new(4)");
+    state("zoo = Zoo.new(bar)");
+    state("zooAcceptor = ZooAcceptor.new(zoo)");
+
+    bool error_encounted = false;
+    state.HandleExceptionsWith([&error_encounted](int, std::string, std::exception_ptr) {
+        error_encounted = true;
+    });
+
+    state("zooAcceptor:acceptZoo(bar)");
+    return error_encounted;
+}
 bool test_pass_pointer(sel::State &state) {
     state["Bar"].SetClass<Bar, int>();
     state["Zoo"].SetClass<Zoo, Bar*>("get", &Zoo::GetX);
@@ -117,6 +166,24 @@ bool test_pass_ref(sel::State &state) {
     state("zoo:change_bar(bar)");
     state("barx = bar:get()");
     return state["barx"] == 8;
+}
+
+bool test_return_pointer(sel::State &state) {
+    state["Bar"].SetClass<Bar, int>("get", &Bar::GetX);
+    state["BarHolder"].SetClass<BarHolder, int>("get", &BarHolder::getPtr);
+    state("bh = BarHolder.new(4)");
+    state("bar = bh:get()");
+    state("barx = bar:get()");
+    return state["barx"] == 4;
+}
+
+bool test_return_ref(sel::State &state) {
+    state["Bar"].SetClass<Bar, int>("get", &Bar::GetX);
+    state["BarHolder"].SetClass<BarHolder, int>("get", &BarHolder::getRef);
+    state("bh = BarHolder.new(4)");
+    state("bar = bh:get()");
+    state("barx = bar:get()");
+    return state["barx"] == 4;
 }
 
 bool test_freestanding_fun_ref(sel::State &state) {

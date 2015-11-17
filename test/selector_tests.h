@@ -108,3 +108,151 @@ bool test_function_should_run_once(sel::State &state) {
     should_run_once();
     return state["should_be_one"] == 1;
 }
+
+struct SelectorBar {};
+struct SelectorFoo {
+    int x;
+    SelectorFoo(int num) : x(num) {}
+    int getX() {
+        return x;
+    }
+};
+
+bool test_selector_call_with_registered_class(sel::State &state) {
+    state["Foo"].SetClass<SelectorFoo, int>("get", &SelectorFoo::getX);
+    state("function getXFromFoo(foo) return foo:get() end");
+    SelectorFoo foo{4};
+    return state["getXFromFoo"](foo) == 4;
+}
+
+bool test_selector_call_with_registered_class_ptr(sel::State &state) {
+    state["Foo"].SetClass<SelectorFoo, int>("get", &SelectorFoo::getX);
+    state("function getXFromFoo(foo) return foo:get() end");
+    SelectorFoo foo{4};
+    return state["getXFromFoo"](&foo) == 4;
+}
+
+bool test_selector_call_with_wrong_type_ptr(sel::State &state) {
+    auto acceptFoo = [] (SelectorFoo *) {};
+    state["Foo"].SetClass<SelectorFoo, int>();
+    state["Bar"].SetClass<SelectorBar>();
+    state["acceptFoo"] = acceptFoo;
+    state("bar = Bar.new()");
+
+    bool error_encounted = false;
+    state.HandleExceptionsWith([&error_encounted](int, std::string, std::exception_ptr) {
+        error_encounted = true;
+    });
+    state("acceptFoo(bar)");
+
+    return error_encounted;
+}
+
+bool test_selector_call_with_wrong_type_ref(sel::State &state) {
+    auto acceptFoo = [] (SelectorFoo &) {};
+    state["Foo"].SetClass<SelectorFoo, int>();
+    state["Bar"].SetClass<SelectorBar>();
+    state["acceptFoo"] = acceptFoo;
+    state("bar = Bar.new()");
+
+    bool error_encounted = false;
+    state.HandleExceptionsWith([&error_encounted](int, std::string, std::exception_ptr) {
+        error_encounted = true;
+    });
+    state("acceptFoo(bar)");
+
+    return error_encounted;
+}
+
+bool test_selector_call_with_nullptr_ref(sel::State &state) {
+    auto acceptFoo = [] (SelectorFoo &) {};
+    state["Foo"].SetClass<SelectorFoo, int>();
+    state["acceptFoo"] = acceptFoo;
+
+    bool error_encounted = false;
+    state.HandleExceptionsWith([&error_encounted](int, std::string, std::exception_ptr) {
+        error_encounted = true;
+    });
+    state("acceptFoo(nil)");
+
+    return error_encounted;
+}
+
+bool test_selector_get_nullptr_ref(sel::State &state) {
+    state["Foo"].SetClass<SelectorFoo, int>();
+    state("bar = nil");
+    bool error_encounted = false;
+
+    try{
+        SelectorFoo & foo = state["bar"];
+    } catch(sel::TypeError &) {
+        error_encounted = true;
+    }
+
+    return error_encounted;
+}
+
+bool test_selector_get_wrong_ref(sel::State &state) {
+    state["Foo"].SetClass<SelectorFoo, int>();
+    state["Bar"].SetClass<SelectorBar>();
+    state("bar = Bar.new()");
+    bool error_encounted = false;
+
+    try{
+        SelectorFoo & foo = state["bar"];
+    } catch(sel::TypeError &) {
+        error_encounted = true;
+    }
+
+    return error_encounted;
+}
+
+bool test_selector_get_wrong_ref_to_string(sel::State &state) {
+    state["Foo"].SetClass<SelectorFoo, int>();
+    state("bar = \"Not a Foo\"");
+    bool expected_message = false;
+
+    try{
+        SelectorFoo & foo = state["bar"];
+    } catch(sel::TypeError & e) {
+        expected_message = std::string(e.what()).find("got string") != std::string::npos;
+    }
+
+    return expected_message;
+}
+
+bool test_selector_get_wrong_ref_to_table(sel::State &state) {
+    state["Foo"].SetClass<SelectorFoo, int>();
+    state("bar = {}");
+    bool expected_message = false;
+
+    try{
+        SelectorFoo & foo = state["bar"];
+    } catch(sel::TypeError & e) {
+        expected_message = std::string(e.what()).find("got table") != std::string::npos;
+    }
+
+    return expected_message;
+}
+
+bool test_selector_get_wrong_ref_to_unregistered(sel::State &state) {
+    state["Foo"].SetClass<SelectorFoo, int>();
+    state("foo = Foo.new(4)");
+    bool expected_message = false;
+
+    try{
+        SelectorBar & bar = state["foo"];
+    } catch(sel::TypeError & e) {
+        expected_message = std::string(e.what()).find("unregistered type expected") != std::string::npos;
+    }
+
+    return expected_message;
+}
+
+bool test_selector_get_wrong_ptr(sel::State &state) {
+    state["Foo"].SetClass<SelectorFoo, int>();
+    state["Bar"].SetClass<SelectorBar>();
+    state("bar = Bar.new()");
+    SelectorFoo * foo = state["bar"];
+    return foo == nullptr;
+}

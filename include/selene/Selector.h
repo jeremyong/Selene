@@ -1,6 +1,6 @@
 #pragma once
 
-#include "exception.h"
+#include "ExceptionHandler.h"
 #include "exotics.h"
 #include <functional>
 #include "LuaRef.h"
@@ -282,7 +282,7 @@ public:
     operator T&() const {
         ResetStackOnScopeExit save(_state);
         _evaluate_retrieve(1);
-        return *detail::_pop(detail::_id<T*>{}, _state);
+        return detail::_pop(detail::_id<T&>{}, _state);
     }
 
     template <typename T>
