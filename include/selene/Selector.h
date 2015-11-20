@@ -1,9 +1,10 @@
 #pragma once
 
 #include "ExceptionHandler.h"
-#include "exotics.h"
+#include "function.h"
 #include <functional>
 #include "LuaRef.h"
+#include "references.h"
 #include "Registry.h"
 #include "ResourceHandler.h"
 #include <string>
@@ -236,6 +237,20 @@ public:
         });
     }
 
+    template<typename T>
+    void operator=(Reference<T> const & ref) {
+        _evaluate_store([this, &ref]() {
+            detail::_push(_state, ref);
+        });
+    }
+
+    template<typename T>
+    void operator=(Pointer<T> const & ptr) {
+        _evaluate_store([this, &ptr]() {
+            detail::_push(_state, ptr);
+        });
+    }
+
     template <typename Ret, typename... Args>
     void operator=(Ret (*fun)(Args...)) {
         _evaluate_store([this, fun]() {
@@ -290,6 +305,20 @@ public:
         ResetStackOnScopeExit save(_state);
         _evaluate_retrieve(1);
         return detail::_pop(detail::_id<T*>{}, _state);
+    }
+
+    template <typename T>
+    operator Reference<T>() const {
+        ResetStackOnScopeExit save(_state);
+        _evaluate_retrieve(1);
+        return detail::_pop(detail::_id<Reference<T>>{}, _state);
+    }
+
+    template <typename T>
+    operator Pointer<T>() const {
+        ResetStackOnScopeExit save(_state);
+        _evaluate_retrieve(1);
+        return detail::_pop(detail::_id<Pointer<T>>{}, _state);
     }
 
     operator bool() const {

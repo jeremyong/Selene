@@ -31,6 +31,10 @@ public:
     LuaRef(lua_State *state, int ref)
         : _ref(new int{ref}, detail::LuaRefDeleter{state}) {}
 
+    LuaRef(lua_State *state)
+        : LuaRef(state, LUA_REFNIL)
+        {}
+
     void Push(lua_State *state) const {
         lua_rawgeti(state, LUA_REGISTRYINDEX, *_ref);
     }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "common/lifetime.h"
 #include <selene.h>
 
 bool test_select_global(sel::State &state) {
@@ -107,6 +108,56 @@ bool test_function_should_run_once(sel::State &state) {
     auto should_run_once = state["should_run_once"];
     should_run_once();
     return state["should_be_one"] == 1;
+}
+
+bool test_function_result_is_alive_ptr(sel::State &state) {
+    using namespace test_lifetime;
+    state["Obj"].SetClass<InstanceCounter>();
+    state("function createObj() return Obj.new() end");
+    int const instanceCountBeforeCreation = InstanceCounter::instances;
+
+    sel::Pointer<InstanceCounter> pointer = state["createObj"]();
+    state.ForceGC();
+
+    return InstanceCounter::instances == instanceCountBeforeCreation + 1;
+}
+
+bool test_function_result_is_alive_ref(sel::State &state) {
+    using namespace test_lifetime;
+    state["Obj"].SetClass<InstanceCounter>();
+    state("function createObj() return Obj.new() end");
+    int const instanceCountBeforeCreation = InstanceCounter::instances;
+
+    sel::Reference<InstanceCounter> reference = state["createObj"]();
+    state.ForceGC();
+
+    return InstanceCounter::instances == instanceCountBeforeCreation + 1;
+}
+
+bool test_get_and_set_Reference_keeps_identity(sel::State &state) {
+    using namespace test_lifetime;
+    state["Obj"].SetClass<InstanceCounter>();
+    state("objA = Obj.new()");
+
+    sel::Reference<InstanceCounter> objA_ref = state["objA"];
+    state["objB"] = objA_ref;
+    sel::Reference<InstanceCounter> objB_ref = state["objB"];
+
+    state("function areVerySame() return objA == objB end");
+    return state["areVerySame"]() && (&objA_ref.get() == &objB_ref.get());
+}
+
+bool test_get_and_set_Pointer_keeps_identity(sel::State &state) {
+    using namespace test_lifetime;
+    state["Obj"].SetClass<InstanceCounter>();
+    state("objA = Obj.new()");
+
+    sel::Pointer<InstanceCounter> objA_ptr = state["objA"];
+    state["objB"] = objA_ptr;
+    sel::Pointer<InstanceCounter> objB_ptr = state["objB"];
+
+    state("function areVerySame() return objA == objB end");
+    return state["areVerySame"]() && (objA_ptr == objB_ptr);
 }
 
 struct SelectorBar {};
