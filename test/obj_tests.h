@@ -85,3 +85,50 @@ bool test_bind_vector_push_back_string(sel::State &state) {
     state["vec"]["push_back"]("hi");
     return test_vector[0] == "hi";
 }
+
+struct FooHolder {
+    Foo foo;
+    FooHolder(int num) : foo(num) {}
+    Foo & getRef() {
+        return foo;
+    }
+    Foo * getPtr() {
+        return &foo;
+    }
+    void acceptFoo(Foo *) {};
+};
+struct ObjBar{};
+
+bool test_obj_member_return_pointer(sel::State &state) {
+    state["Foo"].SetClass<Foo, int>("get", &Foo::GetX);
+    FooHolder fh{4};
+    state["fh"].SetObj(fh, "get", &FooHolder::getPtr);
+    state("foo = fh:get()");
+    state("foox = foo:get()");
+    return state["foox"] == 4;
+}
+
+bool test_obj_member_return_ref(sel::State &state) {
+    state["Foo"].SetClass<Foo, int>("get", &Foo::GetX);
+    FooHolder fh{4};
+    state["fh"].SetObj(fh, "get", &FooHolder::getRef);
+    state("foo = fh:get()");
+    state("foox = foo:get()");
+    return state["foox"] == 4;
+}
+
+bool test_obj_member_wrong_type(sel::State &state) {
+    state["Foo"].SetClass<Foo, int>();
+    state["Bar"].SetClass<ObjBar>();
+    FooHolder fh{5};
+    state["fh"].SetObj(fh, "acceptFoo", &FooHolder::acceptFoo);
+    state("bar = Bar.new()");
+
+    bool error_encounted = false;
+    state.HandleExceptionsWith([&error_encounted](int, std::string, std::exception_ptr) {
+        error_encounted = true;
+    });
+
+    state("fh.acceptFoo(bar)");
+    return error_encounted;
+}

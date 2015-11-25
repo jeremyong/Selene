@@ -2,7 +2,7 @@
 
 #include "exotics.h"
 #include <exception>
-#include "exception.h"
+#include "ExceptionHandler.h"
 #include <functional>
 #include "primitives.h"
 #include <tuple>
@@ -19,11 +19,16 @@ namespace detail {
 inline int _lua_dispatcher(lua_State *l) {
     BaseFun *fun = (BaseFun *)lua_touserdata(l, lua_upvalueindex(1));
     _lua_check_get raiseParameterConversionError = nullptr;
+    const char * wrong_meta_table = nullptr;
     int erroneousParameterIndex = 0;
     try {
         return fun->Apply(l);
     } catch (GetParameterFromLuaTypeError & e) {
         raiseParameterConversionError = e.checked_get;
+        erroneousParameterIndex = e.index;
+    } catch (GetUserdataParameterFromLuaTypeError & e) {
+        wrong_meta_table = lua_pushlstring(
+            l, e.metatable_name.c_str(), e.metatable_name.length());
         erroneousParameterIndex = e.index;
     } catch (std::exception & e) {
         lua_pushstring(l, e.what());
@@ -37,6 +42,9 @@ inline int _lua_dispatcher(lua_State *l) {
 
     if(raiseParameterConversionError) {
         raiseParameterConversionError(l, erroneousParameterIndex);
+    }
+    else if(wrong_meta_table) {
+        luaL_checkudata(l, erroneousParameterIndex, wrong_meta_table);
     }
 
     return lua_error(l);

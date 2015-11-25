@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ExceptionTypes.h"
 #include <string>
 #include "traits.h"
 #include <type_traits>
@@ -63,8 +64,26 @@ using decay_primitive =
 /* getters */
 template <typename T>
 inline T* _get(_id<T*>, lua_State *l, const int index) {
-    auto t = lua_topointer(l, index);
-    return (T*)(t);
+    if(MetatableRegistry::IsType(l, typeid(T), index)) {
+        return (T*)lua_topointer(l, index);
+    }
+    return nullptr;
+}
+
+template <typename T>
+inline T& _get(_id<T&>, lua_State *l, const int index) {
+    if(!MetatableRegistry::IsType(l, typeid(T), index)) {
+        throw TypeError{
+            MetatableRegistry::GetTypeName(l, typeid(T)),
+            MetatableRegistry::GetTypeName(l, index)
+        };
+    }
+
+    T *ptr = (T*)lua_topointer(l, index);
+    if(ptr == nullptr) {
+        throw TypeError{MetatableRegistry::GetTypeName(l, typeid(T))};
+    }
+    return *ptr;
 }
 
 inline bool _get(_id<bool>, lua_State *l, const int index) {
@@ -106,6 +125,7 @@ struct GetParameterFromLuaTypeError {
 
 template <typename T>
 inline T* _check_get(_id<T*>, lua_State *l, const int index) {
+    MetatableRegistry::CheckType(l, typeid(T), index);
     return (T *)lua_topointer(l, index);
 };
 
@@ -113,7 +133,17 @@ template <typename T>
 inline T& _check_get(_id<T&>, lua_State *l, const int index) {
     static_assert(!is_primitive<T>::value,
                   "Reference types must not be primitives.");
-    return *(T *)lua_topointer(l, index);
+
+    T *ptr = _check_get(_id<T*>{}, l, index);
+
+    if(ptr == nullptr) {
+        throw GetUserdataParameterFromLuaTypeError{
+            MetatableRegistry::GetTypeName(l, typeid(T)),
+            index
+        };
+    }
+
+    return *ptr;
 };
 
 template <typename T>
@@ -244,63 +274,13 @@ T _pop(_id<T> t, lua_State *l) {
 inline void _push(lua_State *) {}
 
 template <typename T>
-inline void _push(lua_State *l, MetatableRegistry &m, T* t) {
-  if(t == nullptr) {
-    lua_pushnil(l);
-  }
-  else {
-    lua_pushlightuserdata(l, t);
-    if (const std::string* metatable = m.Find(typeid(T))) {
-      luaL_setmetatable(l, metatable->c_str());
-    }
-  }
-}
-
-template <typename T>
-inline void _push(lua_State *l, MetatableRegistry &m, T& t) {
-    lua_pushlightuserdata(l, &t);
-    if (const std::string* metatable = m.Find(typeid(T))) {
-        luaL_setmetatable(l, metatable->c_str());
-    }
-}
-
-inline void _push(lua_State *l, MetatableRegistry &, bool b) {
-    lua_pushboolean(l, b);
-}
-
-inline void _push(lua_State *l, MetatableRegistry &, int i) {
-    lua_pushinteger(l, i);
-}
-
-inline void _push(lua_State *l, MetatableRegistry &, unsigned int u) {
-#if LUA_VERSION_NUM >= 503
-  lua_pushinteger(l, (lua_Integer)u);
-#elif LUA_VERSION_NUM >= 502
-    lua_pushunsigned(l, u);
-#else
-    lua_pushinteger(l, static_cast<int>(u));
-#endif
-}
-
-inline void _push(lua_State *l, MetatableRegistry &, lua_Number f) {
-    lua_pushnumber(l, f);
-}
-
-inline void _push(lua_State *l, MetatableRegistry &, const std::string &s) {
-    lua_pushlstring(l, s.c_str(), s.size());
-}
-
-inline void _push(lua_State *l, MetatableRegistry &, const char *s) {
-    lua_pushstring(l, s);
-}
-
-template <typename T>
 inline void _push(lua_State *l, T* t) {
   if(t == nullptr) {
     lua_pushnil(l);
   }
   else {
     lua_pushlightuserdata(l, t);
+    MetatableRegistry::SetMetatable(l, typeid(T));
   }
 }
 
@@ -310,6 +290,7 @@ inline typename std::enable_if<
 >::type
 _push(lua_State *l, T& t) {
     lua_pushlightuserdata(l, &t);
+    MetatableRegistry::SetMetatable(l, typeid(T));
 }
 
 inline void _push(lua_State *l, bool b) {
@@ -348,37 +329,12 @@ inline void _set(lua_State *l, T &&value, const int index) {
     lua_replace(l, index);
 }
 
-inline void _push_n(lua_State *, MetatableRegistry &) {}
-
-template <typename T, typename... Rest>
-inline void _push_n(lua_State *l, MetatableRegistry &m, T value, Rest... rest) {
-    _push(l, m, std::forward<T>(value));
-    _push_n(l, m, rest...);
-}
-
-template <typename... T, std::size_t... N>
-inline void _push_dispatcher(lua_State *l,
-                             MetatableRegistry &m,
-                             const std::tuple<T...> &values,
-                             _indices<N...>) {
-    _push_n(l, m, std::get<N>(values)...);
-}
-
-inline void _push(lua_State *, MetatableRegistry &, std::tuple<>) {}
-
-template <typename... T>
-inline void _push(lua_State *l, MetatableRegistry &m, const std::tuple<T...> &values) {
-    constexpr int num_values = sizeof...(T);
-    _push_dispatcher(l, m, values,
-                     typename _indices_builder<num_values>::type());
-}
-
 inline void _push_n(lua_State *) {}
 
 template <typename T, typename... Rest>
-inline void _push_n(lua_State *l, T value, Rest... rest) {
+inline void _push_n(lua_State *l, T &&value, Rest&&... rest) {
     _push(l, std::forward<T>(value));
-    _push_n(l, rest...);
+    _push_n(l, std::forward<Rest>(rest)...);
 }
 
 template <typename... T, std::size_t... N>

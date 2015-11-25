@@ -12,12 +12,12 @@ private:
 
 public:
     Ctor(lua_State *l,
-         const std::string &metatable_name) {
-        _ctor = [metatable_name](lua_State *state, Args... args) {
-            void *addr = lua_newuserdata(state, sizeof(T));
-            new(addr) T(args...);
-            luaL_setmetatable(state, metatable_name.c_str());
-        };
+         const std::string &metatable_name)
+         : _ctor([metatable_name](lua_State *state, Args... args) {
+             void *addr = lua_newuserdata(state, sizeof(T));
+             new(addr) T(args...);
+             luaL_setmetatable(state, metatable_name.c_str());
+           }) {
         lua_pushlightuserdata(l, (void *)static_cast<BaseFun *>(this));
         lua_pushcclosure(l, &detail::_lua_dispatcher, 1);
         lua_setfield(l, -2, "new");
