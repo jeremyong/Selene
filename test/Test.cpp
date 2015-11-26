@@ -149,23 +149,32 @@ int ExecuteAll() {
     int passing = 0;
     for (auto it = tests.begin(); it != tests.end(); ++it) {
         sel::State state{true};
-        const bool result = it->second(state);
-        int const leak_count = state.Size();
-        const bool leaked = leak_count != 0;
         char progress_marker = 'E';
-        if (result) {
-            if (!leaked) {
-                passing += 1;
-                progress_marker = '.';
+        bool leaked = false;
+        try {
+            const bool result = it->second(state);
+            int const leak_count = state.Size();
+            leaked = leak_count != 0;
+            if (result) {
+                if (!leaked) {
+                    passing += 1;
+                    progress_marker = '.';
+                } else {
+                    failures.push_back(std::string{"Test \""} + it->first
+                                       + "\" leaked " + std::to_string(leak_count) + " values");
+                    progress_marker = 'l';
+                }
             } else {
-                failures.push_back(std::string{"Test \""} + it->first
-                                   + "\" leaked " + std::to_string(leak_count) + " values");
-                progress_marker = 'l';
+                progress_marker = 'x';
+                failures.push_back(std::string{"Test \""} +
+                                   it->first + "\" failed.");
             }
-        } else {
-            progress_marker = 'x';
-            failures.push_back(std::string{"Test \""} +
-                               it->first + "\" failed.");
+        } catch(std::exception & e) {
+            progress_marker = 'e';
+            failures.push_back(std::string{"Test \""} + it->first + "\" raised an exception: \"" + e.what() + "\".");
+        } catch(...) {
+            progress_marker = 'e';
+            failures.push_back(std::string{"Test \""} + it->first + "\" raised an exception of unknown type.");
         }
         std::cout << progress_marker << std::flush;
         if (leaked) {
