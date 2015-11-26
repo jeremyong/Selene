@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Class.h"
-#include "exotics.h"
+#include <functional>
 #include "Fun.h"
 #include "MetatableRegistry.h"
 #include "Obj.h"

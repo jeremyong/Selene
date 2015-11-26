@@ -1,5 +1,6 @@
 #pragma once
 
+#include "common/lifetime.h"
 #include <iostream>
 #include <selene.h>
 
@@ -57,6 +58,32 @@ bool test_call_multivalue_lua_function(sel::State &state) {
     state.Load("../test/test_ref.lua");
     sel::function<std::tuple<int, int>()> lua_add = state["return_two"];
     return lua_add() == std::make_tuple(1, 2);
+}
+
+bool test_call_result_is_alive_ptr(sel::State &state) {
+    using namespace test_lifetime;
+    state["Obj"].SetClass<InstanceCounter>();
+    state("function createObj() return Obj.new() end");
+    sel::function<sel::Pointer<InstanceCounter>()> createObj = state["createObj"];
+    int const instanceCountBeforeCreation = InstanceCounter::instances;
+
+    sel::Pointer<InstanceCounter> pointer = createObj();
+    state.ForceGC();
+
+    return InstanceCounter::instances == instanceCountBeforeCreation + 1;
+}
+
+bool test_call_result_is_alive_ref(sel::State &state) {
+    using namespace test_lifetime;
+    state["Obj"].SetClass<InstanceCounter>();
+    state("function createObj() return Obj.new() end");
+    sel::function<sel::Reference<InstanceCounter>()> createObj = state["createObj"];
+    int const instanceCountBeforeCreation = InstanceCounter::instances;
+
+    sel::Reference<InstanceCounter> ref = createObj();
+    state.ForceGC();
+
+    return InstanceCounter::instances == instanceCountBeforeCreation + 1;
 }
 
 struct FunctionFoo {

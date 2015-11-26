@@ -1,11 +1,11 @@
 #pragma once
 
 #include "ExceptionHandler.h"
-#include <functional>
 #include "LuaRef.h"
-#include <memory>
 #include "primitives.h"
+#include "references.h"
 #include "ResourceHandler.h"
+#include <tuple>
 #include "util.h"
 
 namespace sel {
@@ -112,4 +112,30 @@ public:
 
     using function_base::Push;
 };
+
+namespace detail {
+
+template<typename T>
+struct is_primitive<sel::function<T>> {
+    static constexpr bool value = true;
+};
+
+template <typename R, typename...Args>
+inline sel::function<R(Args...)> _check_get(_id<sel::function<R(Args...)>>,
+                                            lua_State *l, const int index) {
+    lua_pushvalue(l, index);
+    return sel::function<R(Args...)>{luaL_ref(l, LUA_REGISTRYINDEX), l};
+}
+
+template <typename R, typename... Args>
+inline sel::function<R(Args...)> _get(_id<sel::function<R(Args...)>> id,
+                                      lua_State *l, const int index) {
+    return _check_get(id, l, index);
+}
+
+template <typename R, typename... Args>
+inline void _push(lua_State *l, sel::function<R(Args...)> fun) {
+    fun.Push(l);
+}
+}
 }
