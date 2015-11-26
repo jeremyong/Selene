@@ -61,19 +61,19 @@ public:
         return !_obj;
     }
 
-    friend bool operator==(nullptr_t, Pointer<T> const & ptr) {
+    friend bool operator==(std::nullptr_t, Pointer<T> const & ptr) {
         return nullptr == ptr._obj;
     }
 
-    friend bool operator==(Pointer<T> const & ptr, nullptr_t) {
+    friend bool operator==(Pointer<T> const & ptr, std::nullptr_t) {
         return nullptr == ptr._obj;
     }
 
-    friend bool operator!=(nullptr_t, Pointer<T> const & ptr) {
+    friend bool operator!=(std::nullptr_t, Pointer<T> const & ptr) {
         return !(nullptr == ptr);
     }
 
-    friend bool operator!=(Pointer<T> const & ptr, nullptr_t) {
+    friend bool operator!=(Pointer<T> const & ptr, std::nullptr_t) {
         return !(nullptr == ptr);
     }
 
