@@ -23,8 +23,7 @@ public:
     int Apply(lua_State *l) override {
         std::tuple<detail::decay_primitive<Args>...> args =
             detail::_get_args<detail::decay_primitive<Args>...>(l);
-        Ret value = detail::_lift(_fun, args);
-        detail::_push(l, std::forward<Ret>(value));
+        detail::_push(l, detail::_lift(_fun, args));
         return N;
     }
 

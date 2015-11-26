@@ -40,8 +40,7 @@ public:
         std::tuple<T*> t = std::make_tuple(_get(l));
         std::tuple<Args...> args = detail::_get_args<Args...>(l);
         std::tuple<T*, Args...> pack = std::tuple_cat(t, args);
-        Ret value = detail::_lift(_fun, pack);
-        detail::_push(l, std::forward<Ret>(value));
+        detail::_push(l, detail::_lift(_fun, pack));
         return N;
     }
 };

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "common/lifetime.h"
+#include <memory>
 #include <selene.h>
 #include <string>
 
@@ -178,8 +180,90 @@ bool test_reference_return(sel::State &state) {
     return &ref == &special;
 }
 
+test_lifetime::InstanceCounter return_value() { return {}; }
+
+bool test_return_value(sel::State &state) {
+    using namespace test_lifetime;
+    state["MyClass"].SetClass<InstanceCounter>();
+    state["return_value"] = &return_value;
+    int const instanceCountBeforeCreation = InstanceCounter::instances;
+
+    state("globalValue = return_value()");
+
+    return InstanceCounter::instances == instanceCountBeforeCreation + 1;
+}
+
+bool test_return_unregistered_type(sel::State &state) {
+    using namespace test_lifetime;
+    state["return_value"] = &return_value;
+    int const instanceCountBeforeCreation = InstanceCounter::instances;
+
+    bool error_encounted = false;
+    state.HandleExceptionsWith([&error_encounted](int, std::string msg, std::exception_ptr) {
+        error_encounted = true;
+    });
+
+    state("globalValue = return_value()");
+
+    return error_encounted;
+}
+
+bool test_value_parameter(sel::State &state) {
+    using namespace test_lifetime;
+    state["MyClass"].SetClass<InstanceCounter>();
+    state("function acceptValue(value) valCopy = value end");
+    int const instanceCountBefore = InstanceCounter::instances;
+
+    state["acceptValue"](InstanceCounter{});
+
+    return InstanceCounter::instances == instanceCountBefore + 1;
+}
+
+bool test_wrong_value_parameter(sel::State &state) {
+    using namespace test_lifetime;
+    state["MyClass"].SetClass<InstanceCounter>();
+    state("function acceptValue(value) valCopy = value end");
+    int const instanceCountBefore = InstanceCounter::instances;
+
+    try {
+        state["acceptValue"](Special{});
+    } catch(sel::CopyUnregisteredType & e)
+    {
+        return e.getType().get() == typeid(Special);
+    }
+
+    return false;
+}
+
+bool test_value_parameter_keeps_type_info(sel::State &state) {
+    using namespace test_lifetime;
+    state["MyClass"].SetClass<Special>();
+    state("function acceptValue(value) valCopy = value end");
+    state["acceptValue"](Special{});
+
+    Special * foo = state["valCopy"];
+
+    return foo != nullptr;
+}
+
+bool test_callback_with_value(sel::State &state) {
+    using namespace test_lifetime;
+    state["MyClass"].SetClass<InstanceCounter>();
+    state("val = MyClass.new()");
+
+    std::unique_ptr<InstanceCounter> copy;
+    state["accept"] = [&copy](InstanceCounter counter) {
+        copy.reset(new InstanceCounter(std::move(counter)));
+    };
+
+    int const instanceCountBeforeCall = InstanceCounter::instances;
+    state("accept(val)");
+
+    return InstanceCounter::instances == instanceCountBeforeCall + 1;
+}
+
 bool test_nullptr_to_nil(sel::State &state) {
-    state["getNullptr"] = []() {
+    state["getNullptr"] = []() -> void* {
         return nullptr;
     };
     state("x = getNullptr()");

@@ -90,6 +90,16 @@ static inline bool SetMetatable(lua_State *state, TypeID type) {
     return false;
 }
 
+static inline bool IsRegisteredType(lua_State *state, TypeID type) {
+    detail::_push_names_table(state);
+    detail::_push_typeinfo(state, type);
+    lua_gettable(state, -2);
+
+    bool registered = lua_isstring(state, -1);
+    lua_pop(state, 2);
+    return registered;
+}
+
 static inline std::string GetTypeName(lua_State *state, TypeID type) {
     std::string name("unregistered type");
 
