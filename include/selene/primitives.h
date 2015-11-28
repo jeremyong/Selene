@@ -119,7 +119,7 @@ template <typename T>
 inline T* _check_get(_id<T*>, lua_State *l, const int index) {
     MetatableRegistry::CheckType(l, typeid(T), index);
     return (T *)lua_topointer(l, index);
-};
+}
 
 template <typename T>
 inline T& _check_get(_id<T&>, lua_State *l, const int index) {
@@ -136,12 +136,12 @@ inline T& _check_get(_id<T&>, lua_State *l, const int index) {
     }
 
     return *ptr;
-};
+}
 
 template <typename T>
 inline T _check_get(_id<T&&>, lua_State *l, const int index) {
     return _check_get(_id<T>{}, l, index);
-};
+}
 
 
 inline int _check_get(_id<int>, lua_State *l, const int index) {
@@ -162,7 +162,7 @@ inline int _check_get(_id<int>, lua_State *l, const int index) {
 #else
 #error "Not supported for Lua versions <5.2"
 #endif
-};
+}
 
 inline unsigned int _check_get(_id<unsigned int>, lua_State *l, const int index) {
     int isNum = 0;
