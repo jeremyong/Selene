@@ -52,6 +52,12 @@ static TestMap tests = {
     {"test_coroutine", test_coroutine},
     {"test_pointer_return", test_pointer_return},
     {"test_reference_return", test_reference_return},
+    {"test_return_value", test_return_value},
+    {"test_return_unregistered_type", test_return_unregistered_type},
+    {"test_value_parameter", test_value_parameter},
+    {"test_wrong_value_parameter", test_wrong_value_parameter},
+    {"test_value_parameter_keeps_type_info", test_value_parameter_keeps_type_info},
+    {"test_callback_with_value", test_callback_with_value},
     {"test_nullptr_to_nil", test_nullptr_to_nil},
     {"test_get_primitive_by_value", test_get_primitive_by_value},
     {"test_get_primitive_by_const_ref", test_get_primitive_by_const_ref},
@@ -73,8 +79,10 @@ static TestMap tests = {
     {"test_register_obj_const_member_variable", test_register_obj_const_member_variable},
     {"test_bind_vector_push_back", test_bind_vector_push_back},
     {"test_bind_vector_push_back_string", test_bind_vector_push_back_string},
+    {"test_bind_vector_push_back_foos", test_bind_vector_push_back_foos},
     {"test_obj_member_return_pointer", test_obj_member_return_pointer},
     {"test_obj_member_return_ref", test_obj_member_return_ref},
+    {"test_obj_member_return_val", test_obj_member_return_val},
     {"test_obj_member_wrong_type", test_obj_member_wrong_type},
 
     {"test_select_global", test_select_global},
@@ -122,6 +130,7 @@ static TestMap tests = {
     {"test_pass_ref", test_pass_ref},
     {"test_return_pointer", test_return_pointer},
     {"test_return_ref", test_return_ref},
+    {"test_return_val", test_return_val},
     {"test_freestanding_fun_ref", test_freestanding_fun_ref},
     {"test_freestanding_fun_ptr", test_freestanding_fun_ptr},
     {"test_const_member_function", test_const_member_function},
@@ -136,9 +145,12 @@ static TestMap tests = {
     {"test_call_result_is_alive_ref", test_call_result_is_alive_ref},
     {"test_function_call_with_registered_class", test_function_call_with_registered_class},
     {"test_function_call_with_registered_class_ptr", test_function_call_with_registered_class_ptr},
+    {"test_function_call_with_registered_class_val", test_function_call_with_registered_class_val},
+    {"test_function_call_with_registered_class_val_lifetime", test_function_call_with_registered_class_val_lifetime},
     {"test_function_call_with_nullptr_ref", test_function_call_with_nullptr_ref},
     {"test_function_call_with_wrong_ref", test_function_call_with_wrong_ref},
     {"test_function_call_with_wrong_ptr", test_function_call_with_wrong_ptr},
+    {"test_function_get_registered_class_by_value", test_function_get_registered_class_by_value},
 };
 
 // Executes all tests and returns the number of failures.
@@ -149,23 +161,32 @@ int ExecuteAll() {
     int passing = 0;
     for (auto it = tests.begin(); it != tests.end(); ++it) {
         sel::State state{true};
-        const bool result = it->second(state);
-        int const leak_count = state.Size();
-        const bool leaked = leak_count != 0;
         char progress_marker = 'E';
-        if (result) {
-            if (!leaked) {
-                passing += 1;
-                progress_marker = '.';
+        bool leaked = false;
+        try {
+            const bool result = it->second(state);
+            int const leak_count = state.Size();
+            leaked = leak_count != 0;
+            if (result) {
+                if (!leaked) {
+                    passing += 1;
+                    progress_marker = '.';
+                } else {
+                    failures.push_back(std::string{"Test \""} + it->first
+                                       + "\" leaked " + std::to_string(leak_count) + " values");
+                    progress_marker = 'l';
+                }
             } else {
-                failures.push_back(std::string{"Test \""} + it->first
-                                   + "\" leaked " + std::to_string(leak_count) + " values");
-                progress_marker = 'l';
+                progress_marker = 'x';
+                failures.push_back(std::string{"Test \""} +
+                                   it->first + "\" failed.");
             }
-        } else {
-            progress_marker = 'x';
-            failures.push_back(std::string{"Test \""} +
-                               it->first + "\" failed.");
+        } catch(std::exception & e) {
+            progress_marker = 'e';
+            failures.push_back(std::string{"Test \""} + it->first + "\" raised an exception: \"" + e.what() + "\".");
+        } catch(...) {
+            progress_marker = 'e';
+            failures.push_back(std::string{"Test \""} + it->first + "\" raised an exception of unknown type.");
         }
         std::cout << progress_marker << std::flush;
         if (leaked) {

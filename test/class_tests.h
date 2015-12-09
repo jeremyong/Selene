@@ -43,6 +43,10 @@ struct BarHolder {
     Bar * getPtr() {
         return &bar;
     }
+
+    Bar getValue() {
+        return bar;
+    }
 };
 
 struct ZooAcceptor {
@@ -180,6 +184,15 @@ bool test_return_pointer(sel::State &state) {
 bool test_return_ref(sel::State &state) {
     state["Bar"].SetClass<Bar, int>("get", &Bar::GetX);
     state["BarHolder"].SetClass<BarHolder, int>("get", &BarHolder::getRef);
+    state("bh = BarHolder.new(4)");
+    state("bar = bh:get()");
+    state("barx = bar:get()");
+    return state["barx"] == 4;
+}
+
+bool test_return_val(sel::State &state) {
+    state["Bar"].SetClass<Bar, int>("get", &Bar::GetX);
+    state["BarHolder"].SetClass<BarHolder, int>("get", &BarHolder::getValue);
     state("bh = BarHolder.new(4)");
     state("bar = bh:get()");
     state("barx = bar:get()");

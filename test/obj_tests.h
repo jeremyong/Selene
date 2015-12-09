@@ -86,6 +86,16 @@ bool test_bind_vector_push_back_string(sel::State &state) {
     return test_vector[0] == "hi";
 }
 
+bool test_bind_vector_push_back_foos(sel::State &state) {
+    std::vector<Foo> test_vector;
+    state["Foo"].SetClass<Foo, int>();
+    state["vec"].SetObj(test_vector, "push_back",
+                        static_cast<void(std::vector<Foo>::*)(Foo&&)>(&std::vector<Foo>::push_back));
+    state["vec"]["push_back"](Foo{1});
+    state["vec"]["push_back"](Foo{2});
+    return test_vector.size() == 2;
+}
+
 struct FooHolder {
     Foo foo;
     FooHolder(int num) : foo(num) {}
@@ -94,6 +104,9 @@ struct FooHolder {
     }
     Foo * getPtr() {
         return &foo;
+    }
+    Foo getValue() {
+        return foo;
     }
     void acceptFoo(Foo *) {};
 };
@@ -112,6 +125,15 @@ bool test_obj_member_return_ref(sel::State &state) {
     state["Foo"].SetClass<Foo, int>("get", &Foo::GetX);
     FooHolder fh{4};
     state["fh"].SetObj(fh, "get", &FooHolder::getRef);
+    state("foo = fh:get()");
+    state("foox = foo:get()");
+    return state["foox"] == 4;
+}
+
+bool test_obj_member_return_val(sel::State &state) {
+    state["Foo"].SetClass<Foo, int>("get", &Foo::GetX);
+    FooHolder fh{4};
+    state["fh"].SetObj(fh, "get", &FooHolder::getValue);
     state("foo = fh:get()");
     state("foox = foo:get()");
     return state["foox"] == 4;

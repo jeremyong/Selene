@@ -57,7 +57,7 @@ public:
 
         int handler_index = SetErrorHandler(_state);
         _ref.Push(_state);
-        detail::_push_n(_state, args...);
+        detail::_push_n(_state, std::forward<Args>(args)...);
         constexpr int num_args = sizeof...(Args);
 
         protected_call(num_args, 1, handler_index);
@@ -79,7 +79,7 @@ public:
 
         int handler_index = SetErrorHandler(_state);
         _ref.Push(_state);
-        detail::_push_n(_state, args...);
+        detail::_push_n(_state, std::forward<Args>(args)...);
         constexpr int num_args = sizeof...(Args);
 
         protected_call(num_args, 1, handler_index);
@@ -100,7 +100,7 @@ public:
 
         int handler_index = SetErrorHandler(_state);
         _ref.Push(_state);
-        detail::_push_n(_state, args...);
+        detail::_push_n(_state, std::forward<Args>(args)...);
         constexpr int num_args = sizeof...(Args);
         constexpr int num_ret = sizeof...(R);
 

@@ -78,6 +78,14 @@ inline T& _get(_id<T&>, lua_State *l, const int index) {
     return *ptr;
 }
 
+template <typename T>
+inline typename std::enable_if<
+    !is_primitive<typename std::decay<T>::type>::value, T
+>::type
+_get(_id<T>, lua_State *l, const int index) {
+    return _get(_id<T&>{}, l, index);
+}
+
 inline bool _get(_id<bool>, lua_State *l, const int index) {
     return lua_toboolean(l, index) != 0;
 }
@@ -137,6 +145,14 @@ inline T& _check_get(_id<T&>, lua_State *l, const int index) {
 
     return *ptr;
 }
+
+template <typename T>
+inline typename std::enable_if<
+    !is_primitive<typename std::decay<T>::type>::value, T
+>::type
+_check_get(_id<T>, lua_State *l, const int index) {
+    return _check_get(_id<T&>{}, l, index);
+};
 
 template <typename T>
 inline T _check_get(_id<T&&>, lua_State *l, const int index) {
@@ -285,6 +301,22 @@ _push(lua_State *l, T& t) {
     MetatableRegistry::SetMetatable(l, typeid(T));
 }
 
+template <typename T>
+inline typename std::enable_if<
+    !is_primitive<typename std::decay<T>::type>::value
+    && std::is_rvalue_reference<T&&>::value
+>::type
+_push(lua_State *l, T&& t) {
+    if(!MetatableRegistry::IsRegisteredType(l, typeid(t)))
+    {
+        throw CopyUnregisteredType(typeid(t));
+    }
+
+    void *addr = lua_newuserdata(l, sizeof(T));
+    new(addr) T(std::forward<T>(t));
+    MetatableRegistry::SetMetatable(l, typeid(T));
+}
+
 inline void _push(lua_State *l, bool b) {
     lua_pushboolean(l, b);
 }
@@ -344,5 +376,11 @@ inline void _push(lua_State *l, const std::tuple<T...> &values) {
     _push_dispatcher(l, values,
                      typename _indices_builder<num_values>::type());
 }
+
+template <typename... T>
+inline void _push(lua_State *l, std::tuple<T...> &&values) {
+    _push(l, const_cast<const std::tuple<T...> &>(values));
+}
+
 }
 }

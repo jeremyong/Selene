@@ -111,6 +111,30 @@ bool test_function_call_with_registered_class_ptr(sel::State &state) {
     return getX(&foo) == 4;
 }
 
+bool test_function_call_with_registered_class_val(sel::State &state) {
+    state["Foo"].SetClass<FunctionFoo, int>("get", &FunctionFoo::getX);
+    state("function store(foo) globalFoo = foo end");
+    state("function getX() return globalFoo:get() end");
+
+    sel::function<void(FunctionFoo)> store = state["store"];
+    sel::function<int()> getX = state["getX"];
+    store(FunctionFoo{4});
+
+    return getX() == 4;
+}
+
+bool test_function_call_with_registered_class_val_lifetime(sel::State &state) {
+    using namespace test_lifetime;
+    state["Foo"].SetClass<InstanceCounter>();
+    state("function store(foo) globalFoo = foo end");
+    sel::function<void(InstanceCounter)> store = state["store"];
+
+    int instanceCountBefore = InstanceCounter::instances;
+    store(InstanceCounter{});
+
+    return InstanceCounter::instances == instanceCountBefore + 1;
+}
+
 bool test_function_call_with_nullptr_ref(sel::State &state) {
     state["Foo"].SetClass<FunctionFoo, int>();
     state("function makeNil() return nil end");
@@ -148,4 +172,14 @@ bool test_function_call_with_wrong_ptr(sel::State &state) {
     state("function makeBar() return Bar.new() end");
     sel::function<FunctionFoo *()> getFoo = state["makeBar"];
     return nullptr == getFoo();
+}
+
+bool test_function_get_registered_class_by_value(sel::State &state) {
+    state["Foo"].SetClass<FunctionFoo, int>();
+    state("function getFoo() return Foo.new(4) end");
+    sel::function<FunctionFoo()> getFoo = state["getFoo"];
+
+    FunctionFoo foo = getFoo();
+
+    return foo.getX() == 4;
 }
