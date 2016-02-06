@@ -26,6 +26,17 @@ public:
         : LuaRef(state, LUA_REFNIL)
         {}
 
+	LuaRef(const LuaRef &other)
+		: _state(other._state)
+		, _ref(other._ref)
+	{
+		if (_state && _ref != LUA_REFNIL)
+		{
+			other.Push(_state);
+			_ref = luaL_ref(_state, LUA_REGISTRYINDEX);
+		}
+	}
+
 	~LuaRef()
 	{
 		if(_state && _ref != LUA_REFNIL)

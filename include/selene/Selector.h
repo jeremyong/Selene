@@ -68,10 +68,10 @@ private:
         : _state(s), _registry(&r), _exception_handler(&eh), _name(name),
           _key(make_Ref(s, name)) {}
 
-    void _get(LuaRef r) const {
+    void _get(const LuaRef &r) const {
         r.Push(_state);
         lua_gettable(_state, -2);
-        lua_remove(_state, lua_absindex(_state, -2));
+        lua_remove(_state, -2);
     }
 
     // Pushes this element to the stack
