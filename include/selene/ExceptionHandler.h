@@ -55,13 +55,8 @@ inline void store_current_exception(lua_State * l, char const * what) {
 }
 
 inline stored_exception * test_stored_exception(lua_State *l) {
-    if(lua_isuserdata(l, -1)) {
-        void * user_data = luaL_testudata(l, -1, _stored_exception_metatable_name()->c_str());
-        if(user_data != nullptr) {
-            return static_cast<stored_exception *>(user_data);
-        }
-    }
-    return nullptr;
+    void * user_data = compat::_luaL_testudata(l, -1, _stored_exception_metatable_name()->c_str());
+    return static_cast<stored_exception *>(user_data);
 }
 
 inline bool push_stored_exceptions_what(lua_State * l) {
