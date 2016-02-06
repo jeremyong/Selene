@@ -77,7 +77,7 @@ namespace sel
 #if LUA_VERSION_NUM >= 503
 			result = (unsigned int)(lua_tointeger(l, index));
 #elif LUA_VERSION_NUM >= 502
-			result = (unsigned int)(lua_tointeger(l, index));
+			result = (unsigned int)(lua_tounsigned(l, index));
 #else
 			result = (unsigned int)(lua_tointeger(l, index));
 #endif
