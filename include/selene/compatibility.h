@@ -136,7 +136,7 @@ namespace sel
 		static inline void _lua_pushglobaltable(lua_State *l)
 		{
 #if LUA_VERSION_NUM >= 502
-			lua_pushglobaltable(_state);
+			lua_pushglobaltable(l);
 #else
 			lua_pushvalue(l, LUA_GLOBALSINDEX);
 #endif
