@@ -71,6 +71,19 @@ namespace sel
 			return result;
 		}
 
+		static inline unsigned int _lua_tounsigned(lua_State *l, const int index)
+		{
+			unsigned int result;
+#if LUA_VERSION_NUM >= 503
+			result = (unsigned int)(lua_tointeger(l, index));
+#elif LUA_VERSION_NUM >= 502
+			result = (unsigned int)(lua_tointeger(l, index));
+#else
+			result = (unsigned int)(lua_tointeger(l, index));
+#endif
+			return result;
+		}
+
 		static inline int _luaL_checkinteger(lua_State *l, const int index)
 		{
 #if LUA_VERSION_NUM >= 503

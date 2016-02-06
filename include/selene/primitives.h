@@ -96,11 +96,7 @@ inline int _get(_id<int>, lua_State *l, const int index) {
 }
 
 inline unsigned int _get(_id<unsigned int>, lua_State *l, const int index) {
-#if defined(lua_tounsigned)
-    return lua_tounsigned(l, index);
-#else
-    return static_cast<unsigned>(lua_tointeger(l, index));
-#endif
+    return compat::_lua_tounsigned(l, index);
 }
 
 inline lua_Number _get(_id<lua_Number>, lua_State *l, const int index) {
