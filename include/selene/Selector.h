@@ -4,11 +4,14 @@
 #include "function.h"
 #include <functional>
 #include "LuaRef.h"
+#include "primitives.h"
 #include "references.h"
 #include "Registry.h"
 #include "ResourceHandler.h"
 #include <string>
 #include <tuple>
+#include "tuples.h"
+#include "userdefined.h"
 #include "util.h"
 #include <vector>
 
@@ -291,7 +294,7 @@ public:
     template<
         typename T,
         typename = typename std::enable_if<
-            !detail::is_primitive<typename std::decay<T>::type>::value
+            detail::is_referenceable<T&>::value
         >::type
     >
     operator T&() const {

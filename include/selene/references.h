@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include "LuaRef.h"
+#include "types.h"
 #include <utility>
 
 namespace sel {
@@ -94,69 +95,62 @@ public:
 namespace detail {
 
 template<typename T>
-struct is_primitive<sel::Reference<T>> {
-    static constexpr bool value = true;
-};
+struct type_t<sel::Reference<T>> {
 
-template <typename T>
-inline sel::Reference<T> _check_get(_id<sel::Reference<T>>,
-                                    lua_State *l, const int index) {
-    T& result = _check_get(_id<T&>{}, l, index);
-    lua_pushvalue(l, index);
-    LuaRef lifetime(l, luaL_ref(l, LUA_REGISTRYINDEX));
-    return {result, lifetime};
-}
-
-template <typename T>
-inline sel::Reference<T> _get(_id<sel::Reference<T>>,
-                              lua_State *l, const int index) {
-    T& result = _get(_id<T&>{}, l, index);
-    lua_pushvalue(l, index);
-    LuaRef lifetime(l, luaL_ref(l, LUA_REGISTRYINDEX));
-    return {result, lifetime};
-}
-
-template<typename T>
-inline void _push(lua_State *l, sel::Reference<T> const & ref) {
-    ref._push(l);
-}
-
-
-template<typename T>
-struct is_primitive<sel::Pointer<T>> {
-    static constexpr bool value = true;
-};
-
-template <typename T>
-inline sel::Pointer<T> _check_get(_id<sel::Pointer<T>>,
-                                    lua_State *l, const int index) {
-    auto result = _check_get(_id<T*>{}, l, index);
-    if(result) {
+    sel::Reference<T> _get(_id<sel::Reference<T>>,
+                           lua_State *l, const int index) {
+        T& result = sel::detail::_get(_id<T&>{}, l, index);
         lua_pushvalue(l, index);
         LuaRef lifetime(l, luaL_ref(l, LUA_REGISTRYINDEX));
         return {result, lifetime};
-    } else {
-        return {LuaRef(l)};
     }
-}
 
-template <typename T>
-inline sel::Pointer<T> _get(_id<sel::Pointer<T>>,
-                              lua_State *l, const int index) {
-    auto result = _get(_id<T*>{}, l, index);
-    if(result) {
+    sel::Reference<T> _check_get(_id<sel::Reference<T>>,
+                                 lua_State *l, const int index) {
+        T& result = _check_get(_id<T&>{}, l, index);
         lua_pushvalue(l, index);
         LuaRef lifetime(l, luaL_ref(l, LUA_REGISTRYINDEX));
         return {result, lifetime};
-    } else {
-        return {LuaRef(l)};
     }
-}
+
+    void _push(lua_State *l, sel::Reference<T> const & ref) {
+        ref._push(l);
+    }
+
+};
 
 template<typename T>
-inline void _push(lua_State *l, sel::Pointer<T> const & ptr) {
-    ptr._push(l);
-}
+struct type_t<sel::Pointer<T>> {
+
+    sel::Pointer<T> _get(_id<sel::Pointer<T>>,
+                         lua_State *l, const int index) {
+        auto result = sel::detail::_get(_id<T*>{}, l, index);
+        if(result) {
+            lua_pushvalue(l, index);
+            LuaRef lifetime(l, luaL_ref(l, LUA_REGISTRYINDEX));
+            return {result, lifetime};
+        } else {
+            return {LuaRef(l)};
+        }
+    }
+
+    sel::Pointer<T> _check_get(_id<sel::Pointer<T>>,
+                               lua_State *l, const int index) {
+        auto result = sel::detail::_check_get(_id<T*>{}, l, index);
+        if(result) {
+            lua_pushvalue(l, index);
+            LuaRef lifetime(l, luaL_ref(l, LUA_REGISTRYINDEX));
+            return {result, lifetime};
+        } else {
+            return {LuaRef(l)};
+        }
+    }
+
+    void _push(lua_State *l, sel::Pointer<T> const & ptr) {
+        ptr._push(l);
+    }
+
+};
 
 }
 }

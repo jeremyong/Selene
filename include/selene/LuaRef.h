@@ -2,8 +2,7 @@
 
 #include <memory>
 #include <vector>
-#include "primitives.h"
-#include "ResourceHandler.h"
+#include "types.h"
 
 extern "C" {
 #include <lua.h>

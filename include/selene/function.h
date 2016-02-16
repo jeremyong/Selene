@@ -2,10 +2,9 @@
 
 #include "ExceptionHandler.h"
 #include "LuaRef.h"
-#include "primitives.h"
-#include "references.h"
 #include "ResourceHandler.h"
 #include <tuple>
+#include "types.h"
 #include "util.h"
 
 namespace sel {
@@ -115,27 +114,25 @@ public:
 
 namespace detail {
 
-template<typename T>
-struct is_primitive<sel::function<T>> {
-    static constexpr bool value = true;
+template<typename R, typename...Args>
+struct type_t<sel::function<R(Args...)>> {
+
+    sel::function<R(Args...)> _get(_id<sel::function<R(Args...)>> id,
+                                   lua_State *l, const int index) {
+        return this->_check_get(id, l, index);
+    }
+
+    sel::function<R(Args...)> _check_get(_id<sel::function<R(Args...)>>,
+                                         lua_State *l, const int index) {
+        lua_pushvalue(l, index);
+        return sel::function<R(Args...)>{luaL_ref(l, LUA_REGISTRYINDEX), l};
+    }
+
+    void _push(lua_State *l, sel::function<R(Args...)> fun) {
+        fun.Push(l);
+    }
+
 };
 
-template <typename R, typename...Args>
-inline sel::function<R(Args...)> _check_get(_id<sel::function<R(Args...)>>,
-                                            lua_State *l, const int index) {
-    lua_pushvalue(l, index);
-    return sel::function<R(Args...)>{luaL_ref(l, LUA_REGISTRYINDEX), l};
-}
-
-template <typename R, typename... Args>
-inline sel::function<R(Args...)> _get(_id<sel::function<R(Args...)>> id,
-                                      lua_State *l, const int index) {
-    return _check_get(id, l, index);
-}
-
-template <typename R, typename... Args>
-inline void _push(lua_State *l, sel::function<R(Args...)> fun) {
-    fun.Push(l);
-}
 }
 }

@@ -34,6 +34,5 @@ struct _indices_builder<0, Is...> {
     using type = _indices<Is...>;
 };
 
-template <typename T> struct _id {};
 }
 }
