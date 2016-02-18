@@ -132,6 +132,7 @@ static TestMap tests = {
     {"test_return_ref", test_return_ref},
     {"test_return_val", test_return_val},
     {"test_freestanding_fun_ref", test_freestanding_fun_ref},
+    {"test_freestanding_fun_const_ref", test_freestanding_fun_const_ref},
     {"test_freestanding_fun_ptr", test_freestanding_fun_ptr},
     {"test_const_member_function", test_const_member_function},
     {"test_const_member_variable", test_const_member_variable},
