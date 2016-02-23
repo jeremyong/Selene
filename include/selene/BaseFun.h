@@ -1,11 +1,11 @@
 #pragma once
 
-#include "function.h"
 #include <exception>
 #include "ExceptionHandler.h"
+#include "MetatableRegistry.h"
 #include <functional>
-#include "primitives.h"
 #include <tuple>
+#include "types.h"
 #include "util.h"
 
 namespace sel {

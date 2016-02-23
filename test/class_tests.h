@@ -71,6 +71,10 @@ std::string ShowBarRef(Bar &bar) {
     return std::to_string(bar.x);
 }
 
+std::string ShowConstBarRef(const Bar &bar) {
+    return std::to_string(bar.x);
+}
+
 std::string ShowBarPtr(Bar *bar) {
     return std::to_string(bar->x);
 }
@@ -203,6 +207,14 @@ bool test_freestanding_fun_ref(sel::State &state) {
     state["Bar"].SetClass<Bar, int>();
     state("bar = Bar.new(4)");
     state["print_bar"] = &ShowBarRef;
+    state("barstring = print_bar(bar)");
+    return state["barstring"] == "4";
+}
+
+bool test_freestanding_fun_const_ref(sel::State &state) {
+    state["Bar"].SetClass<Bar, int>();
+    state("bar = Bar.new(4)");
+    state["print_bar"] = &ShowConstBarRef;
     state("barstring = print_bar(bar)");
     return state["barstring"] == "4";
 }

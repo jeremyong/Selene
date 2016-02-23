@@ -183,3 +183,19 @@ bool test_function_get_registered_class_by_value(sel::State &state) {
 
     return foo.getX() == 4;
 }
+
+bool test_function_roundtrip(sel::State &state) {
+    state.Load("../test/test_ref.lua");
+    sel::function<void(void)> foo = state["foo"];
+    return state["is_function_foo"](foo);
+}
+
+bool test_reference_roundtrip(sel::State &state) {
+    state["Bar"].SetClass<FunctionBar>();
+    state("bar = Bar.new()");
+    state("function is_bar(candidate) return bar == candidate end");
+
+    sel::Reference<FunctionBar> bar = state["bar"];
+
+    return state["is_bar"](bar);
+}

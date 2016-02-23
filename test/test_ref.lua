@@ -33,3 +33,7 @@ end
 function return_two()
    return 1, 2
 end
+
+function is_function_foo(candidate)
+   return foo == candidate
+end

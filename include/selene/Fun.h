@@ -1,14 +1,14 @@
 #pragma once
 
 #include "BaseFun.h"
-#include "primitives.h"
 #include <string>
+#include "types.h"
 
 namespace sel {
 template <int N, typename Ret, typename... Args>
 class Fun : public BaseFun {
 private:
-    using _fun_type = std::function<Ret(detail::decay_primitive<Args>...)>;
+    using _fun_type = std::function<Ret(detail::decay_non_referencable<Args>...)>;
     _fun_type _fun;
 
 public:
@@ -21,8 +21,8 @@ public:
     // Each application of a function receives a new Lua context so
     // this argument is necessary.
     int Apply(lua_State *l) override {
-        std::tuple<detail::decay_primitive<Args>...> args =
-            detail::_get_args<detail::decay_primitive<Args>...>(l);
+        std::tuple<detail::decay_non_referencable<Args>...> args =
+            detail::_get_args<detail::decay_non_referencable<Args>...>(l);
         detail::_push(l, detail::_lift(_fun, args));
         return N;
     }
@@ -32,7 +32,7 @@ public:
 template <typename... Args>
 class Fun<0, void, Args...> : public BaseFun {
 private:
-    using _fun_type = std::function<void(detail::decay_primitive<Args>...)>;
+    using _fun_type = std::function<void(detail::decay_non_referencable<Args>...)>;
     _fun_type _fun;
 
 public:
@@ -45,8 +45,8 @@ public:
     // Each application of a function receives a new Lua context so
     // this argument is necessary.
     int Apply(lua_State *l) {
-        std::tuple<detail::decay_primitive<Args>...> args =
-            detail::_get_args<detail::decay_primitive<Args>...>(l);
+        std::tuple<detail::decay_non_referencable<Args>...> args =
+            detail::_get_args<detail::decay_non_referencable<Args>...>(l);
         detail::_lift(_fun, args);
         return 0;
     }
