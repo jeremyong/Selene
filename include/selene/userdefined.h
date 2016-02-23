@@ -81,7 +81,7 @@ struct type_t : referenceable_tag {
     }
 
     T& _check_get(_id<const T&>, lua_State *l, const int index) {
-        return this->_get(_id<T&>{}, l, index);
+        return this->_check_get(_id<T&>{}, l, index);
     }
 
     T _check_get(_id<T>, lua_State *l, const int index) {
