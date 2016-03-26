@@ -2,6 +2,7 @@
 
 #include <exception>
 #include <utility>
+#include <string>
 
 namespace sel {
 
