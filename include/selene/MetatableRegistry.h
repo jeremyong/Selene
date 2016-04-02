@@ -95,7 +95,7 @@ static inline bool IsRegisteredType(lua_State *state, TypeID type) {
     detail::_push_typeinfo(state, type);
     lua_gettable(state, -2);
 
-    bool registered = lua_isstring(state, -1);
+    bool registered = lua_isstring(state, -1) == 1;
     lua_pop(state, 2);
     return registered;
 }
