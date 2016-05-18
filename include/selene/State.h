@@ -61,9 +61,9 @@ public:
 
     lua_State* Get() const {
 		return _l;
-	}
+    }
 	
-	bool Load(char* buffer, size_t sz, const std::string& name) {
+    bool Load(char* buffer, size_t sz, const std::string& name) {
 	    ResetStackOnScopeExit savedStack(_l);
         int status = luaL_loadbuffer(_l, buffer, sz, name.c_str());
 #if LUA_VERSION_NUM >= 502
@@ -90,7 +90,7 @@ public:
         const char *msg = lua_tostring(_l, -1);
         _exception_handler->Handle(status, msg ? msg : name + ": dofile failed");
         return false;
-	}
+    }
     
     bool Load(const std::string &file) {
         ResetStackOnScopeExit savedStack(_l);
