@@ -89,6 +89,10 @@ public:
 
         const char *msg = lua_tostring(_l, -1);
         _exception_handler->Handle(status, msg ? msg : name + ": dofile failed");
+        
+        // cleanup buffer
+	delete[] buffer;
+        
         return false;
     }
     
