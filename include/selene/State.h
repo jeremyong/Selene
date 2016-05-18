@@ -59,6 +59,39 @@ public:
         return lua_gettop(_l);
     }
 
+    lua_State* Get() const {
+		return _l;
+	}
+	
+	bool Load(char* buffer, size_t sz, const std::string& name) {
+	    ResetStackOnScopeExit savedStack(_l);
+        int status = luaL_loadbuffer(_l, buffer, sz, name.c_str());
+#if LUA_VERSION_NUM >= 502
+        auto const lua_ok = LUA_OK;
+#else
+        auto const lua_ok = 0;
+#endif
+        if (status != lua_ok) {
+            if (status == LUA_ERRSYNTAX) {
+                const char *msg = lua_tostring(_l, -1);
+                _exception_handler->Handle(status, msg ? msg : name + ": syntax error");
+            } else if (status == LUA_ERRFILE) {
+                const char *msg = lua_tostring(_l, -1);
+                _exception_handler->Handle(status, msg ? msg : name + ": file error");
+            }
+            return false;
+        }
+
+        status = lua_pcall(_l, 0, LUA_MULTRET, 0);
+        if(status == lua_ok) {
+            return true;
+        }
+
+        const char *msg = lua_tostring(_l, -1);
+        _exception_handler->Handle(status, msg ? msg : name + ": dofile failed");
+        return false;
+	}
+    
     bool Load(const std::string &file) {
         ResetStackOnScopeExit savedStack(_l);
         int status = luaL_loadfile(_l, file.c_str());
