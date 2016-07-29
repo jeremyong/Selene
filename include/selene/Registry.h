@@ -17,6 +17,11 @@ template <typename T, typename Ret, typename... Args>
 struct lambda_traits<Ret(T::*)(Args...) const> {
     using Fun = std::function<Ret(Args...)>;
 };
+
+template <typename T, typename Ret, typename... Args>
+struct lambda_traits<Ret(T::*)(Args...)> {
+	using Fun = std::function<Ret(Args...)>;
+};
 }
 class Registry {
 private:
