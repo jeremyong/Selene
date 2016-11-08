@@ -152,7 +152,7 @@ inline typename std::enable_if<
 >::type
 _check_get(_id<T>, lua_State *l, const int index) {
     return _check_get(_id<T&>{}, l, index);
-};
+}
 
 template <typename T>
 inline T _check_get(_id<T&&>, lua_State *l, const int index) {
