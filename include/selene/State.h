@@ -18,7 +18,7 @@ private:
     std::unique_ptr<Registry> _registry;
     std::unique_ptr<ExceptionHandler> _exception_handler;
 
-    bool executeState(const int status) {
+    bool executeState(int status) {
         #if LUA_VERSION_NUM >= 502
             auto const lua_ok = LUA_OK;
         #else
@@ -27,10 +27,10 @@ private:
         if (status != lua_ok) {
             if (status == LUA_ERRSYNTAX) {
                 const char *msg = lua_tostring(_l, -1);
-                _exception_handler->Handle(status, msg ? msg : file + ": syntax error");
+                _exception_handler->Handle(status, msg ? msg : " syntax error");
             } else if (status == LUA_ERRFILE) {
                 const char *msg = lua_tostring(_l, -1);
-                _exception_handler->Handle(status, msg ? msg : file + ": file error");
+                _exception_handler->Handle(status, msg ? msg : " file error");
             }
             return false;
         }
@@ -41,7 +41,7 @@ private:
         }
 
         const char *msg = lua_tostring(_l, -1);
-        _exception_handler->Handle(status, msg ? msg : file + ": dofile failed");
+        _exception_handler->Handle(status, msg ? msg : "Failed to execute Lua script");
         return false;
     }
 
