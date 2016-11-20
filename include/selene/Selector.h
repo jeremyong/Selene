@@ -186,8 +186,8 @@ public:
     template <typename... Args>
     const Selector operator()(Args&&... args) const {
         Selector copy{*this};
-        const auto state = _state; // gcc-5.1 doesn't support implicit member capturing
-        const auto eh = _exception_handler;
+        //const auto state = _state; // gcc-5.1 doesn't support implicit member capturing
+        //const auto eh = _exception_handler;
         copy._functor_arguments = make_Refs(_state, std::forward<Args>(args)...);
         copy._functor_active = true;
         return copy;
