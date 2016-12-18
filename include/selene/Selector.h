@@ -404,6 +404,13 @@ public:
 
     friend bool operator==(const char *, const Selector &);
 
+    bool exists() {
+        ResetStackOnScopeExit save(_state);
+        _traverse();
+        _get();
+
+        return !lua_isnil(_state, -1);
+    }
 private:
     std::string ToString() const {
         ResetStackOnScopeExit save(_state);
