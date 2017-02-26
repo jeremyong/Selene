@@ -144,7 +144,7 @@ private:
             arg.Push(_state);
         }
         auto const statusCode =
-            lua_pcall(_state, _functor_arguments.size(), num_ret, handler_index - 1);
+            lua_pcall(_state, static_cast<int>(_functor_arguments.size()), num_ret, handler_index - 1);
 
         // remove error handler
         lua_remove(_state, handler_index - 1);
