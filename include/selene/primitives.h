@@ -5,6 +5,7 @@
 #include "traits.h"
 #include <type_traits>
 #include "MetatableRegistry.h"
+#include "compatibility.h"
 
 extern "C" {
 #include <lua.h>
@@ -95,11 +96,7 @@ inline int _get(_id<int>, lua_State *l, const int index) {
 }
 
 inline unsigned int _get(_id<unsigned int>, lua_State *l, const int index) {
-#if LUA_VERSION_NUM >= 502 && LUA_VERSION_NUM < 503
-    return lua_tounsigned(l, index);
-#else
-    return static_cast<unsigned>(lua_tointeger(l, index));
-#endif
+    return compat::_lua_tounsigned(l, index);
 }
 
 inline lua_Number _get(_id<lua_Number>, lua_State *l, const int index) {
@@ -161,52 +158,32 @@ inline T _check_get(_id<T&&>, lua_State *l, const int index) {
 
 
 inline int _check_get(_id<int>, lua_State *l, const int index) {
-#if LUA_VERSION_NUM >= 502
-    int isNum = 0;
-    auto res = static_cast<int>(lua_tointegerx(l, index, &isNum));
+	int isNum = 0;
+	auto res = compat::_lua_tointegerx(l, index, &isNum);
     if(!isNum){
         throw GetParameterFromLuaTypeError{
-#if LUA_VERSION_NUM >= 503
-            [](lua_State *l, int index){luaL_checkinteger(l, index);},
-#else
-            [](lua_State *l, int index){luaL_checkint(l, index);},
-#endif
+			[](lua_State *l, int index) {compat::_luaL_checkinteger(l, index); },
             index
         };
     }
     return res;
-#else
-#error "Not supported for Lua versions <5.2"
-#endif
 }
 
 inline unsigned int _check_get(_id<unsigned int>, lua_State *l, const int index) {
-    int isNum = 0;
-#if LUA_VERSION_NUM >= 503
-    auto res = static_cast<unsigned>(lua_tointegerx(l, index, &isNum));
-    if(!isNum) {
+	int isNum = 0;
+	auto res = compat::_lua_tounsignedx(l, index, &isNum);
+	if (!isNum) {
         throw GetParameterFromLuaTypeError{
-            [](lua_State *l, int index){luaL_checkinteger(l, index);},
+            [](lua_State *l, int index){compat::_luaL_checkunsigned(l, index);},
             index
         };
     }
-#elif LUA_VERSION_NUM >= 502
-    auto res = static_cast<unsigned>(lua_tounsignedx(l, index, &isNum));
-    if(!isNum) {
-        throw GetParameterFromLuaTypeError{
-            [](lua_State *l, int index){luaL_checkunsigned(l, index);},
-            index
-        };
-    }
-#else
-#error "Not supported for Lua versions <5.2"
-#endif
     return res;
 }
 
 inline lua_Number _check_get(_id<lua_Number>, lua_State *l, const int index) {
-    int isNum = 0;
-    auto res = lua_tonumberx(l, index, &isNum);
+	int isNum = 0;
+    auto res = compat::_lua_tonumberx(l, index, &isNum);
     if(!isNum){
         throw GetParameterFromLuaTypeError{
             [](lua_State *l, int index){luaL_checknumber(l, index);},
