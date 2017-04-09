@@ -4,6 +4,7 @@
 #include <memory>
 #include <selene.h>
 #include <string>
+#include <fstream>
 
 int my_add(int a, int b) {
     return a + b;
@@ -310,4 +311,16 @@ bool test_call_with_primitive_by_rvalue_ref(sel::State & state) {
     state["test"] = accept_int_by_rvalue_ref;
     state["test"](5);
     return success;
+}
+
+bool test_fstream_input(sel::State &state) {
+    std::ifstream ifs("../test/test.lua");
+    state.Load(ifs);
+    return state["global1"] == 5;
+}
+
+bool test_sstream_input(sel::State &state) {
+    std::istringstream iss("x = 5");
+    state.Load(iss);
+    return state["x"] == 5;
 }

@@ -65,6 +65,8 @@ static TestMap tests = {
     {"test_call_with_primitive_by_value", test_call_with_primitive_by_value},
     {"test_call_with_primitive_by_const_ref", test_call_with_primitive_by_const_ref},
     {"test_call_with_primitive_by_rvalue_ref", test_call_with_primitive_by_rvalue_ref},
+    {"test_fstream_input", test_fstream_input},
+    {"test_sstream_input", test_sstream_input},
 
     {"test_metatable_registry_ptr", test_metatable_registry_ptr},
     {"test_metatable_registry_ref", test_metatable_registry_ref},

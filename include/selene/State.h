@@ -4,6 +4,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <sstream>
 #include "Registry.h"
 #include "Selector.h"
 #include <tuple>
@@ -86,6 +87,12 @@ public:
         const char *msg = lua_tostring(_l, -1);
         _exception_handler->Handle(status, msg ? msg : file + ": dofile failed");
         return false;
+    }
+
+    bool Load(std::istream& stream) {
+        std::stringstream buffer;
+        buffer << stream.rdbuf();
+        this->operator()(buffer.str().c_str());
     }
 
     void OpenLib(const std::string& modname, lua_CFunction openf) {
