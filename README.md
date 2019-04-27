@@ -5,7 +5,7 @@
 Selene would love to have a new home :) The project makes it very simple to interface from C++ to Lua but needs
 some love to manage pull requests, issues, Lua compatibility, and other improvements. I intend on creating a
 separate organization for Selene that I can continue to sit in and weigh in feedback as I have time, but will allow
-for multiple contributors. Please let me know if you're interested by emailing jeremy@plexchat.com. Of course,
+for multiple contributors. Please let me know if you're interested by emailing jeremycong@gmail.com. Of course,
 previous and current active maintainers will go to the front of the line, but everyone will be considered!
 
 Best,
