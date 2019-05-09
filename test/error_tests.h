@@ -76,7 +76,7 @@ bool test_call_stackoverflow(sel::State &state) {
 
 bool test_parameter_conversion_error(sel::State &state) {
     const char * expected =
-        "bad argument #2 to 'accept_string_int_string' (number expected, got string)";
+        "bad argument #-2 to 'accept_string_int_string' (number expected, got string)";
     std::string largeStringToPreventSSO(50, 'x');
     state["accept_string_int_string"] = [](std::string, int, std::string){};
 

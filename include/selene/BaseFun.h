@@ -63,10 +63,9 @@ inline Ret _lift(std::function<Ret(Args...)> fun,
     return _lift(fun, args, typename _indices_builder<sizeof...(Args)>::type());
 }
 
-
 template <typename... T, std::size_t... N>
 inline std::tuple<T...> _get_args(lua_State *state, _indices<N...>) {
-    return std::tuple<T...>{_check_get(_id<T>{}, state, N + 1)...};
+    return std::tuple<T...>{_check_get(_id<T>{}, state, static_cast<int>(N) - static_cast<int>(sizeof...(T)))...};
 }
 
 template <typename... T>
