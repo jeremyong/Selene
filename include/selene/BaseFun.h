@@ -27,8 +27,8 @@ inline int _lua_dispatcher(lua_State *l) {
         raiseParameterConversionError = e.checked_get;
         erroneousParameterIndex = e.index;
     } catch (GetUserdataParameterFromLuaTypeError & e) {
-        wrong_meta_table = lua_pushlstring(
-            l, e.metatable_name.c_str(), e.metatable_name.length());
+        lua_pushlstring(l, e.metatable_name.c_str(), e.metatable_name.length());
+		wrong_meta_table = lua_tostring(l, -1);
         erroneousParameterIndex = e.index;
     } catch (std::exception & e) {
         lua_pushstring(l, e.what());

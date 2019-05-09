@@ -71,7 +71,7 @@ private:
     void _get(LuaRef r) const {
         r.Push(_state);
         lua_gettable(_state, -2);
-        lua_remove(_state, lua_absindex(_state, -2));
+        lua_remove(_state, compat::_lua_absindex(_state, -2));
     }
 
     // Pushes this element to the stack
@@ -104,7 +104,7 @@ private:
     }
 
     void _traverse() const {
-        lua_pushglobaltable(_state);
+        compat::_lua_pushglobaltable(_state);
         for (auto &key : _traversal) {
             _get(key);
         }
@@ -135,7 +135,7 @@ private:
         lua_replace(_state, handler_index);
 #else
         lua_pushvalue(_state, func_index);
-        lua_push_value(_state, handler_index);
+        lua_pushvalue(_state, handler_index);
         lua_replace(_state, func_index);
         lua_replace(_state, handler_index);
 #endif
