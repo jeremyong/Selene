@@ -18,6 +18,33 @@ private:
     std::unique_ptr<Registry> _registry;
     std::unique_ptr<ExceptionHandler> _exception_handler;
 
+    bool executeState(int status) {
+        #if LUA_VERSION_NUM >= 502
+            auto const lua_ok = LUA_OK;
+        #else
+            auto const lua_ok = 0;
+        #endif
+        if (status != lua_ok) {
+            if (status == LUA_ERRSYNTAX) {
+                const char *msg = lua_tostring(_l, -1);
+                _exception_handler->Handle(status, msg ? msg : " syntax error");
+            } else if (status == LUA_ERRFILE) {
+                const char *msg = lua_tostring(_l, -1);
+                _exception_handler->Handle(status, msg ? msg : " file error");
+            }
+            return false;
+        }
+
+        status = lua_pcall(_l, 0, LUA_MULTRET, 0);
+        if(status == lua_ok) {
+            return true;
+        }
+
+        const char *msg = lua_tostring(_l, -1);
+        _exception_handler->Handle(status, msg ? msg : "Failed to execute Lua script");
+        return false;
+    }
+
 public:
     State() : State(false) {}
     State(bool should_open_libs) : _l(nullptr), _l_owner(true), _exception_handler(new ExceptionHandler) {
@@ -61,31 +88,20 @@ public:
 
     bool Load(const std::string &file) {
         ResetStackOnScopeExit savedStack(_l);
-        int status = luaL_loadfile(_l, file.c_str());
-#if LUA_VERSION_NUM >= 502
-        auto const lua_ok = LUA_OK;
-#else
-        auto const lua_ok = 0;
-#endif
-        if (status != lua_ok) {
-            if (status == LUA_ERRSYNTAX) {
-                const char *msg = lua_tostring(_l, -1);
-                _exception_handler->Handle(status, msg ? msg : file + ": syntax error");
-            } else if (status == LUA_ERRFILE) {
-                const char *msg = lua_tostring(_l, -1);
-                _exception_handler->Handle(status, msg ? msg : file + ": file error");
-            }
-            return false;
-        }
+        const int status = luaL_loadfile(_l, file.c_str());
 
-        status = lua_pcall(_l, 0, LUA_MULTRET, 0);
-        if(status == lua_ok) {
-            return true;
-        }
+        return executeState(status);
+    }
 
-        const char *msg = lua_tostring(_l, -1);
-        _exception_handler->Handle(status, msg ? msg : file + ": dofile failed");
-        return false;
+    bool loadString(const std::string script) {
+        ResetStackOnScopeExit savedStack(_l);
+        const int status = luaL_loadstring(_l, script.c_str());
+
+        return executeState(status);
+    }
+
+    lua_State* getState() {
+        return _l;
     }
 
     void OpenLib(const std::string& modname, lua_CFunction openf) {
