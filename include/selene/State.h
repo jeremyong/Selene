@@ -114,7 +114,17 @@ public:
 
     bool operator()(const char *code) {
         ResetStackOnScopeExit savedStack(_l);
-        int status = luaL_dostring(_l, code);
+        int status = luaL_loadstring(_l, code);
+        if(!status)
+        {
+            int handler_index = lua_gettop(_l);
+            SetErrorHandler(_l);
+            lua_insert(_l, handler_index);
+
+            status = lua_pcall(_l, 0, 0, handler_index);
+
+            lua_remove(_l, handler_index);
+        }
         if(status) {
             _exception_handler->Handle_top_of_stack(status, _l);
             return false;
