@@ -15,13 +15,13 @@ else()
   endif()
 endif()
 
-if(${LUA_INCLUDE_DIR})
-  if(NOT EXISTS ${LUA_INCLUDE_DIR}/lua.h)
-    message(SEND_ERROR "Can't find lua.h in ${LUA_INCLUDE_DIR}")
-  endif()
+find_path(LUA_H_DIR lua.h PATHS ${LUA_INCLUDE_DIRS} ${LUA_INCLUDE_DIR})
+
+if(NOT LUA_H_DIR)
+    message(SEND_ERROR "Can't find lua.h in ${LUA_INCLUDE_DIRS} ${LUA_INCLUDE_DIR}")
 endif()
 
-include_directories(${LUA_INCLUDE_DIR})
+include_directories(${LUA_H_DIR})
 
 if(APPLE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -std=c++11 -stdlib=libc++")
