@@ -18,6 +18,37 @@ private:
     std::unique_ptr<Registry> _registry;
     std::unique_ptr<ExceptionHandler> _exception_handler;
 
+    /// Shared code post-calling LoadString or LoadFile
+    inline bool PostLoad(int status, const char* file = nullptr) {
+        const std::string filename(file != nullptr ? file : "");
+#if LUA_VERSION_NUM >= 502
+        auto const lua_ok = LUA_OK;
+#else
+        auto const lua_ok = 0;
+#endif
+        if (status != lua_ok) {
+            if (status == LUA_ERRSYNTAX) {
+                const char *msg = lua_tostring(_l, -1);
+                _exception_handler->Handle(status, msg != nullptr ? msg : filename + " : syntax error");
+            } else if (status == LUA_ERRFILE) {
+                const char *msg = lua_tostring(_l, -1);
+                _exception_handler->Handle(status, msg != nullptr ? msg : filename + " : file error");
+            }
+            return false;
+        }
+
+        status = lua_pcall(_l, 0, LUA_MULTRET, 0);
+        if(status == lua_ok) {
+            return true;
+        }
+
+        const char *msg = lua_tostring(_l, -1);
+        const std::string strmsg(msg != nullptr ? msg : (filename.empty() ? "dostring failed" : filename + " : dofile failed"));
+        _exception_handler->Handle(status, strmsg);
+
+        return false;
+    }
+
 public:
     State() : State(false) {}
     State(bool should_open_libs) : _l(nullptr), _l_owner(true), _exception_handler(new ExceptionHandler) {
@@ -59,33 +90,24 @@ public:
         return lua_gettop(_l);
     }
 
-    bool Load(const std::string &file) {
+    bool Load(const char* file) {
         ResetStackOnScopeExit savedStack(_l);
-        int status = luaL_loadfile(_l, file.c_str());
-#if LUA_VERSION_NUM >= 502
-        auto const lua_ok = LUA_OK;
-#else
-        auto const lua_ok = 0;
-#endif
-        if (status != lua_ok) {
-            if (status == LUA_ERRSYNTAX) {
-                const char *msg = lua_tostring(_l, -1);
-                _exception_handler->Handle(status, msg ? msg : file + ": syntax error");
-            } else if (status == LUA_ERRFILE) {
-                const char *msg = lua_tostring(_l, -1);
-                _exception_handler->Handle(status, msg ? msg : file + ": file error");
-            }
-            return false;
-        }
+        const int status = luaL_loadfile(_l, file);
+        return PostLoad(status, file);
+    }
+    
+    inline bool Load(const std::string &file) {
+        return Load(file.c_str());
+    }
 
-        status = lua_pcall(_l, 0, LUA_MULTRET, 0);
-        if(status == lua_ok) {
-            return true;
-        }
+    bool LoadStr(const char* script) {
+        ResetStackOnScopeExit savedStack(_l);
+        const int status = luaL_loadstring(_l, script);
+        return PostLoad(status);
+    }
 
-        const char *msg = lua_tostring(_l, -1);
-        _exception_handler->Handle(status, msg ? msg : file + ": dofile failed");
-        return false;
+    inline bool LoadStr(const std::string &script) {
+        return LoadStr(script.c_str());
     }
 
     void OpenLib(const std::string& modname, lua_CFunction openf) {
